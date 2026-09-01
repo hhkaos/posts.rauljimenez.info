@@ -3,7 +3,7 @@
 // `_site/`, for GitHub Pages (posts.rauljimenez.info). Not a general-purpose
 // static site generator — just enough markup for a Webmention receiver (and
 // a human) to find the post and its target link. No client-side JS.
-import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import MarkdownIt from "markdown-it";
@@ -483,6 +483,15 @@ async function main() {
   await writeFile(path.join(SITE_DIR, ".nojekyll"), "");
   await writeFile(path.join(SITE_DIR, "CNAME"), "posts.rauljimenez.info\n");
   await copyFile("scripts/style.css", path.join(SITE_DIR, "style.css"));
+
+  // Media uploaded via Micropub (@indiekit/store-github writes it to `media/`).
+  // Posts reference these by absolute URL under posts.rauljimenez.info, so the
+  // files must be served from the Pages site verbatim — nothing else copies them.
+  try {
+    await cp("media", path.join(SITE_DIR, "media"), { recursive: true });
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err; // no media/ folder yet is fine
+  }
 
   const index = [];
 
