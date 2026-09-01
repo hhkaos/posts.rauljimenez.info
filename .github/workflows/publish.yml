@@ -24,6 +24,10 @@ jobs:
           node-version: 22
       - run: npm install
       - run: node scripts/render.mjs
+      - name: Screenshot post pages for social cards / syndication media
+        run: |
+          npx playwright install --with-deps chromium
+          node scripts/screenshot.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
