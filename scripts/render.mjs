@@ -6,7 +6,26 @@
 import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import MarkdownIt from "markdown-it";
 import YAML from "yaml";
+
+// Post bodies are authored as Markdown (that's what Indiekit's postTemplate
+// writes). `linkify` turns bare URLs into links; `breaks` keeps single
+// newlines as <br>, matching how short notes are written. `html: false`
+// means any literal HTML in a body is escaped, not passed through.
+const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
+
+function renderMarkdown(text) {
+  return md.render(String(text || "").replace(/\r\n/g, "\n")).trim();
+}
+
+// Markdown reduced to a single line of plain text, for list titles etc.
+function markdownToPlain(text) {
+  return md
+    .renderInline(String(text || "").replace(/\r\n/g, "\n").replace(/\n+/g, " "))
+    .replace(/<[^>]+>/g, "")
+    .trim();
+}
 
 const TYPES = ["note", "bookmark", "like", "reply", "rsvp", "repost", "event"];
 const TYPE_FOLDER = {
@@ -144,7 +163,7 @@ ${end ? ` – <time class="dt-end" datetime="${escapeHtml(end)}">${escapeHtml(fo
 </p>
 ${location ? `<p class="event-where">📍 <span class="p-location">${escapeHtml(location)}</span></p>` : ""}
 ${eventUrl ? `<p class="target"><a class="u-url" href="${escapeHtml(eventUrl)}">${escapeHtml(eventUrl)}</a></p>` : ""}
-${content ? `<div class="content e-content">${escapeHtml(content)}</div>` : ""}
+${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
 <p style="margin-top:1.5rem">${
   eventUrl
     ? `<a href="${escapeHtml(url)}">Permalink</a>`
@@ -168,7 +187,7 @@ function renderPostHtml({ type, url, properties, content }) {
 ${renderMetaRow(type, published)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
-<div class="content e-content p-name">${escapeHtml(content)}</div>
+<div class="content e-content">${renderMarkdown(content)}</div>
 ${renderPermalink(url)}
 </article>`;
 
@@ -217,7 +236,7 @@ async function main() {
         type,
         url,
         published: post.properties.published,
-        title: rsvpPrefix + (post.properties.name || post.content.slice(0, 90) || TYPE_LABEL[type]),
+        title: rsvpPrefix + (post.properties.name || markdownToPlain(post.content).slice(0, 90) || TYPE_LABEL[type]),
         target: targetOf(post.properties),
       });
     }

@@ -151,7 +151,27 @@ article.h-entry .target a { color: var(--accent); word-break: break-word; }
 article.h-entry .content,
 article.h-event .content {
   font-size: 1.05rem;
-  white-space: pre-wrap;
+}
+
+.content > :first-child { margin-top: 0; }
+.content > :last-child { margin-bottom: 0; }
+.content ul,
+.content ol { padding-left: 1.4rem; }
+.content li { margin: 0.2rem 0; }
+.content a { color: var(--accent); word-break: break-word; }
+.content pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+}
+.content code { font-size: 0.9em; }
+.content blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
 }
 
 article.h-event h1.p-name {

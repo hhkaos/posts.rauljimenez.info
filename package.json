@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Renders public posts from this repo as static HTML for posts.rauljimenez.info, and sends outgoing Webmentions for public bookmark/like/reply/rsvp/repost posts.",
   "dependencies": {
+    "markdown-it": "^14.1.0",
     "yaml": "^2.9.0"
   }
 }
