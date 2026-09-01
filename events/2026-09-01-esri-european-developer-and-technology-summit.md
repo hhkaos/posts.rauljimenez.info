@@ -18,6 +18,10 @@ category:
 visibility: public
 post-status: published
 published: 2026-09-01T14:25:03.862Z
+syndication:
+  - https://mastodon.social/@hhkaos/117196264959411857
+  - https://bsky.app/profile/did:plc:gwbqjf3ciffqeedjrpmjinfo/post/3muhn543gfb2u
+updated: 2026-09-01T14:31:27.435Z
 ---
 
 At the upcoming edition of our developer conference in Frankfurt, I will be giving several talks:
