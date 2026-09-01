@@ -3,15 +3,20 @@
 // `_site/`, for GitHub Pages (posts.rauljimenez.info). Not a general-purpose
 // static site generator — just enough markup for a Webmention receiver (and
 // a human) to find the post and its target link. No client-side JS.
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import YAML from "yaml";
 
 const TYPES = ["note", "bookmark", "like", "reply"];
 const TYPE_FOLDER = { note: "notes", bookmark: "bookmarks", like: "likes", reply: "replies" };
+const TYPE_LABEL = { note: "Note", bookmark: "Bookmark", like: "Like", reply: "Reply" };
+const TYPE_VERB = { bookmark: "Bookmark of", like: "Like of", reply: "Reply to" };
 const SITE_DIR = "_site";
 const BASE_URL = "https://posts.rauljimenez.info";
+const MAIN_SITE = "https://www.rauljimenez.info/";
+const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
+const SOURCE_REPO = "https://github.com/hhkaos/posts.rauljimenez.info";
 
 // Mirrors the default applied in indiekit.config.js's postTemplate — kept
 // here too so already-published files without an explicit `visibility`
@@ -49,38 +54,70 @@ function targetOf(properties) {
   );
 }
 
-const TYPE_LABEL = { note: "Note", bookmark: "Bookmark", like: "Like", reply: "Reply" };
+function targetClassOf(type) {
+  return { bookmark: "u-bookmark-of", like: "u-like-of", reply: "u-in-reply-to" }[type];
+}
 
-function renderPostHtml({ type, url, properties, content }) {
-  const target = targetOf(properties);
-  const targetRelClass = { bookmark: "u-bookmark-of", like: "u-like-of", reply: "u-in-reply-to" }[type];
-  const published = properties.published || "";
-  const title = properties.name || `${TYPE_LABEL[type]} — ${published}`;
+function formatDate(iso) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" });
+  } catch {
+    return iso;
+  }
+}
 
+function page({ title, body }) {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<article class="h-entry">
-<p><a class="u-url" href="${escapeHtml(url)}">${escapeHtml(TYPE_LABEL[type])}</a></p>
-${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(published)}</time>` : ""}
-${target ? `<p>${escapeHtml(TYPE_LABEL[type])} of <a class="${targetRelClass}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
-<div class="e-content p-name">${escapeHtml(content)}</div>
-<p><a class="p-author h-card" href="https://www.rauljimenez.info/">Raul Jimenez</a></p>
-</article>
+<div class="wrap">
+<header class="site">
+<h1><a href="${BASE_URL}/">Raul Jimenez — activity</a></h1>
+<p class="about">A public feed of notes, bookmarks, likes and replies. Part of an <a href="${ABOUT_POST}">IndieWeb</a> experiment — <a href="${MAIN_SITE}">main site</a> · <a href="${SOURCE_REPO}">source</a>.</p>
+</header>
+${body}
+<footer class="site">
+<a href="${MAIN_SITE}">www.rauljimenez.info</a>
+<a href="${ABOUT_POST}">How this works</a>
+<a href="${SOURCE_REPO}">Source on GitHub</a>
+</footer>
+</div>
 </body>
 </html>
 `;
+}
+
+function renderPostHtml({ type, url, properties, content }) {
+  const target = targetOf(properties);
+  const published = properties.published || "";
+
+  const body = `
+<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+<article class="h-entry">
+<div class="meta">
+<span class="badge ${type}">${escapeHtml(TYPE_LABEL[type])}</span>
+${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(formatDate(published))}</time>` : ""}
+</div>
+${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
+<div class="content e-content p-name">${escapeHtml(content)}</div>
+<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · <a class="p-author h-card" href="${MAIN_SITE}">Raul Jimenez</a></p>
+</article>`;
+
+  return page({ title: properties.name || `${TYPE_LABEL[type]} — ${formatDate(published)}`, body });
 }
 
 async function main() {
   await mkdir(SITE_DIR, { recursive: true });
   await writeFile(path.join(SITE_DIR, ".nojekyll"), "");
   await writeFile(path.join(SITE_DIR, "CNAME"), "posts.rauljimenez.info\n");
+  await copyFile("scripts/style.css", path.join(SITE_DIR, "style.css"));
 
   const index = [];
 
@@ -113,29 +150,31 @@ async function main() {
         renderPostHtml({ type, url, properties: post.properties, content: post.content }),
       );
 
-      index.push({ type, url, published: post.properties.published, title: post.properties.name || post.content.slice(0, 80) });
+      index.push({
+        type,
+        url,
+        published: post.properties.published,
+        title: post.properties.name || post.content.slice(0, 90),
+        target: targetOf(post.properties),
+      });
     }
   }
 
   index.sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
-  const indexHtml = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Raul Jimenez — activity</title>
-</head>
-<body>
-<h1>Activity</h1>
-<p>Public notes, bookmarks, likes and replies. Source: <a href="https://github.com/hhkaos/posts.rauljimenez.info">hhkaos/posts.rauljimenez.info</a>.</p>
-<ul>
-${index.map((p) => `<li>${escapeHtml(p.published || "")} — <strong>${escapeHtml(TYPE_LABEL[p.type])}</strong> — <a href="${escapeHtml(p.url)}">${escapeHtml(p.title)}</a></li>`).join("\n")}
-</ul>
-</body>
-</html>
-`;
-  await writeFile(path.join(SITE_DIR, "index.html"), indexHtml);
+  const listItems = index.map((p) => `<li>
+<div class="meta">
+<span class="badge ${p.type}">${escapeHtml(TYPE_LABEL[p.type])}</span>
+<time datetime="${escapeHtml(p.published || "")}">${escapeHtml(formatDate(p.published))}</time>
+</div>
+<a class="title" href="${escapeHtml(p.url)}">${escapeHtml(p.title)}${p.target ? ` &rarr; ${escapeHtml(new URL(p.target).hostname)}` : ""}</a>
+</li>`).join("\n");
+
+  const indexBody = index.length
+    ? `<ul class="feed">\n${listItems}\n</ul>`
+    : `<p>Nothing public yet.</p>`;
+
+  await writeFile(path.join(SITE_DIR, "index.html"), page({ title: "Raul Jimenez — activity", body: indexBody }));
 
   console.log(`Rendered ${index.length} public post(s) into ${SITE_DIR}/`);
 }
