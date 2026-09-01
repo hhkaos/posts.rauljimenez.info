@@ -56,6 +56,10 @@ push to main
 scripts/render.mjs      -- renders visibility=public posts as static HTML
      |
      v
+scripts/verify-mf2.mjs  -- parses the generated HTML with microformats-parser
+                            and fails the build if the author markup regresses
+     |
+     v
 GitHub Pages            -- posts.rauljimenez.info
      |
      v
@@ -67,6 +71,23 @@ scripts/send-webmentions.mjs  -- sends Webmentions for public bookmark/like/
                                   check-ins are not sent — they announce
                                   something rather than respond to a page.)
 ```
+
+### Author identity (microformats2)
+
+`render.mjs` emits author markup that Webmention receivers (e.g.
+webmention.io) can read:
+
+- a hidden **representative h-card** on every page — `p-name`
+  (`Raúl Jiménez Ortega`), `u-url` + `rel="me"` to `www.rauljimenez.info`,
+  and an absolute `u-photo`. This is what lets a mention whose *source* is
+  the home page (a bare list of links, no `h-entry`) still resolve an
+  author;
+- a nested **`p-author` h-card** inside every post's `h-entry` / `h-event`
+  / `h-review`, with the same name, url and photo.
+
+The name/url/photo are the `AUTHOR_*` constants at the top of `render.mjs`.
+`scripts/verify-mf2.mjs` (run in CI) parses the built HTML and fails if any
+of this regresses.
 
 This repo itself is not built or deployed to www.rauljimenez.info. It is
 read and written by the Indiekit server via the GitHub API

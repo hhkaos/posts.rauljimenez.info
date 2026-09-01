@@ -67,6 +67,33 @@ const MAIN_SITE = "https://www.rauljimenez.info/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
 const SOURCE_REPO = "https://github.com/hhkaos/posts.rauljimenez.info";
 
+// Author identity. Webmention receivers (e.g. webmention.io) extract the
+// author of a mention from microformats2: a representative h-card on the
+// source page and/or a nested h-card in the h-entry's `author` property.
+// Both need name + url + photo, and the photo URL must be absolute.
+const AUTHOR_NAME = "Raúl Jiménez Ortega";
+const AUTHOR_URL = MAIN_SITE; // https://www.rauljimenez.info/
+const AUTHOR_PHOTO = "https://www.rauljimenez.info/img/hhkaos-raul-jimenez-ortega.jpeg";
+
+// Hidden representative h-card — dropped on every page. Its `u-url` is also
+// a `rel="me"` link, which is what makes it the *representative* h-card for
+// the page (IndieWeb rep-hcard algorithm), so a receiver parsing a page
+// with no h-entry (the home page links list) still finds name/photo/url.
+function repHCard() {
+  return `<div class="h-card" hidden>
+<a class="p-name u-url" href="${AUTHOR_URL}" rel="me">${escapeHtml(AUTHOR_NAME)}</a>
+<img class="u-photo" src="${AUTHOR_PHOTO}" alt="">
+</div>`;
+}
+
+// Inline author for an h-entry / h-event / h-review. Parses as a nested
+// h-card with explicit `u-url`, `u-photo` and `p-name` children (implied
+// `url` is not derived once the h-card has a `u-photo` child, so it must
+// be explicit). Compact avatar styling lives in style.css (.p-author.h-card).
+function authorHCard() {
+  return `<span class="p-author h-card"><a class="u-url" href="${AUTHOR_URL}" rel="author"><img class="u-photo" src="${AUTHOR_PHOTO}" alt=""><span class="p-name">${escapeHtml(AUTHOR_NAME)}</span></a></span>`;
+}
+
 // Mirrors the default applied in indiekit.config.js's postTemplate:
 // everything created through the Indiekit server is an explicit act of
 // publishing, so anything without a `visibility` property is public.
@@ -156,6 +183,7 @@ ${og.image ? `<meta property="og:image" content="${escapeHtml(og.image)}">` : ""
 <h1><a href="${BASE_URL}/">Raul Jimenez — activity</a></h1>
 <p class="about">A public feed of notes, bookmarks, likes, replies, reposts, RSVPs, events, check-ins, reviews and things read, watched and listened to. Part of an <a href="${ABOUT_POST}">IndieWeb</a> experiment — <a href="${MAIN_SITE}">main site</a> · <a href="${SOURCE_REPO}">source</a>.</p>
 </header>
+${repHCard()}
 ${body}
 <footer class="site">
 <a href="${MAIN_SITE}">www.rauljimenez.info</a>
@@ -176,7 +204,7 @@ ${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${
 }
 
 function renderPermalink(url) {
-  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · <a class="p-author h-card" href="${MAIN_SITE}">Raul Jimenez</a></p>`;
+  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}</p>`;
 }
 
 function ogDescription(text, fallback) {
@@ -215,7 +243,7 @@ ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : 
   eventUrl
     ? `<a href="${escapeHtml(url)}">Permalink</a>`
     : `<a class="u-url" href="${escapeHtml(url)}">Permalink</a>`
-} · <a class="p-author h-card" href="${MAIN_SITE}">Raul Jimenez</a></p>
+} · ${authorHCard()}</p>
 </article>`;
 
   const when = [formatDate(start), end && `– ${formatDate(end)}`].filter(Boolean).join(" ");

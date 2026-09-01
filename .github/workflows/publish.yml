@@ -24,6 +24,8 @@ jobs:
           node-version: 22
       - run: npm install
       - run: node scripts/render.mjs
+      - name: Verify author microformats2 (representative + nested h-card)
+        run: node scripts/verify-mf2.mjs
       - name: Screenshot post pages for social cards / syndication media
         run: |
           npx playwright install --with-deps chromium

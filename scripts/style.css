@@ -260,3 +260,22 @@ footer.site a { color: var(--text-muted); }
 a { color: var(--accent); }
 
 .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+/* Inline author byline (p-author h-card) — compact avatar + name. */
+.p-author.h-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  white-space: nowrap;
+}
+
+.p-author.h-card .u-photo {
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+/* Belt and braces: the representative h-card carries [hidden] already. */
+[hidden] { display: none !important; }
