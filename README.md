@@ -10,15 +10,27 @@ Docusaurus, hosted separately).
 
 ## Structure
 
-| Folder       | Post type |
-| ------------ | --------- |
-| `notes/`     | note      |
-| `bookmarks/` | bookmark  |
-| `likes/`     | like      |
-| `replies/`   | reply     |
-| `rsvp/`      | rsvp      |
-| `reposts/`   | repost    |
-| `events/`    | event     |
+| Folder       | Post type | Notes                                        |
+| ------------ | --------- | -------------------------------------------- |
+| `notes/`     | note      |                                              |
+| `articles/`  | article   | long-form, has a title                       |
+| `photos/`    | photo     | one or more images + caption                 |
+| `bookmarks/` | bookmark  |                                              |
+| `likes/`     | like      |                                              |
+| `replies/`   | reply     |                                              |
+| `rsvp/`      | rsvp      |                                              |
+| `reposts/`   | repost    |                                              |
+| `events/`    | event     |                                              |
+| `checkins/`  | checkin   | `checkin` = h-card of the venue              |
+| `reviews/`   | review    | h-review: `item`, `rating` (1–5), body       |
+| `reads/`     | read      | `read-of` h-cite + `read-status`             |
+| `watches/`   | watch     | `watch-of` h-cite, optional `rating`         |
+| `listens/`   | listen    | `listen-of` h-cite                           |
+
+> A check-in that also carries a `photo` is stored by Indiekit under
+> `photos/` with `post-type: photo` (its Post Type Discovery can't be
+> reordered). `render.mjs` renders any post with a `checkin` property as a
+> check-in regardless of folder.
 
 Each file's YAML front matter includes a `visibility` property
 (`public` / `unlisted` / `private`). **Everything created through the
@@ -48,11 +60,12 @@ GitHub Pages            -- posts.rauljimenez.info
      |
      v
 scripts/send-webmentions.mjs  -- sends Webmentions for public bookmark/like/
-                                  reply/rsvp/repost posts with an external
-                                  target, once their page is live. Idempotent
-                                  via .webmentions-sent.json. (Events are not
-                                  sent — an h-event announces something, it
-                                  isn't a response to another page.)
+                                  reply/rsvp/repost/review/read/watch/listen
+                                  posts with an external target, once their
+                                  page is live. Idempotent via
+                                  .webmentions-sent.json. (Events and
+                                  check-ins are not sent — they announce
+                                  something rather than respond to a page.)
 ```
 
 This repo itself is not built or deployed to www.rauljimenez.info. It is

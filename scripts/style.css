@@ -13,6 +13,13 @@
   --rsvp: #7c3aed;
   --repost: #0891b2;
   --event: #db2777;
+  --article: #1c1917;
+  --photo: #0d9488;
+  --checkin: #ea580c;
+  --review: #ca8a04;
+  --read: #4f46e5;
+  --watch: #9333ea;
+  --listen: #db2777;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,6 +37,13 @@
     --rsvp: #a78bfa;
     --repost: #22d3ee;
     --event: #f472b6;
+    --article: #d6d3d1;
+    --photo: #2dd4bf;
+    --checkin: #fb923c;
+    --review: #eab308;
+    --read: #818cf8;
+    --watch: #c084fc;
+    --listen: #f472b6;
   }
 }
 
@@ -94,6 +108,28 @@ header.site .about a { color: var(--text-muted); }
 .badge.rsvp { background: var(--rsvp); }
 .badge.repost { background: var(--repost); }
 .badge.event { background: var(--event); }
+.badge.article { background: var(--article); }
+.badge.photo { background: var(--photo); }
+.badge.checkin { background: var(--checkin); }
+.badge.review { background: var(--review); }
+.badge.read { background: var(--read); }
+.badge.watch { background: var(--watch); }
+.badge.listen { background: var(--listen); }
+
+.review-rating {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 1rem;
+}
+.review-rating .p-rating { font-weight: 600; color: var(--review); }
+
+article.h-entry img.u-photo {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin: 0.5rem 0;
+}
 
 ul.feed {
   list-style: none;
@@ -128,7 +164,8 @@ ul.feed a.title {
 
 ul.feed a.title:hover { text-decoration: underline; }
 
-article.h-entry .meta {
+article.h-entry .meta,
+article.h-review .meta {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -137,7 +174,8 @@ article.h-entry .meta {
   color: var(--text-muted);
 }
 
-article.h-entry .target {
+article.h-entry .target,
+article.h-review .target {
   margin: 1rem 0;
   padding: 0.75rem 1rem;
   border-left: 3px solid var(--border);
@@ -146,10 +184,12 @@ article.h-entry .target {
   font-size: 0.95rem;
 }
 
-article.h-entry .target a { color: var(--accent); word-break: break-word; }
+article.h-entry .target a,
+article.h-review .target a { color: var(--accent); word-break: break-word; }
 
 article.h-entry .content,
-article.h-event .content {
+article.h-event .content,
+article.h-review .content {
   font-size: 1.05rem;
 }
 
@@ -174,7 +214,9 @@ article.h-event .content {
   color: var(--text-muted);
 }
 
-article.h-event h1.p-name {
+article.h-event h1.p-name,
+article.h-entry h1.p-name,
+article.h-review h1.p-name {
   font-size: 1.4rem;
   margin: 0.2rem 0 0.6rem;
 }

@@ -27,19 +27,40 @@ function markdownToPlain(text) {
     .trim();
 }
 
-const TYPES = ["note", "bookmark", "like", "reply", "rsvp", "repost", "event"];
+const TYPES = [
+  "note", "article", "photo", "bookmark", "like", "reply", "rsvp", "repost",
+  "event", "checkin", "review", "read", "watch", "listen",
+];
 const TYPE_FOLDER = {
-  note: "notes", bookmark: "bookmarks", like: "likes", reply: "replies",
-  rsvp: "rsvp", repost: "reposts", event: "events",
+  note: "notes", article: "articles", photo: "photos", bookmark: "bookmarks",
+  like: "likes", reply: "replies", rsvp: "rsvp", repost: "reposts",
+  event: "events", checkin: "checkins", review: "reviews", read: "reads",
+  watch: "watches", listen: "listens",
 };
 const TYPE_LABEL = {
-  note: "Note", bookmark: "Bookmark", like: "Like", reply: "Reply",
-  rsvp: "RSVP", repost: "Repost", event: "Event",
+  note: "Note", article: "Article", photo: "Photo", bookmark: "Bookmark",
+  like: "Like", reply: "Reply", rsvp: "RSVP", repost: "Repost",
+  event: "Event", checkin: "Check-in", review: "Review", read: "Read",
+  watch: "Watch", listen: "Listen",
 };
 const TYPE_VERB = {
   bookmark: "Bookmark of", like: "Like of", reply: "Reply to",
   rsvp: "RSVP to", repost: "Repost of",
 };
+
+// checkin / item / read-of / watch-of / listen-of are stored in the front
+// matter as a nested map ({ type, name, url, author, latitude, … }); a
+// bare string is tolerated as a name-only fallback.
+function cite(value) {
+  if (!value) return {};
+  if (typeof value === "string") return { name: value };
+  return value.properties || value;
+}
+function citeUrl(value) {
+  const url = cite(value).url;
+  const first = Array.isArray(url) ? url[0] : url;
+  return typeof first === "string" && /^https?:\/\//.test(first) ? first : "";
+}
 const SITE_DIR = "_site";
 const BASE_URL = "https://posts.rauljimenez.info";
 const MAIN_SITE = "https://www.rauljimenez.info/";
@@ -133,7 +154,7 @@ ${og.image ? `<meta property="og:image" content="${escapeHtml(og.image)}">` : ""
 <div class="wrap">
 <header class="site">
 <h1><a href="${BASE_URL}/">Raul Jimenez — activity</a></h1>
-<p class="about">A public feed of notes, bookmarks, likes, replies, reposts, RSVPs and events. Part of an <a href="${ABOUT_POST}">IndieWeb</a> experiment — <a href="${MAIN_SITE}">main site</a> · <a href="${SOURCE_REPO}">source</a>.</p>
+<p class="about">A public feed of notes, bookmarks, likes, replies, reposts, RSVPs, events, check-ins, reviews and things read, watched and listened to. Part of an <a href="${ABOUT_POST}">IndieWeb</a> experiment — <a href="${MAIN_SITE}">main site</a> · <a href="${SOURCE_REPO}">source</a>.</p>
 </header>
 ${body}
 <footer class="site">
@@ -210,8 +231,188 @@ ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : 
   });
 }
 
+// Photos: `properties.photo` is an array of { url, alt } (or bare URL
+// strings). Body text, if any, is the caption.
+function photoList(photo) {
+  return [].concat(photo || []).map((p) =>
+    typeof p === "string"
+      ? { url: p }
+      : (p.properties
+        ? { url: p.properties.url?.[0] ?? p.properties.url, alt: p.properties.alt?.[0] ?? p.properties.alt }
+        : p),
+  ).filter((p) => p && p.url);
+}
+function photoImgs(photos) {
+  return photos.map((p) => `<img class="u-photo" src="${escapeHtml(p.url)}" alt="${escapeHtml(p.alt || "")}" loading="lazy">`).join("\n");
+}
+
+function renderPhotoHtml({ url, properties, content }) {
+  const published = properties.published || "";
+  const photos = photoList(properties.photo);
+
+  const body = `
+<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+<article class="h-entry">
+${renderMetaRow("photo", published)}
+${properties.name ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>` : ""}
+${photoImgs(photos)}
+${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
+${renderPermalink(url)}
+</article>`;
+
+  return page({
+    title: properties.name || `Photo — ${formatDate(published)}`,
+    body,
+    og: { url, type: "article", image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
+  });
+}
+
+// Articles: title in the front matter, long-form body.
+function renderArticleHtml({ url, properties, content }) {
+  const published = properties.published || "";
+  const name = properties.name || "Article";
+  const body = `
+<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+<article class="h-entry">
+${renderMetaRow("article", published)}
+<h1 class="p-name">${escapeHtml(name)}</h1>
+<div class="content e-content">${renderMarkdown(content)}</div>
+${renderPermalink(url)}
+</article>`;
+  return page({
+    title: name,
+    body,
+    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
+  });
+}
+
+// h-entry with a nested h-card for the venue (`checkin`). No Webmention is
+// sent for these (a check-in isn't a response to another page).
+function renderCheckinHtml({ url, properties, content }) {
+  const published = properties.published || "";
+  const c = cite(properties.checkin);
+  const name = c.name || "a place";
+  const venueUrl = citeUrl(properties.checkin);
+  const lat = c.latitude;
+  const lon = c.longitude;
+  const mapHref = venueUrl
+    || (lat && lon ? `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lon)}#map=17/${encodeURIComponent(lat)}/${encodeURIComponent(lon)}` : "");
+
+  const venue = `<span class="p-location h-card">${
+    mapHref
+      ? `<a class="p-name u-url" href="${escapeHtml(mapHref)}">${escapeHtml(name)}</a>`
+      : `<span class="p-name">${escapeHtml(name)}</span>`
+  }${lat && lon ? `<data class="p-latitude" value="${escapeHtml(lat)}"></data><data class="p-longitude" value="${escapeHtml(lon)}"></data>` : ""}</span>`;
+
+  const photos = photoList(properties.photo);
+  const body = `
+<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+<article class="h-entry">
+${renderMetaRow("checkin", published)}
+<p class="target">📍 Checked in at ${venue}</p>
+${photoImgs(photos)}
+${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
+${renderPermalink(url)}
+</article>`;
+
+  return page({
+    title: `Check-in at ${name}`,
+    body,
+    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
+  });
+}
+
+// h-review: the reviewed thing is `item` (rendered as p-item h-item), the
+// score is `rating` on a 1–5 scale, the body is the p-description.
+function renderReviewHtml({ url, properties, content }) {
+  const published = properties.published || "";
+  const it = cite(properties.item);
+  const itemName = it.name || "something";
+  const itemUrl = citeUrl(properties.item);
+  const rating = Number(properties.rating);
+  const hasRating = Number.isFinite(rating);
+  const headline = properties.name || "";
+
+  const item = `<span class="p-item h-item">${
+    itemUrl
+      ? `<a class="p-name u-url" href="${escapeHtml(itemUrl)}">${escapeHtml(itemName)}</a>`
+      : `<span class="p-name">${escapeHtml(itemName)}</span>`
+  }${it.author ? ` by <span class="p-author">${escapeHtml(it.author)}</span>` : ""}</span>`;
+
+  const body = `
+<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+<article class="h-review">
+${renderMetaRow("review", published)}
+<p class="target">📝 Review of ${item}</p>
+${headline ? `<h1 class="p-name">${escapeHtml(headline)}</h1>` : ""}
+${hasRating ? `<p class="review-rating">Rating: <data class="p-rating" value="${rating}">${rating}</data><data class="p-best" value="5"></data><data class="p-worst" value="1"></data> / 5</p>` : ""}
+<div class="content e-content p-description">${renderMarkdown(content)}</div>
+${renderPermalink(url)}
+</article>`;
+
+  return page({
+    title: headline || `Review of ${itemName}`,
+    body,
+    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
+  });
+}
+
+// read / watch / listen — an h-entry citing the consumed work (h-cite).
+const CONSUMED = {
+  read: { prop: "read-of", uClass: "u-read-of", icon: "📚", verb: "Read", statusProp: "read-status" },
+  watch: { prop: "watch-of", uClass: "u-watch-of", icon: "🎬", verb: "Watched" },
+  listen: { prop: "listen-of", uClass: "u-listen-of", icon: "🎧", verb: "Listened to" },
+};
+const READ_STATUS_LABEL = {
+  "to-read": "Want to read", "want-to-read": "Want to read",
+  reading: "Reading", finished: "Finished reading", read: "Finished reading",
+};
+function renderConsumedHtml(type, { url, properties, content }) {
+  const spec = CONSUMED[type];
+  const published = properties.published || "";
+  const w = cite(properties[spec.prop]);
+  const workName = w.name || "something";
+  const workUrl = citeUrl(properties[spec.prop]);
+  const rating = Number(properties.rating);
+  const hasRating = Number.isFinite(rating);
+  const status = spec.statusProp ? String(properties[spec.statusProp] || "").toLowerCase() : "";
+  const verb = status ? (READ_STATUS_LABEL[status] || spec.verb) : spec.verb;
+
+  const work = `<span class="${spec.uClass} h-cite">${
+    workUrl
+      ? `<a class="p-name u-url" href="${escapeHtml(workUrl)}">${escapeHtml(workName)}</a>`
+      : `<span class="p-name">${escapeHtml(workName)}</span>`
+  }${w.author ? ` by <span class="p-author">${escapeHtml(w.author)}</span>` : ""}</span>`;
+
+  const body = `
+<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+<article class="h-entry">
+${renderMetaRow(type, published)}
+${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
+<p class="target">${spec.icon} ${escapeHtml(verb)} ${work}${hasRating ? ` — <data class="p-rating" value="${rating}">${rating}/5</data>` : ""}</p>
+${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
+${renderPermalink(url)}
+</article>`;
+
+  return page({
+    title: `${verb} ${workName}`,
+    body,
+    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
+  });
+}
+
 function renderPostHtml({ type, url, properties, content }) {
+  // A check-in that also carries a photo is stored as `post-type: photo`
+  // (Indiekit's discovery can't be reordered) — treat any post with a
+  // `checkin` property as a check-in.
+  if (properties.checkin) return renderCheckinHtml({ url, properties, content });
   if (type === "event") return renderEventHtml({ url, properties, content });
+  if (type === "review") return renderReviewHtml({ url, properties, content });
+  if (type === "read" || type === "watch" || type === "listen") {
+    return renderConsumedHtml(type, { url, properties, content });
+  }
+  if (type === "article") return renderArticleHtml({ url, properties, content });
+  if (type === "photo") return renderPhotoHtml({ url, properties, content });
 
   const target = targetOf(properties);
   const published = properties.published || "";
@@ -239,6 +440,42 @@ ${renderPermalink(url)}
       description: ogDescription(content, fallbackDescription),
     },
   });
+}
+
+// Feed-list title + optional external target (for the "→ hostname" suffix,
+// which must be an absolute URL) for one post.
+function indexEntry(type, properties, content) {
+  const bodyTitle = markdownToPlain(content).slice(0, 90);
+  const named = properties.name || bodyTitle || TYPE_LABEL[type];
+
+  switch (type) {
+    case "rsvp":
+      return {
+        title: `${properties.rsvp ? `[${properties.rsvp}] ` : ""}${named}`,
+        target: targetOf(properties),
+      };
+    case "checkin":
+      return { title: `📍 ${cite(properties.checkin).name || named}`, target: citeUrl(properties.checkin) || null };
+    case "review": {
+      const it = cite(properties.item);
+      const r = Number(properties.rating);
+      return {
+        title: `${properties.name || `Review of ${it.name || "something"}`}${Number.isFinite(r) ? ` (${r}/5)` : ""}`,
+        target: citeUrl(properties.item) || null,
+      };
+    }
+    case "read":
+    case "watch":
+    case "listen": {
+      const spec = CONSUMED[type];
+      const w = cite(properties[spec.prop]);
+      const status = spec.statusProp ? String(properties[spec.statusProp] || "").toLowerCase() : "";
+      const verb = status ? (READ_STATUS_LABEL[status] || spec.verb) : spec.verb;
+      return { title: `${spec.icon} ${verb} ${w.name || "something"}`, target: citeUrl(properties[spec.prop]) || null };
+    }
+    default:
+      return { title: named, target: targetOf(properties) };
+  }
 }
 
 async function main() {
@@ -278,14 +515,10 @@ async function main() {
         renderPostHtml({ type, url, properties: post.properties, content: post.content }),
       );
 
-      const rsvpPrefix = type === "rsvp" && post.properties.rsvp ? `[${post.properties.rsvp}] ` : "";
-      index.push({
-        type,
-        url,
-        published: post.properties.published,
-        title: rsvpPrefix + (post.properties.name || markdownToPlain(post.content).slice(0, 90) || TYPE_LABEL[type]),
-        target: targetOf(post.properties),
-      });
+      const props = post.properties;
+      const effectiveType = props.checkin ? "checkin" : type;
+      const { title, target } = indexEntry(effectiveType, props, post.content);
+      index.push({ type: effectiveType, url, published: props.published, title, target });
     }
   }
 

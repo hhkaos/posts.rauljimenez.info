@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-// Sends outgoing Webmentions for public bookmark/like/reply/rsvp/repost
-// posts that reference an external URL. (Events aren't sent: an h-event
-// has no "mention" target — it's the thing being announced, not a
-// response to someone else's page.) Only runs after the corresponding
-// page is
-// already live on posts.rauljimenez.info (this script runs as the
-// `webmentions` job, which `needs: deploy` in the workflow).
+// Sends outgoing Webmentions for public posts that reference an external
+// URL: bookmark/like/reply/rsvp/repost, plus review (→ the reviewed item)
+// and read/watch/listen (→ the cited work, if it has a real URL). Events
+// and check-ins are NOT sent: an h-event announces something rather than
+// responding to a page, and a check-in's venue URL isn't a mention target.
+// Only runs after the corresponding page is already live on
+// posts.rauljimenez.info (this script runs as the `webmentions` job, which
+// `needs: deploy` in the workflow).
 //
 // Idempotent: keeps a ledger (.webmentions-sent.json) of source|target
 // pairs already sent, committed back to the repo by the workflow.
@@ -17,7 +18,17 @@ import YAML from "yaml";
 const TYPE_FOLDER = {
   bookmark: "bookmarks", like: "likes", reply: "replies",
   rsvp: "rsvp", repost: "reposts",
+  review: "reviews", read: "reads", watch: "watches", listen: "listens",
 };
+
+// checkin / item / read-of / watch-of / listen-of are stored as a nested
+// map ({ type, name, url, … }). Return an absolute http(s) URL or null.
+function citeUrl(value) {
+  if (!value || typeof value === "string") return null;
+  const p = value.properties || value;
+  const url = Array.isArray(p.url) ? p.url[0] : p.url;
+  return typeof url === "string" && /^https?:\/\//.test(url) ? url : null;
+}
 const BASE_URL = "https://posts.rauljimenez.info";
 const LEDGER_PATH = ".webmentions-sent.json";
 
@@ -41,6 +52,10 @@ function targetOf(type, properties) {
     reply: properties["in-reply-to"],
     rsvp: properties["in-reply-to"],
     repost: properties["repost-of"],
+    review: citeUrl(properties.item),
+    read: citeUrl(properties["read-of"]),
+    watch: citeUrl(properties["watch-of"]),
+    listen: citeUrl(properties["listen-of"]),
   }[type];
 }
 
