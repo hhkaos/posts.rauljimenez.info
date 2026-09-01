@@ -1,7 +1,8 @@
-# indie.rauljimenez.info — activity store
+# posts.rauljimenez.info — activity store
 
 Content store for a personal [Indiekit](https://getindiekit.com) lab instance
-at `indie.rauljimenez.info`, used to experiment with
+running at `indie.rauljimenez.info` (kept private, not linked publicly),
+used to experiment with
 [IndieAuth](https://indieauth.spec.indieweb.org/) and
 [Micropub](https://micropub.spec.indieweb.org/) without touching the main
 site at [www.rauljimenez.info](https://www.rauljimenez.info/) (built with

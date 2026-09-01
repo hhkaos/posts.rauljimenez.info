@@ -128,7 +128,7 @@ async function main() {
 </head>
 <body>
 <h1>Activity</h1>
-<p>Public notes, bookmarks, likes and replies. Source: <a href="https://github.com/hhkaos/indie.rauljimenez.info">hhkaos/indie.rauljimenez.info</a>.</p>
+<p>Public notes, bookmarks, likes and replies. Source: <a href="https://github.com/hhkaos/posts.rauljimenez.info">hhkaos/posts.rauljimenez.info</a>.</p>
 <ul>
 ${index.map((p) => `<li>${escapeHtml(p.published || "")} — <strong>${escapeHtml(TYPE_LABEL[p.type])}</strong> — <a href="${escapeHtml(p.url)}">${escapeHtml(p.title)}</a></li>`).join("\n")}
 </ul>
