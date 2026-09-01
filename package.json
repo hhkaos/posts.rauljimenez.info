@@ -1,0 +1,10 @@
+{
+  "name": "indie-rauljimenez-info-activity",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Renders public posts from this repo as static HTML for posts.rauljimenez.info, and sends outgoing Webmentions for public bookmark/like/reply posts.",
+  "dependencies": {
+    "yaml": "^2.9.0"
+  }
+}
