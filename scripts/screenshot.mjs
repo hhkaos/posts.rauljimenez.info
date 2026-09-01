@@ -1,8 +1,17 @@
 #!/usr/bin/env node
-// Screenshots every rendered post page into `_site/<path>/screenshot.png`
-// at Open Graph proportions (1200×630). The Indiekit syndicators fetch
-// `{permalink}/screenshot.png` and attach it as native media on Mastodon
-// and Bluesky; the same file is referenced as `og:image` by render.mjs.
+// Screenshots every rendered post page into `_site/<path>/screenshot.png`.
+// The Indiekit syndicators fetch `{permalink}/screenshot.png` and attach it
+// as native media on Mastodon and Bluesky; the same file is referenced as
+// `og:image` by render.mjs.
+//
+// The image is 1200 wide and cropped to the post card's real height rather
+// than a fixed 1200×630, so a short post (an RSVP, a like, a one-line note)
+// no longer sits in a sea of white space — which is what made the
+// syndicated images look empty and, on Bluesky's square-ish crop, cut off.
+// Height is clamped between ~2.2:1 (a landscape floor that keeps the file
+// usable as an Open Graph image) and 1:1 (a cap so a very long note doesn't
+// produce a skyscraper); when the card is shorter than the floor it's
+// centred vertically so the frame reads as deliberate rather than top-heavy.
 //
 // Runs in CI after render.mjs. Serves `_site/` over localhost first so the
 // pages' absolute `/style.css` resolves.
@@ -14,7 +23,9 @@ import { chromium } from "playwright";
 
 const SITE_DIR = "_site";
 const WIDTH = 1200;
-const HEIGHT = 630;
+const MIN_HEIGHT = Math.round(WIDTH / 2.2); // 545 — never wider than ~2.2:1
+const MAX_HEIGHT = WIDTH; //                    1200 — never taller than 1:1
+const PAD_BOTTOM = 12; // small safety margin below the card's own padding
 const PORT = 4173;
 
 const CONTENT_TYPES = {
@@ -72,7 +83,9 @@ async function main() {
   const server = await startServer();
   const browser = await chromium.launch();
   const page = await browser.newPage({
-    viewport: { width: WIDTH, height: HEIGHT },
+    // Start tall so a long post lays out fully before we measure it; the
+    // real crop height is set per page below.
+    viewport: { width: WIDTH, height: MAX_HEIGHT },
     deviceScaleFactor: 2,
     colorScheme: "light",
   });
@@ -83,15 +96,41 @@ async function main() {
     header.site { margin-bottom: 1.25rem; padding-bottom: 0.75rem; }
     .wrap { padding: 2rem 2.5rem; max-width: none; }
     article .content { overflow: hidden; }
+    /* Keep a big image from turning the card into a skyscraper — photo
+       posts syndicate the real photo, this is just the OG fallback. */
+    article img { max-height: 520px; width: auto; object-fit: contain; }
   `;
 
   let count = 0;
   for (const { urlPath, dir } of pages) {
+    await page.setViewportSize({ width: WIDTH, height: MAX_HEIGHT });
     await page.goto(`http://localhost:${PORT}${urlPath}`, { waitUntil: "networkidle" });
     await page.addStyleTag({ content: cardCss });
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+    // Measure the card's real height (`.wrap` carries the visible chrome +
+    // the post), then crop to it, clamped to the landscape floor / square
+    // cap. If the floor adds slack, push the card down by half of it so the
+    // whitespace is split top and bottom rather than dumped below.
+    const cardBottom = await page.evaluate(() => {
+      const wrap = document.querySelector(".wrap");
+      return wrap ? Math.ceil(wrap.getBoundingClientRect().bottom) : 0;
+    });
+    const height = Math.min(
+      Math.max(cardBottom + PAD_BOTTOM, MIN_HEIGHT),
+      MAX_HEIGHT,
+    );
+    const slack = height - PAD_BOTTOM - cardBottom;
+    if (slack > 0) {
+      await page.addStyleTag({
+        content: `body { padding-top: ${Math.round(slack / 2)}px; }`,
+      });
+    }
+
+    await page.setViewportSize({ width: WIDTH, height });
     await page.screenshot({
       path: path.join(dir, "screenshot.png"),
-      clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT },
+      clip: { x: 0, y: 0, width: WIDTH, height },
     });
     count++;
   }
