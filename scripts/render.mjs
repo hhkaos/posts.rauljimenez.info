@@ -8,23 +8,30 @@ import path from "node:path";
 
 import YAML from "yaml";
 
-const TYPES = ["note", "bookmark", "like", "reply"];
-const TYPE_FOLDER = { note: "notes", bookmark: "bookmarks", like: "likes", reply: "replies" };
-const TYPE_LABEL = { note: "Note", bookmark: "Bookmark", like: "Like", reply: "Reply" };
-const TYPE_VERB = { bookmark: "Bookmark of", like: "Like of", reply: "Reply to" };
+const TYPES = ["note", "bookmark", "like", "reply", "rsvp", "repost", "event"];
+const TYPE_FOLDER = {
+  note: "notes", bookmark: "bookmarks", like: "likes", reply: "replies",
+  rsvp: "rsvp", repost: "reposts", event: "events",
+};
+const TYPE_LABEL = {
+  note: "Note", bookmark: "Bookmark", like: "Like", reply: "Reply",
+  rsvp: "RSVP", repost: "Repost", event: "Event",
+};
+const TYPE_VERB = {
+  bookmark: "Bookmark of", like: "Like of", reply: "Reply to",
+  rsvp: "RSVP to", repost: "Repost of",
+};
 const SITE_DIR = "_site";
 const BASE_URL = "https://posts.rauljimenez.info";
 const MAIN_SITE = "https://www.rauljimenez.info/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
 const SOURCE_REPO = "https://github.com/hhkaos/posts.rauljimenez.info";
 
-// Mirrors the default applied in indiekit.config.js's postTemplate — kept
-// here too so already-published files without an explicit `visibility`
-// (e.g. posted before that default existed) still resolve sensibly.
-function resolveVisibility(type, properties) {
-  if (properties.visibility) return properties.visibility;
-  if (type === "bookmark" || type === "like") return "private";
-  return "public";
+// Mirrors the default applied in indiekit.config.js's postTemplate:
+// everything created through the Indiekit server is an explicit act of
+// publishing, so anything without a `visibility` property is public.
+function resolveVisibility(_type, properties) {
+  return properties.visibility || "public";
 }
 
 function escapeHtml(string) {
@@ -50,12 +57,24 @@ function slugAndDateFromFilename(filename) {
 
 function targetOf(properties) {
   return (
-    properties["bookmark-of"] || properties["like-of"] || properties["in-reply-to"] || null
+    properties["bookmark-of"] || properties["like-of"] || properties["in-reply-to"] ||
+    properties["repost-of"] || null
   );
 }
 
 function targetClassOf(type) {
-  return { bookmark: "u-bookmark-of", like: "u-like-of", reply: "u-in-reply-to" }[type];
+  return {
+    bookmark: "u-bookmark-of", like: "u-like-of", reply: "u-in-reply-to",
+    rsvp: "u-in-reply-to", repost: "u-repost-of",
+  }[type];
+}
+
+// Micropub `location` can be a plain string or an h-adr/h-geo object.
+function locationText(location) {
+  if (!location) return "";
+  if (typeof location === "string") return location;
+  const p = location.properties || location;
+  return p.name || p.label || p["street-address"] || p.locality || "";
 }
 
 function formatDate(iso) {
@@ -80,7 +99,7 @@ function page({ title, body }) {
 <div class="wrap">
 <header class="site">
 <h1><a href="${BASE_URL}/">Raul Jimenez — activity</a></h1>
-<p class="about">A public feed of notes, bookmarks, likes and replies. Part of an <a href="${ABOUT_POST}">IndieWeb</a> experiment — <a href="${MAIN_SITE}">main site</a> · <a href="${SOURCE_REPO}">source</a>.</p>
+<p class="about">A public feed of notes, bookmarks, likes, replies, reposts, RSVPs and events. Part of an <a href="${ABOUT_POST}">IndieWeb</a> experiment — <a href="${MAIN_SITE}">main site</a> · <a href="${SOURCE_REPO}">source</a>.</p>
 </header>
 ${body}
 <footer class="site">
@@ -94,20 +113,63 @@ ${body}
 `;
 }
 
+function renderMetaRow(type, published) {
+  return `<div class="meta">
+<span class="badge ${type}">${escapeHtml(TYPE_LABEL[type])}</span>
+${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(formatDate(published))}</time>` : ""}
+</div>`;
+}
+
+function renderPermalink(url) {
+  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · <a class="p-author h-card" href="${MAIN_SITE}">Raul Jimenez</a></p>`;
+}
+
+// h-event: name/start/end/location live in the front matter, not the body.
+function renderEventHtml({ url, properties, content }) {
+  const published = properties.published || "";
+  const name = properties.name || "Event";
+  const start = properties.start || "";
+  const end = properties.end || "";
+  const location = locationText(properties.location);
+  const eventUrl = properties.url;
+
+  const body = `
+<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+<article class="h-event">
+${renderMetaRow("event", published)}
+<h1 class="p-name">${escapeHtml(name)}</h1>
+<p class="event-when">
+${start ? `<time class="dt-start" datetime="${escapeHtml(start)}">${escapeHtml(formatDate(start))}</time>` : ""}
+${end ? ` – <time class="dt-end" datetime="${escapeHtml(end)}">${escapeHtml(formatDate(end))}</time>` : ""}
+</p>
+${location ? `<p class="event-where">📍 <span class="p-location">${escapeHtml(location)}</span></p>` : ""}
+${eventUrl ? `<p class="target"><a class="u-url" href="${escapeHtml(eventUrl)}">${escapeHtml(eventUrl)}</a></p>` : ""}
+${content ? `<div class="content e-content">${escapeHtml(content)}</div>` : ""}
+<p style="margin-top:1.5rem">${
+  eventUrl
+    ? `<a href="${escapeHtml(url)}">Permalink</a>`
+    : `<a class="u-url" href="${escapeHtml(url)}">Permalink</a>`
+} · <a class="p-author h-card" href="${MAIN_SITE}">Raul Jimenez</a></p>
+</article>`;
+
+  return page({ title: name, body });
+}
+
 function renderPostHtml({ type, url, properties, content }) {
+  if (type === "event") return renderEventHtml({ url, properties, content });
+
   const target = targetOf(properties);
   const published = properties.published || "";
+  const rsvp = type === "rsvp" ? properties.rsvp : "";
 
   const body = `
 <a class="back" href="${BASE_URL}/">&larr; All activity</a>
 <article class="h-entry">
-<div class="meta">
-<span class="badge ${type}">${escapeHtml(TYPE_LABEL[type])}</span>
-${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(formatDate(published))}</time>` : ""}
-</div>
+${renderMetaRow(type, published)}
+${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
 <div class="content e-content p-name">${escapeHtml(content)}</div>
-<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · <a class="p-author h-card" href="${MAIN_SITE}">Raul Jimenez</a></p>
+${renderPermalink(url)}
 </article>`;
 
   return page({ title: properties.name || `${TYPE_LABEL[type]} — ${formatDate(published)}`, body });
@@ -150,11 +212,12 @@ async function main() {
         renderPostHtml({ type, url, properties: post.properties, content: post.content }),
       );
 
+      const rsvpPrefix = type === "rsvp" && post.properties.rsvp ? `[${post.properties.rsvp}] ` : "";
       index.push({
         type,
         url,
         published: post.properties.published,
-        title: post.properties.name || post.content.slice(0, 90),
+        title: rsvpPrefix + (post.properties.name || post.content.slice(0, 90) || TYPE_LABEL[type]),
         target: targetOf(post.properties),
       });
     }

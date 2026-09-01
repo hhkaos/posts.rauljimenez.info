@@ -10,6 +10,9 @@
   --bookmark: #b45309;
   --like: #dc2626;
   --reply: #059669;
+  --rsvp: #7c3aed;
+  --repost: #0891b2;
+  --event: #db2777;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,6 +27,9 @@
     --bookmark: #f2b459;
     --like: #f97070;
     --reply: #4ade80;
+    --rsvp: #a78bfa;
+    --repost: #22d3ee;
+    --event: #f472b6;
   }
 }
 
@@ -85,6 +91,9 @@ header.site .about a { color: var(--text-muted); }
 .badge.bookmark { background: var(--bookmark); }
 .badge.like { background: var(--like); }
 .badge.reply { background: var(--reply); }
+.badge.rsvp { background: var(--rsvp); }
+.badge.repost { background: var(--repost); }
+.badge.event { background: var(--event); }
 
 ul.feed {
   list-style: none;
@@ -139,9 +148,38 @@ article.h-entry .target {
 
 article.h-entry .target a { color: var(--accent); word-break: break-word; }
 
-article.h-entry .content {
+article.h-entry .content,
+article.h-event .content {
   font-size: 1.05rem;
   white-space: pre-wrap;
+}
+
+article.h-event h1.p-name {
+  font-size: 1.4rem;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.event-when {
+  font-size: 1rem;
+  color: var(--text);
+  margin: 0.3rem 0;
+}
+
+.event-where {
+  color: var(--text-muted);
+  margin: 0.3rem 0 1rem;
+}
+
+.rsvp-answer {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 1rem;
+}
+
+.rsvp-answer .p-rsvp {
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--rsvp);
 }
 
 footer.site {

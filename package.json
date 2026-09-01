@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Renders public posts from this repo as static HTML for posts.rauljimenez.info, and sends outgoing Webmentions for public bookmark/like/reply posts.",
+  "description": "Renders public posts from this repo as static HTML for posts.rauljimenez.info, and sends outgoing Webmentions for public bookmark/like/reply/rsvp/repost posts.",
   "dependencies": {
     "yaml": "^2.9.0"
   }

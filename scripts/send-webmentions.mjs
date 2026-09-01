@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-// Sends outgoing Webmentions for public bookmark/like/reply posts that
-// reference an external URL. Only runs after the corresponding page is
+// Sends outgoing Webmentions for public bookmark/like/reply/rsvp/repost
+// posts that reference an external URL. (Events aren't sent: an h-event
+// has no "mention" target — it's the thing being announced, not a
+// response to someone else's page.) Only runs after the corresponding
+// page is
 // already live on posts.rauljimenez.info (this script runs as the
 // `webmentions` job, which `needs: deploy` in the workflow).
 //
@@ -11,7 +14,10 @@ import path from "node:path";
 
 import YAML from "yaml";
 
-const TYPE_FOLDER = { bookmark: "bookmarks", like: "likes", reply: "replies" };
+const TYPE_FOLDER = {
+  bookmark: "bookmarks", like: "likes", reply: "replies",
+  rsvp: "rsvp", repost: "reposts",
+};
 const BASE_URL = "https://posts.rauljimenez.info";
 const LEDGER_PATH = ".webmentions-sent.json";
 
@@ -29,7 +35,13 @@ function slugAndDateFromFilename(filename) {
 }
 
 function targetOf(type, properties) {
-  return { bookmark: properties["bookmark-of"], like: properties["like-of"], reply: properties["in-reply-to"] }[type];
+  return {
+    bookmark: properties["bookmark-of"],
+    like: properties["like-of"],
+    reply: properties["in-reply-to"],
+    rsvp: properties["in-reply-to"],
+    repost: properties["repost-of"],
+  }[type];
 }
 
 async function loadLedger() {
@@ -108,7 +120,8 @@ async function main() {
       const post = parsePost(raw);
       if (!post) continue;
 
-      const visibility = post.properties.visibility || (type === "reply" ? "public" : "private");
+      // Mirrors indiekit.config.js: no explicit visibility means public.
+      const visibility = post.properties.visibility || "public";
       if (visibility !== "public") continue;
 
       const target = targetOf(type, post.properties);
