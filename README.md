@@ -77,13 +77,16 @@ scripts/send-webmentions.mjs  -- sends Webmentions for public bookmark/like/
 `render.mjs` emits author markup that Webmention receivers (e.g.
 webmention.io) can read:
 
-- a hidden **representative h-card** on every page — `p-name`
+- a hidden **representative h-card** on every *post* page — `p-name`
   (`Raúl Jiménez Ortega`), `u-url` + `rel="me"` to `www.rauljimenez.info`,
-  and an absolute `u-photo`. This is what lets a mention whose *source* is
-  the home page (a bare list of links, no `h-entry`) still resolve an
-  author;
+  and an absolute `u-photo`;
 - a nested **`p-author` h-card** inside every post's `h-entry` / `h-event`
   / `h-review`, with the same name, url and photo.
+
+The index page deliberately carries **no** h-card: it has no `h-entry`, and
+a lone top-level h-card makes XRay (the parser webmention.io verifies with)
+treat the whole page as a person card and stop looking for target links,
+which would break Webmentions sent *from* the index.
 
 The name/url/photo are the `AUTHOR_*` constants at the top of `render.mjs`.
 `scripts/verify-mf2.mjs` (run in CI) parses the built HTML and fails if any

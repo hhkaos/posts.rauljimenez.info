@@ -2,11 +2,13 @@
 // Verifies the microformats2 that Webmention receivers rely on, against the
 // actual HTML in `_site/` (not the templates). Run after `render.mjs`.
 //
-//   - the home page carries a representative h-card (name + url + photo,
-//     with a rel="me" link to the same url) so a mention whose source is a
-//     bare link list still yields an author;
+//   - every post page carries a representative h-card (name + url + photo,
+//     with a rel="me" link to the same url);
 //   - every post's h-entry / h-event / h-review has an `author` property
-//     that parses as a nested h-card with name + url + photo.
+//     that parses as a nested h-card with name + url + photo;
+//   - the index page has NO top-level h-card — one there makes XRay (what
+//     webmention.io verifies with) treat the whole page as a person card
+//     and miss target links, breaking Webmentions sent from the index.
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -43,18 +45,14 @@ function urlFor(file) {
 
 const files = await htmlFiles(SITE_DIR);
 
-// --- Home page: representative h-card ---
+// --- Home page: must NOT parse as / contain a top-level h-card ---
 const homeFile = path.join(SITE_DIR, "index.html");
 const home = mf2(await readFile(homeFile, "utf8"), { baseUrl: `${BASE_URL}/` });
-const repCard = home.items.find((i) => i.type?.includes("h-card"));
-console.log("\nHome — representative h-card");
-check(!!repCard, "an h-card item exists");
-check(eq(repCard?.properties?.name, [AUTHOR_NAME]), `name = ["${AUTHOR_NAME}"]`);
-check(has(repCard?.properties?.url, AUTHOR_URL), `url includes ${AUTHOR_URL}`);
-check(has(repCard?.properties?.photo, AUTHOR_PHOTO), "photo is the absolute jpeg");
-check(has(home.rels?.me, AUTHOR_URL), `rel="me" -> ${AUTHOR_URL}`);
+console.log("\nHome — no top-level h-card (keeps it usable as a Webmention source)");
+check(!home.items.some((i) => i.type?.includes("h-card")),
+  `no h-card item on the index  (got ${JSON.stringify(home.items.map((i) => i.type))})`);
 
-// --- Every post permalink: nested author h-card ---
+// --- Every post permalink: representative + nested author h-card ---
 for (const file of files) {
   if (file === homeFile) continue;
   const url = urlFor(file);
@@ -63,6 +61,13 @@ for (const file of files) {
     ["h-entry", "h-event", "h-review"].some((t) => i.type?.includes(t)));
   if (!entry) continue; // not a post page
   console.log(`\n${url}  [${entry.type.join(",")}]`);
+
+  const repCard = doc.items.find((i) => i.type?.includes("h-card"));
+  check(!!repCard && eq(repCard.properties?.name, [AUTHOR_NAME])
+    && has(repCard.properties?.url, AUTHOR_URL) && has(repCard.properties?.photo, AUTHOR_PHOTO),
+    "representative h-card present (name + url + photo)");
+  check(has(doc.rels?.me, AUTHOR_URL), `rel="me" -> ${AUTHOR_URL}`);
+
   const author = entry.properties?.author?.[0];
   check(author && typeof author === "object" && author.type?.includes("h-card"),
     "author parses as an embedded h-card");
