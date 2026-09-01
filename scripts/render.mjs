@@ -208,8 +208,33 @@ ${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${
 </div>`;
 }
 
-function renderPermalink(url) {
-  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}</p>`;
+function renderPermalink(url, properties) {
+  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}</p>${syndicationLinks(properties)}`;
+}
+
+// IndieWeb POSSE: link the canonical post to its syndicated copies with
+// `u-syndication` (also lets Bridgy-style backfeed match them). `syndication`
+// in the front matter is an array of status URLs written back by
+// @indiekit/endpoint-syndicate.
+const SYNDICATION_LABEL = {
+  "mastodon.social": "Mastodon",
+  "bsky.app": "Bluesky",
+};
+function syndicationLabel(href) {
+  try {
+    const host = new URL(href).hostname.replace(/^www\./, "");
+    return SYNDICATION_LABEL[host] || host;
+  } catch {
+    return href;
+  }
+}
+function syndicationLinks(properties) {
+  const urls = [].concat(properties?.syndication || []).filter((u) => typeof u === "string" && u);
+  if (!urls.length) return "";
+  const links = urls
+    .map((u) => `<a class="u-syndication" href="${escapeHtml(u)}">${escapeHtml(syndicationLabel(u))}</a>`)
+    .join(", ");
+  return `\n<p class="syndication">Also posted on ${links}</p>`;
 }
 
 function ogDescription(text, fallback) {
@@ -248,7 +273,7 @@ ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : 
   eventUrl
     ? `<a href="${escapeHtml(url)}">Permalink</a>`
     : `<a class="u-url" href="${escapeHtml(url)}">Permalink</a>`
-} · ${authorHCard()}</p>
+} · ${authorHCard()}</p>${syndicationLinks(properties)}
 </article>`;
 
   const when = [formatDate(start), end && `– ${formatDate(end)}`].filter(Boolean).join(" ");
@@ -290,7 +315,7 @@ ${renderMetaRow("photo", published)}
 ${properties.name ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>` : ""}
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url)}
+${renderPermalink(url, properties)}
 </article>`;
 
   return page({
@@ -310,7 +335,7 @@ function renderArticleHtml({ url, properties, content }) {
 ${renderMetaRow("article", published)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <div class="content e-content">${renderMarkdown(content)}</div>
-${renderPermalink(url)}
+${renderPermalink(url, properties)}
 </article>`;
   return page({
     title: name,
@@ -345,7 +370,7 @@ ${renderMetaRow("checkin", published)}
 <p class="target">📍 Checked in at ${venue}</p>
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url)}
+${renderPermalink(url, properties)}
 </article>`;
 
   return page({
@@ -380,7 +405,7 @@ ${renderMetaRow("review", published)}
 ${headline ? `<h1 class="p-name">${escapeHtml(headline)}</h1>` : ""}
 ${hasRating ? `<p class="review-rating">Rating: <data class="p-rating" value="${rating}">${rating}</data><data class="p-best" value="5"></data><data class="p-worst" value="1"></data> / 5</p>` : ""}
 <div class="content e-content p-description">${renderMarkdown(content)}</div>
-${renderPermalink(url)}
+${renderPermalink(url, properties)}
 </article>`;
 
   return page({
@@ -424,7 +449,7 @@ ${renderMetaRow(type, published)}
 ${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
 <p class="target">${spec.icon} ${escapeHtml(verb)} ${work}${hasRating ? ` — <data class="p-rating" value="${rating}">${rating}/5</data>` : ""}</p>
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url)}
+${renderPermalink(url, properties)}
 </article>`;
 
   return page({
@@ -458,7 +483,7 @@ ${renderMetaRow(type, published)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
 <div class="content e-content">${renderMarkdown(content)}</div>
-${renderPermalink(url)}
+${renderPermalink(url, properties)}
 </article>`;
 
   const fallbackDescription =

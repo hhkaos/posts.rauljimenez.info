@@ -92,6 +92,15 @@ The name/url/photo are the `AUTHOR_*` constants at the top of `render.mjs`.
 `scripts/verify-mf2.mjs` (run in CI) parses the built HTML and fails if any
 of this regresses.
 
+### Syndication links (POSSE / `u-syndication`)
+
+Posts syndicated to Mastodon/Bluesky carry a `syndication:` list (status
+URLs) in their front matter, written back by Indiekit's
+`@indiekit/endpoint-syndicate`. `render.mjs` turns each into an
+`<a class="u-syndication">` link ("Also posted on Mastodon, Bluesky") under
+the permalink — the IndieWeb-standard way to point the canonical post at
+its copies, and what Bridgy-style backfeed matches against.
+
 This repo itself is not built or deployed to www.rauljimenez.info. It is
 read and written by the Indiekit server via the GitHub API
 (`@indiekit/store-github`), and separately rendered by its own GitHub Action
