@@ -21,7 +21,7 @@ published: 2026-09-01T14:25:03.862Z
 syndication:
   - https://mastodon.social/@hhkaos/117196264959411857
   - https://bsky.app/profile/did:plc:gwbqjf3ciffqeedjrpmjinfo/post/3muhn543gfb2u
-updated: 2026-09-01T14:31:27.435Z
+updated: 2026-09-01T15:59:22.851Z
 ---
 
 At the upcoming edition of our developer conference in Frankfurt, I will be giving several talks:
@@ -29,3 +29,5 @@ At the upcoming edition of our developer conference in Frankfurt, I will be givi
 - [Authentication: A Practical Approach to Security in ArcGIS](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785493533691001yG2g)
 - [Security and Authentication for Custom Applications](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785487648507001JydR)
 - [Working with ArcGIS REST JS](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785496248538001cWVi)
+
+More info: [https://www.esri.com/en-us/about/events/euro-devtech/overview](https://www.esri.com/en-us/about/events/euro-devtech/overview)
