@@ -114,6 +114,44 @@ Card content per type is built by `feedEntry()` / `renderFeedCard()`. The
 timeline still carries no microformats (no `h-feed`/`h-entry`) — same
 reason the index has no h-card (above).
 
+### Pagination + infinite scroll
+
+The timeline is split into pages of `PAGE_SIZE` (20; override with the
+`TIMELINE_PAGE_SIZE` env var when testing) — `/` is page 1, the rest are
+`/page/2/`, `/page/3/`, … Each page stands alone with working
+`← Newer` / `Older →` links (`rel="prev"`/`rel="next"`), so it works with
+JS disabled. `scripts/timeline.js` (copied to `_site/` next to `style.css`,
+loaded `defer` on every page) is a small progressive enhancement: an
+`IntersectionObserver` on the `#timeline-end` sentinel fetches the next
+page, splices its `.timeline` cards in — deduping a day heading repeated at
+the seam — and follows that page's own sentinel until exhausted.
+
+### Atom feed
+
+`scripts/render.mjs` writes `_site/feed.xml` (Atom 1.0) from the same sorted
+index it already builds — no extra pass over the content tree. Newest
+`FEED_MAX` (50) posts; each entry carries the timeline action line + the
+rendered Markdown body + first image as `content type="html"`. Every page
+links it via `<link rel="alternate" type="application/atom+xml">`, and the
+footer / `/about/` link it visibly.
+
+### Shared header + `/about/`
+
+Every page carries a fixed navbar that mirrors the Docusaurus navbar on
+`www.rauljimenez.info` (logo, links back to the main site's sections, the
+orange `#f05924` accent, `system-ui` font, matched light/dark palette) so
+the two sites read as one. The logo is **hotlinked** from
+`www.rauljimenez.info/img/rauljimenez.info.png` (same owner) — vendor it
+into this repo if that dependency is unwanted. Nav config is the
+`NAV_LINKS` / `LOGO_URL` constants in `render.mjs`.
+
+`/about/` (`renderAboutHtml()`) explains what this feed is: a
+platform-independent social timeline, the IndieWeb rationale
+(`indieweb.org/why` + `/principles`), POSSE, the GitHub repo as the
+canonical record, why not mainstream social media (*The Social Dilemma*),
+and the content license. **All content on the site is CC BY 4.0**; the
+`/about/` page is the canonical statement of that.
+
 ### Syndication links (POSSE / `u-syndication`)
 
 Posts syndicated to Mastodon/Bluesky carry a `syndication:` list (status

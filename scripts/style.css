@@ -1,11 +1,13 @@
 :root {
   color-scheme: light dark;
-  --bg: #fafaf9;
+  /* Palette aligned with www.rauljimenez.info (Docusaurus) so the two sites
+     read as one: same near-white ground, same orange accent. */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --text: #1c1917;
-  --text-muted: #6b6560;
-  --border: #e7e5e4;
-  --accent: #2563eb;
+  --text: #1c1e21;
+  --text-muted: #606770;
+  --border: #e3e3e3;
+  --accent: #f05924;
   --note: #2563eb;
   --bookmark: #b45309;
   --like: #dc2626;
@@ -24,12 +26,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #161513;
-    --surface: #201f1c;
-    --text: #f2f0ed;
-    --text-muted: #a39d96;
-    --border: #35322d;
-    --accent: #60a5fa;
+    --bg: #1b1b1d;
+    --surface: #242526;
+    --text: #e3e3e3;
+    --text-muted: #a0a3a8;
+    --border: #444950;
+    --accent: #f6764a;
     --note: #60a5fa;
     --bookmark: #f2b459;
     --like: #f97070;
@@ -53,7 +55,72 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  padding-top: 3.75rem; /* clears the fixed navbar */
+}
+
+/* ---- Shared navbar (mirrors www.rauljimenez.info) --------------------- */
+
+nav.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  height: 3.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.site-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.site-nav__brand img {
+  height: 2rem;
+  width: auto;
+  display: block;
+}
+
+.site-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem 1.5rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+  font-size: 0.9rem;
+}
+
+.site-nav__link {
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0.25rem 0;
+}
+.site-nav__link:hover { color: var(--accent); }
+.site-nav__link[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 34rem) {
+  /* Not enough width to keep the full nav on one fixed-height row and no
+     hamburger here — let it sit inline at the top of the page instead. */
+  nav.site-nav {
+    position: static;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.82rem; margin-left: 0; }
+  body { padding-top: 0; }
 }
 
 .wrap {
@@ -62,33 +129,26 @@ body {
   padding: 2.5rem 1.25rem 4rem;
 }
 
+/* Page intro block (index + deeper timeline pages). */
 header.site {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
   margin-bottom: 2rem;
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border);
 }
 
 header.site h1 {
-  font-size: 1.15rem;
-  margin: 0;
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
 }
 
-header.site h1 a {
-  color: var(--text);
-  text-decoration: none;
-}
-
-header.site .about {
-  font-size: 0.85rem;
+header.site .page-intro {
+  font-size: 0.92rem;
   color: var(--text-muted);
+  margin: 0;
+  line-height: 1.55;
 }
 
-header.site .about a { color: var(--text-muted); }
+header.site .page-intro a { color: var(--accent); }
 
 .badge {
   display: inline-block;
@@ -123,7 +183,12 @@ header.site .about a { color: var(--text-muted); }
 }
 .review-rating .p-rating { font-weight: 600; color: var(--review); }
 
-article.h-entry img.u-photo {
+/* Any image in a rendered post body / article, whatever the h-* type — the
+   markdown `![](…)` images in review/read/note bodies included. */
+article .content img,
+article.h-entry img.u-photo,
+article.h-review img,
+article.h-event img {
   max-width: 100%;
   height: auto;
   border-radius: 10px;
@@ -356,6 +421,29 @@ footer.site a { color: var(--text-muted); }
 a { color: var(--accent); }
 
 .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+/* ---- Timeline pagination --------------------------------------------- */
+
+nav.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.pager__link { color: var(--accent); text-decoration: none; }
+.pager__link:hover { text-decoration: underline; }
+
+#timeline-end { height: 1px; }
+
+/* ---- /about/ prose -------------------------------------------------- */
+
+.prose h1 { font-size: 1.6rem; margin: 0 0 1rem; }
+.prose h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
+.prose p { margin: 0.8rem 0; }
 
 /* POSSE: links to the syndicated copies (u-syndication). */
 .syndication {

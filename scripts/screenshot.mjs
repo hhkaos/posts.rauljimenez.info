@@ -92,8 +92,8 @@ async function main() {
 
   // Trim the site chrome so the post itself fills the card.
   const cardCss = `
-    header.site .about, a.back, footer.site { display: none !important; }
-    header.site { margin-bottom: 1.25rem; padding-bottom: 0.75rem; }
+    nav.site-nav, header.site, a.back, footer.site { display: none !important; }
+    body { padding-top: 0 !important; }
     .wrap { padding: 2rem 2.5rem; max-width: none; }
     article .content { overflow: hidden; }
     /* Keep a big image from turning the card into a skyscraper — photo
