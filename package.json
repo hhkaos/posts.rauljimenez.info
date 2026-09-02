@@ -13,6 +13,9 @@
     "playwright": "^1.62.1"
   },
   "scripts": {
+    "build": "node scripts/render.mjs",
+    "serve": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs --watch",
     "verify": "node scripts/verify-mf2.mjs"
   }
 }

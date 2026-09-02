@@ -75,7 +75,10 @@ function citeUrl(value) {
   return typeof first === "string" && /^https?:\/\//.test(first) ? first : "";
 }
 const SITE_DIR = "_site";
-const BASE_URL = "https://posts.rauljimenez.info";
+// The live site. Override with PREVIEW_BASE (e.g. http://localhost:8000) for
+// local preview so permalinks/feed links resolve to the local server — never
+// set it for the CI build that actually deploys.
+const BASE_URL = process.env.PREVIEW_BASE || "https://posts.rauljimenez.info";
 const MAIN_SITE = "https://www.rauljimenez.info/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
 const SOURCE_REPO = "https://github.com/hhkaos/posts.rauljimenez.info";

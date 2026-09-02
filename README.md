@@ -8,6 +8,38 @@ used to experiment with
 site at [www.rauljimenez.info](https://www.rauljimenez.info/) (built with
 Docusaurus, hosted separately).
 
+## Running it locally
+
+You only need [Node](https://nodejs.org/) 18+ (CI uses 22). No database, no
+Indiekit — the renderer just reads the Markdown files in this repo.
+
+```bash
+npm install        # once
+
+npm run dev         # build + serve + rebuild on every change
+```
+
+`npm run dev` prints a URL (`http://localhost:8787/`, or the next free port
+if that's taken). Open it, edit a post file or `scripts/render.mjs` /
+`scripts/style.css`, and it re-renders within ~150 ms — **refresh the
+browser** to see it (there's no live-reload).
+
+While previewing, permalinks and feed links point at the local server (via
+the `PREVIEW_BASE` env var the dev server sets) so you can click around. The
+logo in the header is still loaded from `www.rauljimenez.info`.
+
+Other scripts:
+
+| Command | What it does |
+| --- | --- |
+| `npm run build` | Render `_site/` once (production URLs). |
+| `npm run serve` | Serve the current `_site/` without rebuilding. |
+| `npm run verify` | Parse the built HTML and check the author microformats2. |
+| `node scripts/screenshot.mjs` | Regenerate the per-post OG / syndication PNGs (needs `npx playwright install chromium`). |
+
+`_site/` is git-ignored and rebuilt from scratch each time; deleting it is
+always safe.
+
 ## Structure
 
 | Folder       | Post type | Notes                                        |
