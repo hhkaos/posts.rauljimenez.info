@@ -192,6 +192,16 @@ variant off those attributes. Language is picked from `?lang=es|en`
 Both language variants are emitted in the HTML (`.i18n-en` / `.i18n-es`);
 with no JS the English default shows.
 
+**Headings.** The navbar already marks the current section, so the
+timeline's `<h1>` ("Activity" / "Actividad") would just repeat it — it's
+kept in the DOM but `.visually-hidden` (off-screen, still read by screen
+readers and counted for the outline / SEO), leaving the intro paragraph as
+the visible masthead. Conversely, post pages whose type has no visible
+title (note, bookmark, like, reply, RSVP, repost, check-in, read, watch,
+listen, untitled photo/review) now get a `.visually-hidden` `<h1>` so every
+page has exactly one. Visible titles (articles, events, named
+photos/reviews) are unchanged.
+
 The selector only switches the **chrome** — it sets `[data-lang]`, *not*
 `<html lang>`. `<html lang>` is set per page from the **content** language
 (see below) and must stay put so the browser's own "translate this page"

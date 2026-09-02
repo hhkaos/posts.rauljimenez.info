@@ -553,7 +553,9 @@ function renderPhotoHtml({ url, properties, content }) {
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
 ${renderMetaRow("photo", published)}
-${properties.name ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>` : ""}
+${properties.name
+  ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>`
+  : `<h1 class="visually-hidden">${escapeHtml(`Photo — ${formatDate(published)}`)}</h1>`}
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
 ${renderPermalink(url, properties, lang)}
@@ -611,6 +613,7 @@ function renderCheckinHtml({ url, properties, content }) {
   const body = `
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
+<h1 class="visually-hidden">${escapeHtml(`Check-in at ${name}`)}</h1>
 ${renderMetaRow("checkin", published)}
 <p class="target">📍 Checked in at ${venue}</p>
 ${photoImgs(photos)}
@@ -649,7 +652,9 @@ ${BACK_LINK}
 <article class="h-review" lang="${lang}">
 ${renderMetaRow("review", published)}
 <p class="target">📝 Review of ${item}</p>
-${headline ? `<h1 class="p-name">${escapeHtml(headline)}</h1>` : ""}
+${headline
+  ? `<h1 class="p-name">${escapeHtml(headline)}</h1>`
+  : `<h1 class="visually-hidden">${escapeHtml(`Review of ${itemName}`)}</h1>`}
 ${hasRating ? `<p class="review-rating">Rating: <data class="p-rating" value="${rating}">${rating}</data><data class="p-best" value="5"></data><data class="p-worst" value="1"></data> / 5</p>` : ""}
 <div class="content e-content p-description">${renderMarkdown(content)}</div>
 ${renderPermalink(url, properties, lang)}
@@ -694,6 +699,7 @@ function renderConsumedHtml(type, { url, properties, content }) {
   const body = `
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
+<h1 class="visually-hidden">${escapeHtml(`${verb} ${workName}`)}</h1>
 ${renderMetaRow(type, published)}
 ${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
 <p class="target">${spec.icon} ${escapeHtml(verb)} ${work}${hasRating ? ` — <data class="p-rating" value="${rating}">${rating}/5</data>` : ""}</p>
@@ -727,9 +733,15 @@ function renderPostHtml({ type, url, properties, content }) {
   const rsvp = type === "rsvp" ? properties.rsvp : "";
   const lang = postLang(properties, content);
 
+  // These types carry no visible <h1> (the meta row + target line say it
+  // all), so give the page an off-screen one for the document outline.
+  const heading = properties.name
+    || (TYPE_VERB[type] && target ? `${TYPE_VERB[type]} ${hostOf(target) || target}` : `${TYPE_LABEL[type]} — ${formatDate(published)}`);
+
   const body = `
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
+<h1 class="visually-hidden">${escapeHtml(heading)}</h1>
 ${renderMetaRow(type, published)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
@@ -1133,7 +1145,7 @@ async function main() {
   // the rest. Each page stands alone (working prev/next links); timeline.js
   // stitches them into infinite scroll when it can.
   const intro = `<header class="site">
-<h1><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>
+<h1 class="visually-hidden"><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>
 <p class="page-intro i18n-en">The kind of things I'd normally post on a social network — notes, links, photos, events, things I've read or watched — except this feed runs on <a href="${MAIN_SITE}">my own site</a> instead of a platform I don't control. <a href="${BASE_URL}/about/">About this feed &amp; why &rarr;</a> · <a href="/feed.xml">RSS</a></p>
 <p class="page-intro i18n-es">El tipo de cosas que normalmente publicaría en una red social —notas, enlaces, fotos, eventos, lo que he leído o visto—, solo que este feed vive en <a href="${MAIN_SITE_ES}">mi propia web</a> y no en una plataforma que no controlo. <a href="${BASE_URL}/about/">Sobre este feed y por qué &rarr;</a> · <a href="/feed.xml">RSS</a></p>
 </header>`;
@@ -1147,7 +1159,7 @@ async function main() {
 
     const header = n === 1
       ? intro
-      : `<header class="site"><h1><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
+      : `<header class="site"><h1 class="visually-hidden"><span class="i18n-en">Activity — page ${n} of ${pageCount}</span><span class="i18n-es">Actividad — página ${n} de ${pageCount}</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
 
     const body = index.length
       ? `${header}\n${renderTimeline(slice)}\n${pager(prev, next)}`
