@@ -33,6 +33,10 @@ rebuild-on-change. Links that are *meant* to leave the feed (the header
 logo, "my own site" → `www.rauljimenez.info`, the Google-Translate link)
 stay absolute.
 
+To preview from another machine on the LAN, `HOST=0.0.0.0 npm run dev` —
+the server then binds all interfaces and `PREVIEW_BASE` uses this box's LAN
+IP (override with `PREVIEW_HOST=…`). Default stays loopback-only.
+
 Other scripts:
 
 | Command | What it does |

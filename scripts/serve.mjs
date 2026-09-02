@@ -3,20 +3,48 @@
 // (GitHub Pages serves the deployed artifact) — just for seeing changes
 // before pushing.
 //
-//   node scripts/serve.mjs            serve _site/ on http://localhost:8787
-//   node scripts/serve.mjs --watch    also re-run render.mjs when scripts/ or
-//                                      any content folder changes
-//   PORT=4000 node scripts/serve.mjs  pick the port
+//   node scripts/serve.mjs             serve _site/ on http://localhost:8787
+//   node scripts/serve.mjs --watch     also re-run render.mjs when scripts/
+//                                       or any content folder changes
+//   PORT=4000 node scripts/serve.mjs   pick the port
+//   HOST=0.0.0.0 npm run dev           reachable from other machines on the
+//                                       LAN (links use this box's IP; set
+//                                       PREVIEW_HOST to override the IP)
 //
 // `npm run dev` == `serve.mjs --watch`: builds once, serves, and rebuilds on
 // change. `npm run serve` just serves whatever is already in `_site/`.
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { readFile, stat, watch } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 const SITE_DIR = "_site";
 const PORT = Number(process.env.PORT) || 8787;
+// Bind to loopback by default. Set HOST=0.0.0.0 to reach the preview from
+// another machine on the LAN (e.g. `HOST=0.0.0.0 npm run dev`).
+const HOST = process.env.HOST || "127.0.0.1";
+
+// The hostname that goes into PREVIEW_BASE (so internal links / feed URLs
+// resolve for whoever opens the preview). When bound to the LAN, that must
+// be this machine's IP, not "localhost". Override with PREVIEW_HOST.
+function lanIP() {
+  const addrs = [];
+  for (const ifaces of Object.values(os.networkInterfaces())) {
+    for (const i of ifaces || []) {
+      if (i.family === "IPv4" && !i.internal) addrs.push(i.address);
+    }
+  }
+  return (
+    addrs.find((a) => a.startsWith("192.168.")) ||
+    addrs.find((a) => a.startsWith("10.")) ||
+    addrs[0] ||
+    "localhost"
+  );
+}
+const PREVIEW_HOST =
+  process.env.PREVIEW_HOST ||
+  (HOST !== "127.0.0.1" && HOST !== "localhost" ? lanIP() : "localhost");
 const WATCH = process.argv.includes("--watch");
 
 const CONTENT_TYPES = {
@@ -64,7 +92,7 @@ let attempts = 0;
 server.on("error", (error) => {
   if (error.code === "EADDRINUSE" && attempts < 20) {
     attempts++;
-    server.listen(PORT + attempts, "127.0.0.1");
+    server.listen(PORT + attempts, HOST);
   } else {
     console.error(`  serve: ${error.message}`);
     process.exit(1);
@@ -72,7 +100,7 @@ server.on("error", (error) => {
 });
 server.on("listening", async () => {
   const { port } = server.address();
-  console.log(`\n  Preview:  http://localhost:${port}/\n`);
+  console.log(`\n  Preview:  http://${PREVIEW_HOST}:${port}/\n`);
   // Always re-render for the real port so every internal link / feed URL
   // points at this preview, not production — whatever `_site/` held before
   // (e.g. a prior `npm run build` with canonical URLs). `--watch` then only
@@ -80,7 +108,7 @@ server.on("listening", async () => {
   await render(port);
   if (WATCH) startWatch(port);
 });
-server.listen(PORT, "127.0.0.1");
+server.listen(PORT, HOST);
 
 // --- optional rebuild-on-change ------------------------------------------
 
@@ -89,7 +117,7 @@ function render(port) {
     const started = Date.now();
     const child = spawn("node", ["scripts/render.mjs"], {
       stdio: ["ignore", "ignore", "inherit"],
-      env: { ...process.env, PREVIEW_BASE: `http://localhost:${port}` },
+      env: { ...process.env, PREVIEW_BASE: `http://${PREVIEW_HOST}:${port}` },
     });
     child.on("exit", (code) => {
       console.log(code === 0 ? `  rebuilt in ${Date.now() - started}ms` : `  render failed (exit ${code})`);
