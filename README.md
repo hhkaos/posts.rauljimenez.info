@@ -239,27 +239,32 @@ row exactly as before. Wiring is a few lines appended to the
 `HEAD_INIT_SCRIPT` `DOMContentLoaded` block (toggles `.site-nav.is-open` +
 `body.nav-open`).
 
-**Masthead (page 1).** Under the `.visually-hidden` `<h1>`: a collapsed
-`<details class="intro-toggle">` "What is this? / ¿Qué es esto?" that opens
-the descriptive intro (broader than "social network" — Amazon/Maps reviews,
-YouTube likes, RSVPs, and things shared nowhere at all; no "my own site"
-link), then an always-visible `.intro-about` line linking `/about/`. No RSS
-link here any more — `/about/#subscribe` covers that. The OG-card
-screenshot forces the intro open and hides the toggle + about line.
+**Timeline top bar** (`feedFilter(includeIntro)` → `.feed-bar`, page 1 has
+no visible `<header>`, just the `.visually-hidden` `<h1>`). One row,
+border under it:
 
-**Language filter** (`feedFilter()`): a pill group ("All / English /
-Español") above the timeline. Picking one sets `[data-feed-lang]` on
-`<html>` (remembered in `localStorage`, applied pre-paint by
-`HEAD_INIT_SCRIPT`); CSS hides `li.fc:not([lang=…])` and — via `:has()` —
-day headings left empty. Opt-in: "All" is the default, nothing is hidden
-until chosen, and with no JS every post shows. Works with the infinite
-scroll for free (pure CSS on spliced-in cards).
+- **Language filter** (left): a pill group "All / English / Español".
+  Picking one sets `[data-feed-lang]` on `<html>` (remembered in
+  `localStorage`, applied pre-paint by `HEAD_INIT_SCRIPT`); CSS hides
+  `li.fc:not([lang=…])` and — via `:has()` — day headings left empty.
+  Opt-in: "All" is the default, nothing hidden until chosen, no-JS shows
+  everything. Works with the infinite scroll for free (pure CSS on
+  spliced-in cards).
+- **"What is this? / ¿Qué es esto?"** (right, `margin-left:auto`): a
+  collapsed `<details class="intro-toggle">`. Closed it costs no vertical
+  space; open it becomes a full-width panel (`flex-basis:100%`) with the
+  descriptive intro (broader than "social network" — Amazon/Maps reviews,
+  YouTube likes, RSVPs, things shared nowhere) and the `/about/` link
+  (`.page-intro__about`). No inline RSS link — `/about/#subscribe` covers
+  that. A closed `<details>` hides its content via `content-visibility`
+  (not CSS), so the OG-card screenshot sets `details.open` in JS rather
+  than fighting it, then hides the summary + about link.
 
 **Headings.** The navbar already marks the current section, so the
 timeline's `<h1>` ("Activity" / "Actividad") would just repeat it — it's
 kept in the DOM but `.visually-hidden` (off-screen, still read by screen
-readers and counted for the outline / SEO), leaving the intro paragraph as
-the visible masthead. Conversely, post pages whose type has no visible
+readers and counted for the outline / SEO), so the timeline top bar is the
+first visible thing. Conversely, post pages whose type has no visible
 title (note, bookmark, like, reply, RSVP, repost, check-in, read, watch,
 listen, untitled photo/review) now get a `.visually-hidden` `<h1>` so every
 page has exactly one. Visible titles (articles, events, named

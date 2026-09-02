@@ -302,53 +302,19 @@ nav.site-nav {
   border: 0;
 }
 
+/* Pagination header on /page/2/, /page/3/, … (page 1 has no visible header
+   — just the .feed-bar below). */
 header.site {
-  margin-bottom: 2rem;
-  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
 }
-
-header.site h1:not(.visually-hidden) {
-  font-size: 1.5rem;
-  margin: 0 0 0.5rem;
-}
-
-/* "What is this?" — a collapsed <details> in the masthead. */
-.intro-toggle { margin: 0; }
-.intro-toggle__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  width: fit-content;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-  user-select: none;
-  list-style: none;
-}
-.intro-toggle__btn::-webkit-details-marker { display: none; }
-.intro-toggle__btn:hover { color: var(--accent); }
-.intro-toggle__chev { flex: 0 0 auto; transition: transform 0.15s ease; }
-.intro-toggle[open] .intro-toggle__btn { color: var(--accent); }
-.intro-toggle[open] .intro-toggle__chev { transform: rotate(180deg); }
-
 header.site .page-intro {
-  font-size: 0.92rem;
-  color: var(--text-muted);
-  margin: 0.55rem 0 0;
-  line-height: 1.55;
-}
-header.site .page-intro p { margin: 0.5rem 0 0; }
-header.site .page-intro p:first-child { margin-top: 0; }
-header.site .page-intro a { color: var(--accent); }
-
-header.site .intro-about {
-  margin: 0.5rem 0 0;
   font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
 }
-header.site .intro-about a { color: var(--accent); text-decoration: none; }
-header.site .intro-about a:hover { text-decoration: underline; }
+header.site .page-intro a { color: var(--accent); }
 
 .badge {
   display: inline-block;
@@ -398,17 +364,57 @@ article.h-event img {
 
 /* ---- Home timeline ------------------------------------------------------ */
 
-/* Language filter. Opt-in — "All" is the default and nothing is hidden
-   until a language is picked. */
-.feed-filter {
+/* The timeline's top bar: language filter on the left, the "What is this?"
+   toggle floated right so it adds no vertical space until opened. Where the
+   old masthead used to be — carries the border under it. */
+.feed-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 1.25rem 0 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.feed-filter__langs {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin: 1.25rem 0 1rem;
-  font-size: 0.85rem;
 }
 .feed-filter__label { color: var(--text-muted); margin-right: 0.15rem; }
+
+/* "What is this?" — collapsed <details>, right of the language row; opens
+   to a full-width panel that wraps onto its own line below. */
+.intro-toggle { margin-left: auto; }
+.intro-toggle[open] { margin-left: 0; flex-basis: 100%; }
+.intro-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+.intro-toggle__btn::-webkit-details-marker { display: none; }
+.intro-toggle__btn:hover,
+.intro-toggle[open] .intro-toggle__btn { color: var(--accent); }
+.intro-toggle__chev { flex: 0 0 auto; transition: transform 0.15s ease; }
+.intro-toggle[open] .intro-toggle__chev { transform: rotate(180deg); }
+.intro-toggle .page-intro {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-top: 0.65rem;
+}
+.intro-toggle .page-intro p { margin: 0.5rem 0 0; }
+.intro-toggle .page-intro p:first-child { margin-top: 0; }
+.intro-toggle .page-intro a { color: var(--accent); }
+.page-intro__about { margin-top: 0.7rem; }
 .feed-filter__btn {
   padding: 0.25rem 0.65rem;
   border: 1px solid var(--border);

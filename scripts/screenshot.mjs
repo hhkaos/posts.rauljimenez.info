@@ -86,13 +86,20 @@ async function shootSocialCard(browser) {
     colorScheme: "light",
   });
   await card.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+  // Open the "What is this?" panel so the card shows the intro text (a
+  // closed <details> hides its content via content-visibility, not CSS).
+  await card.evaluate(() => {
+    const d = document.querySelector(".intro-toggle");
+    if (d) d.open = true;
+  });
   await card.addStyleTag({
     content: `
       .wrap { max-width: 1000px; padding-top: 1.5rem; }
-      footer.site, #timeline-end, .pager, .fc-reactions, .feed-filter { display: none !important; }
-      /* Show the intro text on the card even though it's collapsed on the page. */
-      .intro-toggle > .page-intro { display: block !important; }
-      .intro-toggle__btn, .intro-about { display: none !important; }
+      footer.site, #timeline-end, .pager, .fc-reactions, .feed-filter__langs { display: none !important; }
+      .feed-bar { border: 0 !important; padding: 0 !important; margin: 0 0 1rem !important; }
+      .intro-toggle, .intro-toggle[open] { flex-basis: 100% !important; margin: 0 !important; }
+      .intro-toggle__btn, .page-intro__about { display: none !important; }
+      .intro-toggle .page-intro { margin-top: 0 !important; }
     `,
   });
   await card.evaluate(() => document.fonts.ready.then(() => undefined));

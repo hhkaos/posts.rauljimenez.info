@@ -422,7 +422,7 @@ return "en"}
 var lang=pickLang();d.dataset.lang=lang;
 try{var fl=localStorage.getItem("feedLang");if(fl==="en"||fl==="es")d.dataset.feedLang=fl}catch(e){}
 addEventListener("DOMContentLoaded",function(){
-var ff=document.querySelector(".feed-filter");
+var ff=document.querySelector(".feed-bar");
 if(ff){var fbtns=ff.querySelectorAll(".feed-filter__btn");
 function syncFF(){var c=d.dataset.feedLang||"";[].forEach.call(fbtns,function(b){b.setAttribute("aria-pressed",(b.dataset.feedLang||"")===c?"true":"false")})}
 syncFF();
@@ -1151,14 +1151,29 @@ ${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}
 // remembered in localStorage and applied pre-paint by HEAD_INIT_SCRIPT.
 // Progressive enhancement: with no JS the buttons do nothing and every
 // post shows.
-function feedFilter() {
+function feedFilter(includeIntro) {
   const btn = (lang, en, es) =>
     `<button type="button" class="feed-filter__btn" data-feed-lang="${lang}"><span class="i18n-en">${en}</span><span class="i18n-es">${es}</span></button>`;
-  return `<div class="feed-filter" role="group" aria-label="Filter posts by language">
+  const langs = `<div class="feed-filter__langs" role="group" aria-label="Filter posts by language">
 <span class="feed-filter__label"><span class="i18n-en">Language</span><span class="i18n-es">Idioma</span></span>
 ${btn("", "All", "Todos")}
 ${btn("en", "English", "English")}
 ${btn("es", "Español", "Español")}
+</div>`;
+  // The "What is this?" toggle floats to the right of the language row so it
+  // costs no vertical space until opened; the /about link lives inside it.
+  const intro = includeIntro
+    ? `<details class="intro-toggle">
+<summary class="intro-toggle__btn"><span class="i18n-en">What is this?</span><span class="i18n-es">¿Qué es esto?</span><svg class="intro-toggle__chev" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></summary>
+<div class="page-intro">
+<p class="i18n-en">The kind of thing people usually scatter across other companies' platforms — a note, a link, a photo, an Amazon or Google Maps review, a like on a YouTube video, an RSVP to an event, something I've read or watched — collected here on my own domain instead. Some of it is also posted to social media; some of it (a rating, a review) has nowhere else good to go; and some I don't share anywhere at all.</p>
+<p class="i18n-es">El tipo de cosas que solemos repartir por las plataformas de otras empresas —una nota, un enlace, una foto, una reseña en Amazon o Google Maps, un me gusta en un vídeo de YouTube, un RSVP a un evento, algo que he leído o visto— recogidas aquí, en mi propio dominio. Parte se publica también en redes sociales; parte (una valoración, una reseña) no tiene otro sitio al que ir; y parte no la comparto en ningún lado.</p>
+<p class="page-intro__about"><a href="/about/"><span class="i18n-en">About this feed, IndieWeb-style, and why &rarr;</span><span class="i18n-es">Sobre este feed, al estilo IndieWeb, y por qué &rarr;</span></a></p>
+</div>
+</details>`
+    : "";
+  return `<div class="feed-bar">
+${langs}${intro}
 </div>`;
 }
 
@@ -1550,17 +1565,7 @@ async function main() {
   // Split the timeline into numbered pages. `/` is page 1; `/page/2/`, … hold
   // the rest. Each page stands alone (working prev/next links); timeline.js
   // stitches them into infinite scroll when it can.
-  const intro = `<header class="site">
-<h1 class="visually-hidden"><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>
-<details class="intro-toggle">
-<summary class="intro-toggle__btn"><span class="i18n-en">What is this?</span><span class="i18n-es">¿Qué es esto?</span><svg class="intro-toggle__chev" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></summary>
-<div class="page-intro">
-<p class="i18n-en">The kind of thing people usually scatter across other companies' platforms — a note, a link, a photo, an Amazon or Google Maps review, a like on a YouTube video, an RSVP to an event, something I've read or watched — collected here on my own domain instead. Some of it is also posted to social media; some of it (a rating, a review) has nowhere else good to go; and some I don't share anywhere at all.</p>
-<p class="i18n-es">El tipo de cosas que solemos repartir por las plataformas de otras empresas —una nota, un enlace, una foto, una reseña en Amazon o Google Maps, un me gusta en un vídeo de YouTube, un RSVP a un evento, algo que he leído o visto— recogidas aquí, en mi propio dominio. Parte se publica también en redes sociales; parte (una valoración, una reseña) no tiene otro sitio al que ir; y parte no la comparto en ningún lado.</p>
-</div>
-</details>
-<p class="intro-about"><a href="/about/"><span class="i18n-en">About this feed, IndieWeb-style, and why &rarr;</span><span class="i18n-es">Sobre este feed, al estilo IndieWeb, y por qué &rarr;</span></a></p>
-</header>`;
+  const intro = `<h1 class="visually-hidden"><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>`;
 
   const pageCount = Math.max(1, Math.ceil(index.length / PAGE_SIZE));
   for (let n = 1; n <= pageCount; n++) {
@@ -1574,7 +1579,7 @@ async function main() {
       : `<header class="site"><h1 class="visually-hidden"><span class="i18n-en">Activity — page ${n} of ${pageCount}</span><span class="i18n-es">Actividad — página ${n} de ${pageCount}</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
 
     const body = index.length
-      ? `${header}\n${feedFilter()}\n${renderTimeline(slice)}\n${pager(prev, next)}`
+      ? `${header}\n${feedFilter(n === 1)}\n${renderTimeline(slice)}\n${pager(prev, next)}`
       : `${intro}\n<p>Nothing public yet.</p>`;
 
     const html = page({
