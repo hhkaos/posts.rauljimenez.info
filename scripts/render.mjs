@@ -81,6 +81,12 @@ const SITE_DIR = "_site";
 // set it for the CI build that actually deploys.
 const CANONICAL_BASE = "https://posts.rauljimenez.info";
 const BASE_URL = process.env.PREVIEW_BASE || CANONICAL_BASE;
+// The production URL for a page, even under PREVIEW_BASE — webmention lookups
+// are always keyed on the real canonical URL, never the localhost preview one.
+const toCanonical = (u) =>
+  BASE_URL !== CANONICAL_BASE && u.startsWith(BASE_URL)
+    ? CANONICAL_BASE + u.slice(BASE_URL.length)
+    : u;
 const MAIN_SITE = "https://www.rauljimenez.info/";
 const MAIN_SITE_ES = "https://www.rauljimenez.info/es/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
@@ -483,7 +489,7 @@ ${webmentions ? webmentionsSection(url) : ""}
 </footer>
 </div>
 <script src="/timeline.js" defer></script>
-${webmentions ? `<script src="/webmentions.js" defer></script>` : ""}
+<script src="/webmentions.js" defer></script>
 </body>
 </html>
 `;
@@ -499,10 +505,9 @@ ${webmentions ? `<script src="/webmentions.js" defer></script>` : ""}
 // where the canonical would point at localhost and match nothing, so we pin
 // the real production URL with `data-wm-targets` to preview live responses.
 function webmentionsSection(pageUrl) {
+  const canonical = toCanonical(pageUrl);
   const previewTarget =
-    BASE_URL !== CANONICAL_BASE && pageUrl.startsWith(BASE_URL)
-      ? ` data-wm-targets="${escapeHtml(CANONICAL_BASE + pageUrl.slice(BASE_URL.length))}"`
-      : "";
+    canonical !== pageUrl ? ` data-wm-targets="${escapeHtml(canonical)}"` : "";
   return `<section class="webmentions" id="webmentions" hidden aria-labelledby="webmentions-title" data-wm-api="https://webmention.io/api/mentions.jf2"${previewTarget}>
 <h2 class="webmentions__title" id="webmentions-title"><span class="i18n-en">Responses from around the web</span><span class="i18n-es">Respuestas de la web</span></h2>
 <div class="webmentions__facepile" id="webmentions-facepile" hidden></div>
@@ -979,7 +984,9 @@ function renderFeedCard(e, url, published) {
   const excerpt = e.excerpt ? `<p class="fc-excerpt">${escapeHtml(e.excerpt)}</p>` : "";
   const context = e.contextHost ? `<p class="fc-context">${escapeHtml(e.contextHost)}</p>` : "";
 
-  return `<li class="fc fc--${e.type}" lang="${escapeHtml(e.lang || SITE_DEFAULT_LANG)}">
+  const canonical = toCanonical(url);
+  const canonAttr = canonical !== url ? ` data-canonical="${escapeHtml(canonical)}"` : "";
+  return `<li class="fc fc--${e.type}" lang="${escapeHtml(e.lang || SITE_DEFAULT_LANG)}"${canonAttr}>
 <a class="fc-perma" href="${escapeHtml(url)}" aria-label="Open this post"></a>
 <div class="fc-head">
 <span class="badge ${e.type}">${escapeHtml(e.badge)}</span>

@@ -272,24 +272,38 @@ its copies, and what Bridgy-style backfeed matches against.
 
 Every page advertises a Webmention endpoint
 (`<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">`
-— the hosted webmention.io account shared with `www.`/`links.rauljimenez.info`).
-Individual post pages also carry a `<section id="webmentions" hidden>` and load
-`scripts/webmentions.js` (`defer`, copied to `_site/` next to `style.css` /
-`timeline.js`). Same split as the representative h-card: the `page()` helper's
-`webmentions` option defaults to `repCard`, so the index and `/about/` don't
-get it.
+— the hosted webmention.io account shared with `www.`/`links.rauljimenez.info`)
+and loads `scripts/webmentions.js` (`defer`, copied to `_site/` next to
+`style.css` / `timeline.js`). The script is a dependency-free progressive
+enhancement with two modes:
 
-The script is a dependency-free progressive enhancement: on load it reads the
-page's `<link rel="canonical">`, queries webmention.io's public
-`api/mentions.jf2` for that target (both slash forms), and fills the section
-in — likes / reposts / bookmarks as an avatar facepile, replies + mentions as
-cards. Remote content is inserted with `textContent` only. If there's nothing
-to show (or the fetch fails) the section stays `hidden`, so a post with no
-responses renders nothing. `screenshot.mjs` hides `.webmentions`.
+- **Post pages** carry a `<section id="webmentions" hidden>` (the `page()`
+  helper adds it on the same pages that get the representative h-card — its
+  `webmentions` option defaults to `repCard`, so the index and `/about/` don't).
+  The script reads the page's `<link rel="canonical">`, queries webmention.io's
+  public `api/mentions.jf2` for that target (both slash forms), and fills the
+  section in — likes / reposts / bookmarks as a tinted-glyph facepile
+  (`♥` / `↻` / `⚑` + count), replies + mentions as cards. If there's nothing
+  to show (or the fetch fails) the section stays `hidden`.
+- **Timeline pages** have no section but a list of `.fc` cards. The script
+  batches every visible permalink into **one** `api/mentions.jf2` call, groups
+  the results by `wm-target`, and appends a compact `♥ n · ↻ n · ↩ n` line to
+  each card that has any (a `MutationObserver` on `.timeline` catches the cards
+  the infinite scroll splices in). `screenshot.mjs` hides both `.webmentions`
+  and `.fc-reactions`.
 
-Reactions on the Mastodon/Bluesky copies show up here once Bridgy
-(<https://brid.gy>) is pointed at the syndicated accounts to back-feed them as
-Webmentions — not set up yet.
+Remote content is inserted with `textContent` only, and the emoji debris
+webmention.io leaves in extracted text (runs of `?`, U+FFFD) is stripped.
+Under `PREVIEW_BASE` (`npm run dev`) the canonical points at localhost and
+would match nothing, so `render.mjs` pins the real production URL on the
+section / cards (`data-wm-targets` / `data-canonical`) — preview only, the
+deployed HTML is unchanged.
+
+Reactions on the Mastodon/Bluesky copies flow in via **Bridgy**
+(<https://brid.gy>, backfeed only, publishing disabled) — it watches the
+syndicated accounts and posts a Webmention to the original for every
+like/reply/repost there. `posts.rauljimenez.info` must be a registered site on
+the webmention.io account for those to be accepted.
 
 The same widget exists (less tidily) as a React component in
 `hhkaos/hhkaos.github.io` and inline in `hhkaos/littlelink`; unifying the

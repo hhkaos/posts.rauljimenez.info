@@ -13,6 +13,11 @@
  * and loads this file with `defer`. The section stays hidden until there is
  * something to show, so a post with no responses renders nothing.
  *
+ * Loaded on every page. On timeline pages (no #webmentions section, but a
+ * list of `.fc` cards) it instead adds a compact `♥ n · ↻ n · ↩ n` count
+ * line to each card, batching every visible permalink into one API call and
+ * watching for cards spliced in by the infinite scroll.
+ *
  * Remote mention content is inserted with textContent only — never as HTML.
  *
  * Candidate shared module: the same job is done by a React component in
@@ -22,12 +27,15 @@
 (function () {
   "use strict";
 
+  if (!window.fetch || !window.URL) return;
+
   var section = document.getElementById("webmentions");
   var facepileEl = document.getElementById("webmentions-facepile");
   var listEl = document.getElementById("webmentions-list");
-  if (!section || !listEl || !window.fetch || !window.URL) return;
 
-  var API = section.getAttribute("data-wm-api") || "https://webmention.io/api/mentions.jf2";
+  var API =
+    (section && section.getAttribute("data-wm-api")) ||
+    "https://webmention.io/api/mentions.jf2";
   var MAX_TEXT = 320;
 
   // --- target URLs -------------------------------------------------------
@@ -258,54 +266,170 @@
     return li;
   }
 
-  // --- fetch ----------------------------------------------------------
-  var params = new URLSearchParams({
-    "per-page": "100",
-    "sort-by": "published",
-    "sort-dir": "up"
-  });
-  targetUrls().forEach(function (u) {
-    params.append("target[]", u);
-  });
-
-  fetch(API + "?" + params.toString())
-    .then(function (r) {
-      if (!r.ok) throw new Error(String(r.status));
-      return r.json();
-    })
-    .then(function (data) {
-      var children = (data && data.children) || [];
-      if (!children.length) return;
-
-      var facepile = { "like-of": [], "repost-of": [], "bookmark-of": [] };
-      var thread = [];
-      var seenId = {};
-      children.forEach(function (m) {
-        var id = m["wm-id"] || m["wm-source"] + "|" + m["wm-property"];
-        if (seenId[id]) return;
-        seenId[id] = true;
-        if (facepile[m["wm-property"]]) facepile[m["wm-property"]].push(m);
-        else thread.push(m);
-      });
-
-      var shown = 0;
-      if (facepileEl) {
-        Object.keys(facepile).forEach(function (prop) {
-          if (!facepile[prop].length) return;
-          facepileEl.appendChild(renderFacepileGroup(prop, facepile[prop]));
-          shown += facepile[prop].length;
-        });
-        if (facepileEl.children.length) facepileEl.hidden = false;
-      }
-
-      thread.forEach(function (m) {
-        listEl.appendChild(renderThreadItem(m));
-        shown += 1;
-      });
-
-      if (shown) section.hidden = false;
-    })
-    .catch(function () {
-      /* leave the section hidden */
+  // --- detail page: the full "Responses from around the web" section ----
+  function initDetail() {
+    var params = new URLSearchParams({
+      "per-page": "100",
+      "sort-by": "published",
+      "sort-dir": "up"
     });
+    targetUrls().forEach(function (u) {
+      params.append("target[]", u);
+    });
+
+    fetch(API + "?" + params.toString())
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
+      .then(function (data) {
+        var children = (data && data.children) || [];
+        if (!children.length) return;
+
+        var facepile = { "like-of": [], "repost-of": [], "bookmark-of": [] };
+        var thread = [];
+        var seenId = {};
+        children.forEach(function (m) {
+          var id = m["wm-id"] || m["wm-source"] + "|" + m["wm-property"];
+          if (seenId[id]) return;
+          seenId[id] = true;
+          if (facepile[m["wm-property"]]) facepile[m["wm-property"]].push(m);
+          else thread.push(m);
+        });
+
+        var shown = 0;
+        if (facepileEl) {
+          Object.keys(facepile).forEach(function (prop) {
+            if (!facepile[prop].length) return;
+            facepileEl.appendChild(renderFacepileGroup(prop, facepile[prop]));
+            shown += facepile[prop].length;
+          });
+          if (facepileEl.children.length) facepileEl.hidden = false;
+        }
+
+        thread.forEach(function (m) {
+          listEl.appendChild(renderThreadItem(m));
+          shown += 1;
+        });
+
+        if (shown) section.hidden = false;
+      })
+      .catch(function () {
+        /* leave the section hidden */
+      });
+  }
+
+  // --- timeline page: a compact count line per card ---------------------
+  // Types collapsed into the count line, in display order. Replies and
+  // mentions share the ↩ glyph; bookmarks are folded in with ⚑.
+  var COUNT_ORDER = [
+    { key: "like", cls: "is-like", glyph: "♥", props: ["like-of"] },
+    { key: "repost", cls: "is-repost", glyph: "↻", props: ["repost-of"] },
+    { key: "reply", cls: "is-reply", glyph: "↩", props: ["in-reply-to", "mention-of"] },
+    { key: "bookmark", cls: "is-bookmark", glyph: "⚑", props: ["bookmark-of"] }
+  ];
+  var PROP_TO_KEY = {};
+  COUNT_ORDER.forEach(function (t) {
+    t.props.forEach(function (p) { PROP_TO_KEY[p] = t.key; });
+  });
+
+  function cardTarget(card) {
+    if (card.dataset && card.dataset.canonical) return card.dataset.canonical;
+    var a = card.querySelector("a.fc-perma[href], a[href]");
+    return a ? a.href : "";
+  }
+
+  function normalizeTarget(u) {
+    return String(u || "").replace(/\/$/, "").replace(/#.*$/, "");
+  }
+
+  function renderCountLine(card, counts) {
+    var total = 0;
+    COUNT_ORDER.forEach(function (t) { total += counts[t.key] || 0; });
+    if (!total) return;
+
+    var line = document.createElement("p");
+    line.className = "fc-reactions";
+    COUNT_ORDER.forEach(function (t) {
+      var n = counts[t.key];
+      if (!n) return;
+      var span = document.createElement("span");
+      span.className = "fc-reactions__c " + t.cls;
+      var g = document.createElement("span");
+      g.className = "fc-reactions__g";
+      g.setAttribute("aria-hidden", "true");
+      g.textContent = t.glyph;
+      span.appendChild(g);
+      span.appendChild(document.createTextNode(" " + n));
+      line.appendChild(span);
+    });
+    card.appendChild(line);
+  }
+
+  function fetchCounts(cards) {
+    var byTarget = {};
+    cards.forEach(function (card) {
+      var t = normalizeTarget(cardTarget(card));
+      if (!t) return;
+      card.dataset.wmCounted = "1";
+      (byTarget[t] = byTarget[t] || []).push(card);
+    });
+    var targets = Object.keys(byTarget);
+    if (!targets.length) return;
+
+    var params = new URLSearchParams({ "per-page": "600" });
+    targets.forEach(function (t) {
+      params.append("target[]", t);
+      params.append("target[]", t + "/");
+    });
+
+    fetch(API + "?" + params.toString())
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        var children = data.children || [];
+        var counts = {};
+        var seen = {};
+        children.forEach(function (m) {
+          var id = m["wm-id"] || m["wm-source"] + "|" + m["wm-property"];
+          if (seen[id]) return;
+          seen[id] = true;
+          var key = PROP_TO_KEY[m["wm-property"]];
+          if (!key) return;
+          var t = normalizeTarget(m["wm-target"]);
+          (counts[t] = counts[t] || {})[key] = (counts[t][key] || 0) + 1;
+        });
+        targets.forEach(function (t) {
+          if (!counts[t]) return;
+          byTarget[t].forEach(function (card) { renderCountLine(card, counts[t]); });
+        });
+      })
+      .catch(function () { /* no counts, no problem */ });
+  }
+
+  function initTimeline(root) {
+    var cards = [].slice.call(
+      (root || document).querySelectorAll(".fc:not([data-wm-counted])")
+    );
+    if (cards.length) fetchCounts(cards);
+  }
+
+  // --- go --------------------------------------------------------------
+  if (section && listEl) {
+    initDetail();
+  } else if (document.querySelector(".fc")) {
+    initTimeline(document);
+    var feed = document.querySelector(".timeline") || document.body;
+    if (window.MutationObserver) {
+      new MutationObserver(function (mutations) {
+        mutations.forEach(function (mut) {
+          [].forEach.call(mut.addedNodes, function (node) {
+            if (node.nodeType !== 1) return;
+            if (node.matches && node.matches(".fc")) initTimeline(node.parentNode);
+            else if (node.querySelector && node.querySelector(".fc")) initTimeline(node);
+          });
+        });
+      }).observe(feed, { childList: true, subtree: true });
+    }
+  }
 })();

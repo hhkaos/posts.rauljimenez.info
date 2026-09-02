@@ -414,6 +414,27 @@ li.fc--listen::before { background: var(--listen); }
 }
 .fc-context::before { content: "🔗 "; }
 
+/* Compact reaction counts on a timeline card (filled in by webmentions.js). */
+.fc-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.9rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.fc-reactions__c {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+.fc-reactions__g { font-size: 0.95rem; line-height: 1; }
+.fc-reactions__c.is-like { color: var(--like); }
+.fc-reactions__c.is-repost { color: var(--repost); }
+.fc-reactions__c.is-reply { color: var(--reply); }
+.fc-reactions__c.is-bookmark { color: var(--bookmark); }
+
 article.h-entry .meta,
 article.h-review .meta {
   display: flex;

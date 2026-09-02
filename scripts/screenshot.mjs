@@ -89,7 +89,7 @@ async function shootSocialCard(browser) {
   await card.addStyleTag({
     content: `
       .wrap { max-width: 1000px; padding-top: 1.5rem; }
-      footer.site, #timeline-end, .pager { display: none !important; }
+      footer.site, #timeline-end, .pager, .fc-reactions { display: none !important; }
     `,
   });
   await card.evaluate(() => document.fonts.ready.then(() => undefined));
