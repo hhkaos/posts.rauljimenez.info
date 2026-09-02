@@ -92,6 +92,28 @@ The name/url/photo are the `AUTHOR_*` constants at the top of `render.mjs`.
 `scripts/verify-mf2.mjs` (run in CI) parses the built HTML and fails if any
 of this regresses.
 
+### Home timeline
+
+The landing page is a reverse-chronological timeline grouped under a
+per-day heading, with each post as a card (`li.fc`) carrying:
+
+- the type **badge** + the local **time** (`Europe/Madrid`, `TZ` in
+  `render.mjs`);
+- an **action line** for response-type posts — `📝 Reviewed <item>`,
+  `📚 Finished reading <book> by <author>`, `⭐ Liked <title>`,
+  `✅ Going to <event>`, … — so a review/like/reply reads at a glance
+  without opening it. Icons mirror the syndicator's `status-text.js`;
+- a **rating** (`★★★★☆`) when the post has one;
+- a one-line body **excerpt**;
+- any **image**: `properties.photo` for photo/check-in posts, otherwise
+  the first inline Markdown image in the body (reviews, reads, notes);
+- a small `🔗 host` context line where the linked title alone isn't
+  obviously external.
+
+Card content per type is built by `feedEntry()` / `renderFeedCard()`. The
+timeline still carries no microformats (no `h-feed`/`h-entry`) — same
+reason the index has no h-card (above).
+
 ### Syndication links (POSSE / `u-syndication`)
 
 Posts syndicated to Mastodon/Bluesky carry a `syndication:` list (status

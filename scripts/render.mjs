@@ -20,11 +20,19 @@ function renderMarkdown(text) {
 }
 
 // Markdown reduced to a single line of plain text, for list titles etc.
+// Tags are stripped and the handful of entities markdown-it emits are
+// decoded, so the result is real text safe to re-escape by the caller.
+function decodeBasicEntities(string) {
+  return string.replace(/&(amp|lt|gt|quot|#39|#x27);/g, (_, e) => ({
+    amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", "#x27": "'",
+  }[e]));
+}
 function markdownToPlain(text) {
-  return md
-    .renderInline(String(text || "").replace(/\r\n/g, "\n").replace(/\n+/g, " "))
-    .replace(/<[^>]+>/g, "")
-    .trim();
+  return decodeBasicEntities(
+    md
+      .renderInline(String(text || "").replace(/\r\n/g, "\n").replace(/\n+/g, " "))
+      .replace(/<[^>]+>/g, ""),
+  ).trim();
 }
 
 const TYPES = [
@@ -143,13 +151,100 @@ function locationText(location) {
   return p.name || p.label || p["street-address"] || p.locality || "";
 }
 
+// Times are shown in the author's timezone (posts carry a UTC `published`).
+const TZ = "Europe/Madrid";
+
 function formatDate(iso) {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" });
+    return new Date(iso).toLocaleDateString("en-GB", { timeZone: TZ, year: "numeric", month: "short", day: "numeric" });
   } catch {
     return iso;
   }
+}
+
+// "2 Sep 2026, 21:57" — used on post pages and (date part) as the feed
+// day heading; the feed cards themselves show just the time.
+function formatDateTime(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    const date = d.toLocaleDateString("en-GB", { timeZone: TZ, year: "numeric", month: "short", day: "numeric" });
+    const time = d.toLocaleTimeString("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+    return `${date}, ${time}`;
+  } catch {
+    return iso;
+  }
+}
+
+function feedTime(iso) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
+function feedDay(iso) {
+  if (!iso) return "Undated";
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  } catch {
+    return "Undated";
+  }
+}
+
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+// Body reduced to a plain-text snippet for feed cards (images/links stripped).
+function excerptOf(text, max = 190) {
+  const plain = markdownToPlain(text);
+  if (plain.length <= max) return plain;
+  return `${plain.slice(0, max - 1).replace(/\s+\S*$/, "")}…`;
+}
+
+// First inline Markdown image in a body — lets reviews / reads / notes show
+// their illustration in the feed (photo posts use `properties.photo`).
+function firstContentImage(text) {
+  const m = String(text || "").match(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/);
+  return m ? { url: m[2], alt: m[1] || "" } : null;
+}
+
+// "20–23 Oct 2026" when start/end share a month, else "20 Oct – 23 Oct 2026".
+function formatDateRange(start, end) {
+  if (!start) return "";
+  if (!end || end === start) return formatDate(start);
+  try {
+    const s = new Date(start);
+    const eD = new Date(end);
+    const sameMonth = s.getUTCFullYear() === eD.getUTCFullYear() && s.getUTCMonth() === eD.getUTCMonth();
+    if (sameMonth) {
+      return `${s.getUTCDate()}–${formatDate(end)}`;
+    }
+    return `${formatDate(start)} – ${formatDate(end)}`;
+  } catch {
+    return formatDate(start);
+  }
+}
+
+function stars(rating) {
+  const r = Math.round(Number(rating));
+  if (!Number.isFinite(r) || r < 1) return "";
+  const n = Math.min(r, 5);
+  return "★".repeat(n) + "☆".repeat(5 - n);
+}
+
+// A DMS coordinate string ("37° 55′ 15.52″ N …") is not a place name worth
+// showing — geo check-ins/photos store one as `location.name`.
+function isCoordinateName(name) {
+  return /\d\s*°/.test(String(name || ""));
 }
 
 // `og` (optional): { url, description, image, type } for a post page.
@@ -204,7 +299,7 @@ ${body}
 function renderMetaRow(type, published) {
   return `<div class="meta">
 <span class="badge ${type}">${escapeHtml(TYPE_LABEL[type])}</span>
-${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(formatDate(published))}</time>` : ""}
+${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(formatDateTime(published))}</time>` : ""}
 </div>`;
 }
 
@@ -500,40 +595,156 @@ ${renderPermalink(url, properties)}
   });
 }
 
-// Feed-list title + optional external target (for the "→ hostname" suffix,
-// which must be an absolute URL) for one post.
-function indexEntry(type, properties, content) {
-  const bodyTitle = markdownToPlain(content).slice(0, 90);
-  const named = properties.name || bodyTitle || TYPE_LABEL[type];
+// Everything the timeline needs to render one card so the post reads at a
+// glance: an icon + action verb, the thing it refers to (linked), a rating,
+// a body excerpt and any image. `action` is left empty for types whose
+// badge already says it all (note/photo/article/event).
+const RSVP_ACTION = {
+  yes: ["✅", "Going to"], no: ["❌", "Not going to"],
+  maybe: ["❔", "Maybe going to"], interested: ["⭐", "Interested in"],
+};
+function feedEntry(type, properties, content, _url) {
+  const e = {
+    type, badge: TYPE_LABEL[type], icon: "", action: "", subject: "",
+    subjectUrl: "", author: "", rating: null, headline: "", excerpt: "",
+    images: [], contextHost: "", whenLine: "",
+  };
+  const body = excerptOf(content);
+
+  const linkTarget = (t) => {
+    const host = hostOf(t);
+    e.subject = properties.name || host || (typeof t === "string" ? t : "");
+    e.subjectUrl = typeof t === "string" ? t : "";
+    // Only worth a separate context line when we have a real title above it.
+    if (properties.name && host) e.contextHost = host;
+    e.excerpt = body;
+  };
+  const consumed = () => {
+    const spec = CONSUMED[type];
+    const w = cite(properties[spec.prop]);
+    const status = spec.statusProp ? String(properties[spec.statusProp] || "").toLowerCase() : "";
+    e.icon = spec.icon;
+    e.action = status ? (READ_STATUS_LABEL[status] || spec.verb) : spec.verb;
+    e.subject = w.name || "something";
+    e.subjectUrl = citeUrl(properties[spec.prop]) || "";
+    e.author = w.author || "";
+    e.contextHost = hostOf(e.subjectUrl);
+    const r = Number(properties.rating);
+    e.rating = Number.isFinite(r) ? r : null;
+    e.excerpt = body;
+    const img = firstContentImage(content);
+    if (img) e.images = [img];
+  };
 
   switch (type) {
-    case "rsvp":
-      return {
-        title: `${properties.rsvp ? `[${properties.rsvp}] ` : ""}${named}`,
-        target: targetOf(properties),
-      };
-    case "checkin":
-      return { title: `📍 ${cite(properties.checkin).name || named}`, target: citeUrl(properties.checkin) || null };
+    case "bookmark":
+      e.icon = "🔖"; e.action = "Bookmarked"; linkTarget(properties["bookmark-of"]);
+      break;
+    case "like":
+      e.icon = "⭐"; e.action = "Liked"; linkTarget(properties["like-of"]);
+      break;
+    case "reply":
+      e.icon = "💬"; e.action = "Replied to"; linkTarget(properties["in-reply-to"]);
+      break;
+    case "repost":
+      e.icon = "🔁"; e.action = "Reposted"; linkTarget(properties["repost-of"]);
+      break;
+    case "rsvp": {
+      const [icon, verb] = RSVP_ACTION[String(properties.rsvp || "").toLowerCase()] || ["🗓️", "RSVP to"];
+      e.icon = icon; e.action = verb; linkTarget(properties["in-reply-to"]);
+      break;
+    }
+    case "event": {
+      const speaking = [].concat(properties.category || []).includes("speaking");
+      e.headline = `${speaking ? "🎤 " : ""}${properties.name || "Event"}`;
+      const locName = locationText(properties.location);
+      const locCity = properties.location?.locality || properties.location?.properties?.locality;
+      const loc = [locName, locCity && locName !== locCity ? locCity : ""].filter(Boolean).join(", ");
+      e.whenLine = [formatDateRange(properties.start, properties.end), loc].filter(Boolean).join(" · ");
+      e.excerpt = body;
+      break;
+    }
+    case "checkin": {
+      const c = cite(properties.checkin);
+      e.icon = "📍"; e.action = "Checked in at";
+      e.subject = c.name || "a place";
+      e.subjectUrl = citeUrl(properties.checkin) || "";
+      e.images = photoList(properties.photo);
+      e.excerpt = body;
+      break;
+    }
     case "review": {
       const it = cite(properties.item);
+      e.icon = "📝"; e.action = "Reviewed";
+      e.subject = it.name || "something";
+      e.subjectUrl = citeUrl(properties.item) || "";
+      e.author = it.author || "";
+      e.contextHost = hostOf(e.subjectUrl);
       const r = Number(properties.rating);
-      return {
-        title: `${properties.name || `Review of ${it.name || "something"}`}${Number.isFinite(r) ? ` (${r}/5)` : ""}`,
-        target: citeUrl(properties.item) || null,
-      };
+      e.rating = Number.isFinite(r) ? r : null;
+      e.headline = properties.name || "";
+      e.excerpt = body;
+      const img = firstContentImage(content);
+      if (img) e.images = [img];
+      break;
     }
     case "read":
     case "watch":
-    case "listen": {
-      const spec = CONSUMED[type];
-      const w = cite(properties[spec.prop]);
-      const status = spec.statusProp ? String(properties[spec.statusProp] || "").toLowerCase() : "";
-      const verb = status ? (READ_STATUS_LABEL[status] || spec.verb) : spec.verb;
-      return { title: `${spec.icon} ${verb} ${w.name || "something"}`, target: citeUrl(properties[spec.prop]) || null };
+    case "listen":
+      consumed();
+      break;
+    case "photo": {
+      e.headline = properties.name || "";
+      e.images = photoList(properties.photo);
+      const place = locationText(properties.location);
+      if (place && !isCoordinateName(place)) e.whenLine = `📍 ${place}`;
+      e.excerpt = body;
+      break;
     }
-    default:
-      return { title: named, target: targetOf(properties) };
+    case "article":
+      e.headline = properties.name || "Article";
+      e.excerpt = excerptOf(properties.summary || content);
+      { const img = firstContentImage(content); if (img) e.images = [img]; }
+      break;
+    default: // note
+      e.headline = properties.name || "";
+      e.excerpt = body;
+      { const img = firstContentImage(content); if (img) e.images = [img]; }
   }
+  return e;
+}
+
+function feedImages(images, max = 4) {
+  const list = images.slice(0, max);
+  if (!list.length) return "";
+  const imgs = list
+    .map((p) => `<img src="${escapeHtml(p.url)}" alt="${escapeHtml(p.alt || "")}" loading="lazy">`)
+    .join("");
+  return `<div class="fc-media${list.length > 1 ? " fc-media--multi" : ""}">${imgs}</div>`;
+}
+
+function renderFeedCard(e, url, published) {
+  const subject = e.subject
+    ? (e.subjectUrl
+      ? `<a class="fc-subject" href="${escapeHtml(e.subjectUrl)}">${escapeHtml(e.subject)}</a>`
+      : `<span class="fc-subject">${escapeHtml(e.subject)}</span>`)
+    : "";
+  const action = e.action
+    ? `<p class="fc-action"><span class="fc-icon">${e.icon}</span> ${escapeHtml(e.action)}${subject ? ` ${subject}` : ""}${e.author ? ` <span class="fc-by">by ${escapeHtml(e.author)}</span>` : ""}${e.rating ? ` <span class="fc-rating" title="${e.rating}/5">${stars(e.rating)}</span>` : ""}</p>`
+    : "";
+  const headline = e.headline ? `<p class="fc-headline">${escapeHtml(e.headline)}</p>` : "";
+  const when = e.whenLine ? `<p class="fc-when">${escapeHtml(e.whenLine)}</p>` : "";
+  const excerpt = e.excerpt ? `<p class="fc-excerpt">${escapeHtml(e.excerpt)}</p>` : "";
+  const context = e.contextHost ? `<p class="fc-context">${escapeHtml(e.contextHost)}</p>` : "";
+
+  return `<li class="fc fc--${e.type}">
+<a class="fc-perma" href="${escapeHtml(url)}" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge ${e.type}">${escapeHtml(e.badge)}</span>
+<time datetime="${escapeHtml(published || "")}">${escapeHtml(feedTime(published))}</time>
+</div>
+${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}
+</li>`;
 }
 
 async function main() {
@@ -584,23 +795,33 @@ async function main() {
 
       const props = post.properties;
       const effectiveType = props.checkin ? "checkin" : type;
-      const { title, target } = indexEntry(effectiveType, props, post.content);
-      index.push({ type: effectiveType, url, published: props.published, title, target });
+      index.push({
+        type: effectiveType,
+        url,
+        published: props.published,
+        entry: feedEntry(effectiveType, props, post.content, url),
+      });
     }
   }
 
   index.sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
-  const listItems = index.map((p) => `<li>
-<div class="meta">
-<span class="badge ${p.type}">${escapeHtml(TYPE_LABEL[p.type])}</span>
-<time datetime="${escapeHtml(p.published || "")}">${escapeHtml(formatDate(p.published))}</time>
-</div>
-<a class="title" href="${escapeHtml(p.url)}">${escapeHtml(p.title)}${p.target ? ` &rarr; ${escapeHtml(new URL(p.target).hostname)}` : ""}</a>
-</li>`).join("\n");
+  // Reverse-chronological timeline, grouped under a heading per calendar day.
+  let feedHtml = "";
+  let currentDay = null;
+  for (const p of index) {
+    const day = feedDay(p.published);
+    if (day !== currentDay) {
+      if (currentDay !== null) feedHtml += "</ul>\n";
+      feedHtml += `<h2 class="feed-day">${escapeHtml(day)}</h2>\n<ul class="feed">\n`;
+      currentDay = day;
+    }
+    feedHtml += `${renderFeedCard(p.entry, p.url, p.published)}\n`;
+  }
+  if (currentDay !== null) feedHtml += "</ul>";
 
   const indexBody = index.length
-    ? `<ul class="feed">\n${listItems}\n</ul>`
+    ? `<div class="timeline">\n${feedHtml}\n</div>`
     : `<p>Nothing public yet.</p>`;
 
   await writeFile(path.join(SITE_DIR, "index.html"), page({ title: "Raul Jimenez — activity", body: indexBody, repCard: false }));
