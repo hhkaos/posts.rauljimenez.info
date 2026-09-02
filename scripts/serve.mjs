@@ -7,12 +7,13 @@
 //   node scripts/serve.mjs --watch     also re-run render.mjs when scripts/
 //                                       or any content folder changes
 //   PORT=4000 node scripts/serve.mjs   pick the port
-//   HOST=0.0.0.0 npm run dev           reachable from other machines on the
-//                                       LAN (links use this box's IP; set
-//                                       PREVIEW_HOST to override the IP)
+//   HOST=127.0.0.1 npm run dev         force loopback-only
+//   PREVIEW_HOST=1.2.3.4 …             override the IP put into links
 //
-// `npm run dev` == `serve.mjs --watch`: builds once, serves, and rebuilds on
-// change. `npm run serve` just serves whatever is already in `_site/`.
+// `npm run dev` == `HOST=0.0.0.0 serve.mjs --watch`: builds once, serves on
+// all interfaces (so another machine on the LAN can open it — links use this
+// box's detected LAN IP), and rebuilds on change. `npm run serve` just
+// serves `_site/` as-is, loopback only.
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { readFile, stat, watch } from "node:fs/promises";
@@ -100,7 +101,12 @@ server.on("error", (error) => {
 });
 server.on("listening", async () => {
   const { port } = server.address();
-  console.log(`\n  Preview:  http://${PREVIEW_HOST}:${port}/\n`);
+  if (PREVIEW_HOST === "localhost") {
+    console.log(`\n  Preview:  http://localhost:${port}/\n`);
+  } else {
+    console.log(`\n  Preview:  http://${PREVIEW_HOST}:${port}/   (LAN)`);
+    console.log(`            http://localhost:${port}/\n`);
+  }
   // Always re-render for the real port so every internal link / feed URL
   // points at this preview, not production — whatever `_site/` held before
   // (e.g. a prior `npm run build` with canonical URLs). `--watch` then only

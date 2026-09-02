@@ -16,7 +16,7 @@
   "scripts": {
     "build": "node scripts/render.mjs",
     "serve": "node scripts/serve.mjs",
-    "dev": "node scripts/serve.mjs --watch",
+    "dev": "HOST=0.0.0.0 node scripts/serve.mjs --watch",
     "verify": "node scripts/verify-mf2.mjs"
   }
 }

@@ -19,10 +19,13 @@ npm install        # once
 npm run dev         # build + serve + rebuild on every change
 ```
 
-`npm run dev` prints a URL (`http://localhost:8787/`, or the next free port
-if that's taken). Open it, edit a post file or `scripts/render.mjs` /
-`scripts/style.css`, and it re-renders within ~150 ms — **refresh the
-browser** to see it (there's no live-reload).
+`npm run dev` binds `0.0.0.0` and prints two URLs — the detected LAN IP
+(`http://192.168.x.x:8787/`, for opening from another machine on the
+network) and `http://localhost:8787/` — or the next free port if 8787 is
+taken. Edit a post file or `scripts/render.mjs` / `scripts/style.css` and
+it re-renders within ~150 ms — **refresh the browser** to see it (no
+live-reload). `HOST=127.0.0.1 npm run dev` forces loopback-only;
+`npm run serve` is loopback-only and doesn't rebuild.
 
 While previewing, every internal link — permalinks, the "← All activity"
 back link, the `/about/` link in the masthead, feed links — points at the
@@ -31,11 +34,9 @@ can click around. `serve.mjs` re-renders once on startup for the real port,
 so `npm run serve` alone is enough; `--watch` (`npm run dev`) only adds
 rebuild-on-change. Links that are *meant* to leave the feed (the header
 logo, "my own site" → `www.rauljimenez.info`, the Google-Translate link)
-stay absolute.
-
-To preview from another machine on the LAN, `HOST=0.0.0.0 npm run dev` —
-the server then binds all interfaces and `PREVIEW_BASE` uses this box's LAN
-IP (override with `PREVIEW_HOST=…`). Default stays loopback-only.
+stay absolute. `PREVIEW_BASE` uses the LAN IP under `npm run dev` (auto-
+detected — prefers `192.168.*`, then `10.*`; `PREVIEW_HOST=…` overrides),
+so those internal links resolve for whoever opens it.
 
 Other scripts:
 
