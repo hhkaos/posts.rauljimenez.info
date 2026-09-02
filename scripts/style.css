@@ -283,7 +283,7 @@ nav.site-nav {
 .wrap {
   max-width: 640px;
   margin: 0 auto;
-  padding: 2.5rem 1.25rem 4rem;
+  padding: 0.5rem 1.25rem 4rem;
 }
 
 /* Page intro block (index + deeper timeline pages). */
