@@ -2,10 +2,16 @@
 // Renders public posts (see `resolveVisibility` below) as static HTML into
 // `_site/`, for GitHub Pages (posts.rauljimenez.info). Not a general-purpose
 // static site generator — just enough markup for a Webmention receiver (and
-// a human) to find the post and its target link. No client-side JS.
+// a human) to find the post and its target link.
+//
+// The timeline is split into numbered pages (`/`, `/page/2/`, …) that work
+// on their own; `scripts/timeline.js` is one small progressive-enhancement
+// script that turns them into infinite scroll when JS is available. An Atom
+// feed is written to `/feed.xml`, and `/about/` explains what this is.
 import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { franc } from "franc-min";
 import MarkdownIt from "markdown-it";
 import YAML from "yaml";
 
@@ -70,10 +76,47 @@ function citeUrl(value) {
   return typeof first === "string" && /^https?:\/\//.test(first) ? first : "";
 }
 const SITE_DIR = "_site";
-const BASE_URL = "https://posts.rauljimenez.info";
+// The live site. Override with PREVIEW_BASE (e.g. http://localhost:8000) for
+// local preview so permalinks/feed links resolve to the local server — never
+// set it for the CI build that actually deploys.
+const BASE_URL = process.env.PREVIEW_BASE || "https://posts.rauljimenez.info";
 const MAIN_SITE = "https://www.rauljimenez.info/";
+const MAIN_SITE_ES = "https://www.rauljimenez.info/es/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
 const SOURCE_REPO = "https://github.com/hhkaos/posts.rauljimenez.info";
+const LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
+
+// Timeline pagination. Overridable via env so pagination can be exercised
+// locally without hundreds of posts.
+const PAGE_SIZE = Number(process.env.TIMELINE_PAGE_SIZE) || 20;
+// Atom feed: newest N entries only.
+const FEED_MAX = 50;
+
+// Navbar — a faithful mirror of the Docusaurus navbar on www.rauljimenez.info
+// so the two sites read as one. The logo is hotlinked from the main site
+// (same owner); vendor it into this repo if that dependency is unwanted.
+const LOGO_URL = "https://www.rauljimenez.info/img/rauljimenez.info.png";
+// Labels + hrefs mirror the main site's own navbar in each language, so a
+// visitor arriving from the Spanish site keeps Spanish chrome (see the
+// [data-lang] handling in HEAD_INIT_SCRIPT + style.css).
+const NAV_LINKS = [
+  {
+    label: "🧠 Digital Brain", href: "https://www.rauljimenez.info/docs/digital-brain",
+    es: { label: "🧠 Mi cerebro digital", href: "https://www.rauljimenez.info/es/docs/digital-brain" },
+  },
+  {
+    label: "📝 Blog", href: "https://www.rauljimenez.info/blog",
+    es: { label: "📝 Blog", href: "https://www.rauljimenez.info/es/blog" },
+  },
+  {
+    label: "📡 Activity", href: `${BASE_URL}/`, current: true,
+    es: { label: "📡 Actividad", href: `${BASE_URL}/` },
+  },
+  {
+    label: "🤓 About me", href: "https://www.rauljimenez.info/docs/category/-about-me",
+    es: { label: "🤓 Sobre mí", href: "https://www.rauljimenez.info/es/docs/category/-about-me" },
+  },
+];
 
 // Author identity. Webmention receivers (e.g. webmention.io) extract the
 // author of a mention from microformats2: a representative h-card on the
@@ -82,6 +125,22 @@ const SOURCE_REPO = "https://github.com/hhkaos/posts.rauljimenez.info";
 const AUTHOR_NAME = "Raúl Jiménez Ortega";
 const AUTHOR_URL = MAIN_SITE; // https://www.rauljimenez.info/
 const AUTHOR_PHOTO = "https://www.rauljimenez.info/img/hhkaos-raul-jimenez-ortega.jpeg";
+
+// <title> / og:title — always branded with the full name, matching
+// www.rauljimenez.info ("Raúl Jiménez Ortega | …").
+function fullTitle(t) {
+  return t ? `${AUTHOR_NAME} | ${t}` : AUTHOR_NAME;
+}
+
+// Social sharing. Every page gets Open Graph + Twitter tags; pages that
+// don't set their own image fall back to SOCIAL_CARD — a 1200×630 shot of
+// the landing page written by screenshot.mjs (the size every network
+// recommends for og:image).
+const SOCIAL_CARD = `${BASE_URL}/social-card.png`;
+const SOCIAL_CARD_ALT = "The activity feed at posts.rauljimenez.info — Raúl Jiménez Ortega";
+const SITE_DESCRIPTION =
+  "Notes, links, photos, events, reviews and things I've read, watched and listened to — self-hosted on my own domain, following the IndieWeb approach, not on a social platform.";
+const OG_LOCALE = { en: "en_US", es: "es_ES" };
 
 // Hidden representative h-card — dropped on every *post* page (not the
 // index, see `page()`). Its `u-url` is also a `rel="me"` link, which makes
@@ -112,6 +171,38 @@ function escapeHtml(string) {
   return String(string).replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[c]);
+}
+
+// Language of the site's own furniture (feed metadata, /about/ prose) and
+// the fallback for a post whose language can't be told. Posts are written
+// in either Spanish or English; nothing else is distinguished.
+const SITE_DEFAULT_LANG = "en";
+
+// Content language of one post, used for `<html lang>` / `xml:lang` / the
+// per-card `lang` on the timeline, and to aim the "translate" link. An
+// explicit `lang:` in the front matter always wins (that's the manual
+// override for when detection is wrong, or for very short posts); otherwise
+// `franc` guesses offline — no API — restricted to es/en, and anything it
+// can't call confidently falls back to the site default.
+function postLang(properties, content) {
+  const explicit = String(properties.lang || "").trim().toLowerCase().slice(0, 2);
+  if (explicit === "es" || explicit === "en") return explicit;
+  const code = franc(markdownToPlain(content || ""), { only: ["spa", "eng"], minLength: 12 });
+  if (code === "spa") return "es";
+  if (code === "eng") return "en";
+  return SITE_DEFAULT_LANG;
+}
+
+// "Translate this post" link. Browsers don't expose their built-in page
+// translation to JS, so this points at Google Translate's page proxy —
+// free, no key. Label + target language are the *other* of es/en, so it
+// reads to the person who needs it. Empty when the language is unknown.
+function translateLink(url, lang) {
+  if (lang !== "es" && lang !== "en") return "";
+  const to = lang === "es" ? "en" : "es";
+  const label = lang === "es" ? "See in English" : "Ver en español";
+  const href = `https://translate.google.com/translate?sl=${lang}&tl=${to}&u=${encodeURIComponent(url)}`;
+  return `<a class="translate-link" href="${escapeHtml(href)}" hreflang="${to}" rel="nofollow noopener">🌐 ${label}</a>`;
 }
 
 function parsePost(raw) {
@@ -247,6 +338,72 @@ function isCoordinateName(name) {
   return /\d\s*°/.test(String(name || ""));
 }
 
+// "Back to the timeline" link at the top of every post page (both languages
+// emitted; CSS shows one per `:root[data-lang]`).
+const BACK_LINK = `<a class="back" href="${BASE_URL}/"><span class="i18n-en">&larr; All activity</span><span class="i18n-es">&larr; Toda la actividad</span></a>`;
+
+// Fixed navbar shared with www.rauljimenez.info. Rendered outside `.wrap`.
+// Layout mirrors the Docusaurus navbar: brand + links on the left, the
+// language + light/dark controls on the right. Both language variants of
+// the links are emitted; CSS shows one per `:root[data-lang]`.
+function navLinks(lang) {
+  return NAV_LINKS.map((l) => {
+    const v = lang === "es" ? l.es : l;
+    return `<a class="site-nav__link"${l.current ? ' aria-current="page"' : ""} href="${escapeHtml(v.href)}">${escapeHtml(v.label)}</a>`;
+  }).join("\n");
+}
+function siteNav() {
+  return `<nav class="site-nav">
+<a class="site-nav__brand" href="${MAIN_SITE}"><img src="${LOGO_URL}" alt="Raúl Jiménez Ortega"></a>
+<div class="site-nav__links i18n-en">
+${navLinks("en")}
+</div>
+<div class="site-nav__links i18n-es">
+${navLinks("es")}
+</div>
+<div class="site-nav__tools">
+<button class="site-nav__lang" type="button" aria-label="Change language — cambiar idioma" title="English · Español">
+<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.82 7.82 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26zm.81 2h2.95c.32 1.25.78 2.45 1.38 3.56A8.03 8.03 0 0 1 5.07 16zm2.95-8H5.07a8.03 8.03 0 0 1 4.33-3.56C8.8 5.55 8.34 6.75 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82A13.9 13.9 0 0 1 12 19.96zM14.34 14H9.66a14.9 14.9 0 0 1 0-4h4.68a14.9 14.9 0 0 1 0 4zm.26 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14a16.5 16.5 0 0 0 0-4h3.38a7.82 7.82 0 0 1 0 4h-3.38z"/></svg>
+<span class="i18n-en">ES</span><span class="i18n-es">EN</span>
+</button>
+<button class="site-nav__theme" type="button" aria-label="Switch between dark and light mode" title="Switch between dark and light mode">
+<svg class="icon-sun" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1zM4.22 4.22a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42L4.22 5.64a1 1 0 0 1 0-1.42zm12.02 12.02a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42l-1.06-1.06a1 1 0 0 1 0-1.42zM2 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1zm17 0a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1zM4.22 19.78a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0zM16.24 7.76a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 1 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0z"/></svg>
+<svg class="icon-moon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27A7.014 7.014 0 0 1 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49z"/></svg>
+</button>
+</div>
+</nav>`;
+}
+
+// Runs before first paint (inline, in <head>) so there's no flash of the
+// wrong theme or chrome language.
+//   theme: an explicit choice from localStorage, else the OS preference.
+//   lang:  this only switches the site's *chrome* (nav, footer, headings)
+//          via [data-lang] — NOT `<html lang>`, which is set server-side to
+//          the language of the post/page content and must stay put so the
+//          browser's own "translate this page" offer is correct.
+//          ?lang=es|en (remembered), else localStorage, else the browser's
+//          languages. No JS → English chrome (the static default).
+const HEAD_INIT_SCRIPT = `<script>
+(function(){var d=document.documentElement;
+function mq(q){return window.matchMedia&&matchMedia(q).matches}
+var t=null;try{t=localStorage.getItem("theme")}catch(e){}
+d.dataset.theme=t==="dark"||t==="light"?t:(mq("(prefers-color-scheme: dark)")?"dark":"light");
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(e){try{if(!localStorage.getItem("theme"))d.dataset.theme=e.matches?"dark":"light"}catch(_){}})}catch(e){}
+function pickLang(){
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="es"||q==="en"){localStorage.setItem("lang",q);return q}}catch(e){}
+try{var s=localStorage.getItem("lang");if(s==="es"||s==="en")return s}catch(e){}
+var ls=navigator.languages||[navigator.language||"en"];
+for(var i=0;i<ls.length;i++){if(/^es/i.test(ls[i]))return "es"}
+return "en"}
+var lang=pickLang();d.dataset.lang=lang;
+addEventListener("DOMContentLoaded",function(){
+var tb=document.querySelector(".site-nav__theme");
+if(tb)tb.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}});
+var lb=document.querySelector(".site-nav__lang");
+if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"es";d.dataset.lang=n;try{localStorage.setItem("lang",n)}catch(e){}});
+});})();
+</script>`;
+
 // `og` (optional): { url, description, image, type } for a post page.
 // `image` is a screenshot generated by scripts/screenshot.mjs; the same
 // file is attached as native media when the post is syndicated.
@@ -256,44 +413,94 @@ function isCoordinateName(name) {
 // person card and stop looking for the target link in the page body, which
 // breaks Webmentions *sent from* the index. Post pages have an h-entry that
 // outranks the h-card, so it's safe (and useful) there.
-function page({ title, body, og, repCard = true }) {
-  const socialMeta = og
-    ? `
-<link rel="canonical" href="${escapeHtml(og.url)}">
-<meta property="og:site_name" content="Raul Jimenez — activity">
-<meta property="og:type" content="${escapeHtml(og.type || "article")}">
-<meta property="og:title" content="${escapeHtml(title)}">
-<meta property="og:url" content="${escapeHtml(og.url)}">
-${og.description ? `<meta property="og:description" content="${escapeHtml(og.description)}">` : ""}
-${og.image ? `<meta property="og:image" content="${escapeHtml(og.image)}">` : ""}
-<meta name="twitter:card" content="${og.image ? "summary_large_image" : "summary"}">`
-    : "";
+// `webmentions` (defaults to the same value as `repCard`): render the
+// "Responses from around the web" section + load /webmentions.js. Same split
+// as repCard — individual post pages get it, the index/about pages don't.
+function page({ title, body, og, repCard = true, webmentions = repCard, lang = SITE_DEFAULT_LANG }) {
+  const o = og || {};
+  const branded = fullTitle(title);
+  const url = o.url || `${BASE_URL}/`;
+  const type = o.type || "website";
+  const description = o.description || SITE_DESCRIPTION;
+  const image = o.image || SOCIAL_CARD;
+  const imageAlt = o.imageAlt || (o.image ? branded : SOCIAL_CARD_ALT);
+  // Only the site card's dimensions are known and fixed; per-post
+  // screenshots are cropped to the post so their size varies.
+  const cardDims = o.image
+    ? ""
+    : `
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">`;
+
+  const socialMeta = `
+<meta name="description" content="${escapeHtml(description)}">
+<meta name="author" content="${escapeHtml(AUTHOR_NAME)}">
+<link rel="canonical" href="${escapeHtml(url)}">
+<meta property="og:site_name" content="${escapeHtml(AUTHOR_NAME)}">
+<meta property="og:locale" content="${OG_LOCALE[lang] || OG_LOCALE.en}">
+<meta property="og:type" content="${escapeHtml(type)}">
+<meta property="og:title" content="${escapeHtml(branded)}">
+<meta property="og:description" content="${escapeHtml(description)}">
+<meta property="og:url" content="${escapeHtml(url)}">
+<meta property="og:image" content="${escapeHtml(image)}">
+<meta property="og:image:alt" content="${escapeHtml(imageAlt)}">${cardDims}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtml(branded)}">
+<meta name="twitter:description" content="${escapeHtml(description)}">
+<meta name="twitter:image" content="${escapeHtml(image)}">
+<meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}">${
+    type === "article" && o.published
+      ? `
+<meta property="article:published_time" content="${escapeHtml(o.published)}">
+<meta property="article:author" content="${escapeHtml(AUTHOR_URL)}">`
+      : ""
+  }`;
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${escapeHtml(lang)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)}</title>${socialMeta}
+<title>${escapeHtml(branded)}</title>${socialMeta}
+${HEAD_INIT_SCRIPT}
+<link rel="icon" href="/favicon.ico">
+<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">
 <link rel="stylesheet" href="/style.css">
+<link rel="alternate" type="application/atom+xml" title="Raúl Jiménez — Activity" href="/feed.xml">
 </head>
 <body>
+${siteNav()}
 <div class="wrap">
-<header class="site">
-<h1><a href="${BASE_URL}/">Raul Jimenez — activity</a></h1>
-<p class="about">A public feed of notes, bookmarks, likes, replies, reposts, RSVPs, events, check-ins, reviews and things read, watched and listened to. Part of an <a href="${ABOUT_POST}">IndieWeb</a> experiment — <a href="${MAIN_SITE}">main site</a> · <a href="${SOURCE_REPO}">source</a>.</p>
-</header>
 ${repCard ? repHCard() : ""}
 ${body}
+${webmentions ? webmentionsSection() : ""}
 <footer class="site">
-<a href="${MAIN_SITE}">www.rauljimenez.info</a>
-<a href="${ABOUT_POST}">How this works</a>
-<a href="${SOURCE_REPO}">Source on GitHub</a>
+<a class="i18n-en" href="${MAIN_SITE}">www.rauljimenez.info</a><a class="i18n-es" href="${MAIN_SITE_ES}">www.rauljimenez.info</a>
+<a href="${BASE_URL}/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
+<a href="/feed.xml">RSS</a>
+<a href="${SOURCE_REPO}"><span class="i18n-en">Source on GitHub</span><span class="i18n-es">Código en GitHub</span></a>
 </footer>
 </div>
+<script src="/timeline.js" defer></script>
+${webmentions ? `<script src="/webmentions.js" defer></script>` : ""}
 </body>
 </html>
 `;
+}
+
+// The container that /webmentions.js fills in at page load with the likes,
+// reposts, replies and mentions webmention.io has collected for this URL
+// (including the ones Bridgy back-feeds from the Mastodon/Bluesky copies).
+// Starts `hidden`; the script reveals it only when there's something to show,
+// so a post with no responses renders nothing. Progressive enhancement —
+// same deal as timeline.js. The `<link rel="canonical">` in the head is the
+// target the script queries by.
+function webmentionsSection() {
+  return `<section class="webmentions" id="webmentions" hidden aria-labelledby="webmentions-title" data-wm-api="https://webmention.io/api/mentions.jf2">
+<h2 class="webmentions__title" id="webmentions-title"><span class="i18n-en">Responses from around the web</span><span class="i18n-es">Respuestas de la web</span></h2>
+<div class="webmentions__facepile" id="webmentions-facepile" hidden></div>
+<ol class="webmentions__list" id="webmentions-list"></ol>
+</section>`;
 }
 
 function renderMetaRow(type, published) {
@@ -303,8 +510,9 @@ ${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${
 </div>`;
 }
 
-function renderPermalink(url, properties) {
-  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}</p>${syndicationLinks(properties)}`;
+function renderPermalink(url, properties, lang) {
+  const translate = translateLink(url, lang);
+  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}${translate ? ` · ${translate}` : ""}</p>${syndicationLinks(properties)}`;
 }
 
 // IndieWeb POSSE: link the canonical post to its syndicated copies with
@@ -351,10 +559,11 @@ function renderEventHtml({ url, properties, content }) {
   const end = properties.end || "";
   const location = locationText(properties.location);
   const eventUrl = properties.url;
+  const lang = postLang(properties, content);
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
-<article class="h-event">
+${BACK_LINK}
+<article class="h-event" lang="${lang}">
 ${renderMetaRow("event", published)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <p class="event-when">
@@ -368,12 +577,13 @@ ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : 
   eventUrl
     ? `<a href="${escapeHtml(url)}">Permalink</a>`
     : `<a class="u-url" href="${escapeHtml(url)}">Permalink</a>`
-} · ${authorHCard()}</p>${syndicationLinks(properties)}
+} · ${authorHCard()}${translateLink(url, lang) ? ` · ${translateLink(url, lang)}` : ""}</p>${syndicationLinks(properties)}
 </article>`;
 
   const when = [formatDate(start), end && `– ${formatDate(end)}`].filter(Boolean).join(" ");
   return page({
     title: name,
+    lang,
     body,
     og: {
       url,
@@ -402,21 +612,25 @@ function photoImgs(photos) {
 function renderPhotoHtml({ url, properties, content }) {
   const published = properties.published || "";
   const photos = photoList(properties.photo);
+  const lang = postLang(properties, content);
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
-<article class="h-entry">
+${BACK_LINK}
+<article class="h-entry" lang="${lang}">
 ${renderMetaRow("photo", published)}
-${properties.name ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>` : ""}
+${properties.name
+  ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>`
+  : `<h1 class="visually-hidden">${escapeHtml(`Photo — ${formatDate(published)}`)}</h1>`}
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: properties.name || `Photo — ${formatDate(published)}`,
+    lang,
     body,
-    og: { url, type: "article", image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
+    og: { url, type: "article", published, image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
   });
 }
 
@@ -424,18 +638,20 @@ ${renderPermalink(url, properties)}
 function renderArticleHtml({ url, properties, content }) {
   const published = properties.published || "";
   const name = properties.name || "Article";
+  const lang = postLang(properties, content);
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
-<article class="h-entry">
+${BACK_LINK}
+<article class="h-entry" lang="${lang}">
 ${renderMetaRow("article", published)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <div class="content e-content">${renderMarkdown(content)}</div>
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
   return page({
     title: name,
+    lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
   });
 }
 
@@ -458,20 +674,23 @@ function renderCheckinHtml({ url, properties, content }) {
   }${lat && lon ? `<data class="p-latitude" value="${escapeHtml(lat)}"></data><data class="p-longitude" value="${escapeHtml(lon)}"></data>` : ""}</span>`;
 
   const photos = photoList(properties.photo);
+  const lang = postLang(properties, content);
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
-<article class="h-entry">
+${BACK_LINK}
+<article class="h-entry" lang="${lang}">
+<h1 class="visually-hidden">${escapeHtml(`Check-in at ${name}`)}</h1>
 ${renderMetaRow("checkin", published)}
 <p class="target">📍 Checked in at ${venue}</p>
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: `Check-in at ${name}`,
+    lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
   });
 }
 
@@ -485,6 +704,7 @@ function renderReviewHtml({ url, properties, content }) {
   const rating = Number(properties.rating);
   const hasRating = Number.isFinite(rating);
   const headline = properties.name || "";
+  const lang = postLang(properties, content);
 
   const item = `<span class="p-item h-item">${
     itemUrl
@@ -493,20 +713,23 @@ function renderReviewHtml({ url, properties, content }) {
   }${it.author ? ` by <span class="p-author">${escapeHtml(it.author)}</span>` : ""}</span>`;
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
-<article class="h-review">
+${BACK_LINK}
+<article class="h-review" lang="${lang}">
 ${renderMetaRow("review", published)}
 <p class="target">📝 Review of ${item}</p>
-${headline ? `<h1 class="p-name">${escapeHtml(headline)}</h1>` : ""}
+${headline
+  ? `<h1 class="p-name">${escapeHtml(headline)}</h1>`
+  : `<h1 class="visually-hidden">${escapeHtml(`Review of ${itemName}`)}</h1>`}
 ${hasRating ? `<p class="review-rating">Rating: <data class="p-rating" value="${rating}">${rating}</data><data class="p-best" value="5"></data><data class="p-worst" value="1"></data> / 5</p>` : ""}
 <div class="content e-content p-description">${renderMarkdown(content)}</div>
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: headline || `Review of ${itemName}`,
+    lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
   });
 }
 
@@ -530,6 +753,7 @@ function renderConsumedHtml(type, { url, properties, content }) {
   const hasRating = Number.isFinite(rating);
   const status = spec.statusProp ? String(properties[spec.statusProp] || "").toLowerCase() : "";
   const verb = status ? (READ_STATUS_LABEL[status] || spec.verb) : spec.verb;
+  const lang = postLang(properties, content);
 
   const work = `<span class="${spec.uClass} h-cite">${
     workUrl
@@ -538,19 +762,21 @@ function renderConsumedHtml(type, { url, properties, content }) {
   }${w.author ? ` by <span class="p-author">${escapeHtml(w.author)}</span>` : ""}</span>`;
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
-<article class="h-entry">
+${BACK_LINK}
+<article class="h-entry" lang="${lang}">
+<h1 class="visually-hidden">${escapeHtml(`${verb} ${workName}`)}</h1>
 ${renderMetaRow(type, published)}
 ${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
 <p class="target">${spec.icon} ${escapeHtml(verb)} ${work}${hasRating ? ` — <data class="p-rating" value="${rating}">${rating}/5</data>` : ""}</p>
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: `${verb} ${workName}`,
+    lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
   });
 }
 
@@ -570,25 +796,34 @@ function renderPostHtml({ type, url, properties, content }) {
   const target = targetOf(properties);
   const published = properties.published || "";
   const rsvp = type === "rsvp" ? properties.rsvp : "";
+  const lang = postLang(properties, content);
+
+  // These types carry no visible <h1> (the meta row + target line say it
+  // all), so give the page an off-screen one for the document outline.
+  const heading = properties.name
+    || (TYPE_VERB[type] && target ? `${TYPE_VERB[type]} ${hostOf(target) || target}` : `${TYPE_LABEL[type]} — ${formatDate(published)}`);
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
-<article class="h-entry">
+${BACK_LINK}
+<article class="h-entry" lang="${lang}">
+<h1 class="visually-hidden">${escapeHtml(heading)}</h1>
 ${renderMetaRow(type, published)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
 <div class="content e-content">${renderMarkdown(content)}</div>
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   const fallbackDescription =
     (TYPE_VERB[type] && target ? `${TYPE_VERB[type]} ${target}` : `${TYPE_LABEL[type]} · posts.rauljimenez.info`);
   return page({
     title: properties.name || `${TYPE_LABEL[type]} — ${formatDate(published)}`,
+    lang,
     body,
     og: {
       url,
       type: "article",
+      published,
       image: screenshotUrl(url),
       description: ogDescription(content, fallbackDescription),
     },
@@ -607,7 +842,7 @@ function feedEntry(type, properties, content, _url) {
   const e = {
     type, badge: TYPE_LABEL[type], icon: "", action: "", subject: "",
     subjectUrl: "", author: "", rating: null, headline: "", excerpt: "",
-    images: [], contextHost: "", whenLine: "",
+    images: [], contextHost: "", whenLine: "", lang: postLang(properties, content),
   };
   const body = excerptOf(content);
 
@@ -737,7 +972,7 @@ function renderFeedCard(e, url, published) {
   const excerpt = e.excerpt ? `<p class="fc-excerpt">${escapeHtml(e.excerpt)}</p>` : "";
   const context = e.contextHost ? `<p class="fc-context">${escapeHtml(e.contextHost)}</p>` : "";
 
-  return `<li class="fc fc--${e.type}">
+  return `<li class="fc fc--${e.type}" lang="${escapeHtml(e.lang || SITE_DEFAULT_LANG)}">
 <a class="fc-perma" href="${escapeHtml(url)}" aria-label="Open this post"></a>
 <div class="fc-head">
 <span class="badge ${e.type}">${escapeHtml(e.badge)}</span>
@@ -747,11 +982,172 @@ ${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}
 </li>`;
 }
 
+// Reverse-chronological cards for one page of the timeline, grouped under a
+// per-calendar-day heading. `timeline.js` relies on this exact shape (a
+// `.timeline` wrapper, `h2.feed-day` headings, sibling `ul.feed` lists) to
+// splice pages together, deduping a heading repeated at a page seam.
+function renderTimeline(items) {
+  let html = "";
+  let currentDay = null;
+  for (const p of items) {
+    const day = feedDay(p.published);
+    if (day !== currentDay) {
+      if (currentDay !== null) html += "</ul>\n";
+      html += `<h2 class="feed-day">${escapeHtml(day)}</h2>\n<ul class="feed">\n`;
+      currentDay = day;
+    }
+    html += `${renderFeedCard(p.entry, p.url, p.published)}\n`;
+  }
+  if (currentDay !== null) html += "</ul>";
+  return `<div class="timeline">\n${html}\n</div>`;
+}
+
+// Bottom-of-page pager + the sentinel `timeline.js` observes. `next` is the
+// path of the older page (or "" on the last page).
+function pager(prev, next) {
+  const links = [
+    prev ? `<a class="pager__link" rel="prev" href="${escapeHtml(prev)}">← Newer</a>` : "<span></span>",
+    next ? `<a class="pager__link" rel="next" href="${escapeHtml(next)}">Older →</a>` : "<span></span>",
+  ].join("\n");
+  return `<nav class="pager">\n${links}\n</nav>\n<div id="timeline-end"${next ? ` data-next="${escapeHtml(next)}"` : ""}></div>`;
+}
+
+function xmlEscape(string) {
+  return String(string).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;",
+  })[c]);
+}
+
+// A short human title for a feed entry, reusing the timeline card model.
+function feedEntryTitle(item) {
+  const e = item.entry;
+  if (e.headline) return e.headline;
+  if (e.action) return [e.action, e.subject].filter(Boolean).join(" ");
+  return `${TYPE_LABEL[item.type] || "Post"} — ${formatDate(item.published)}`;
+}
+
+// Atom 1.0 feed of the newest FEED_MAX posts. Built from the same sorted
+// `index` main() already has — no extra passes over the content tree.
+function buildFeed(index) {
+  const items = index.slice(0, FEED_MAX);
+  const updated = items[0]?.published || new Date().toISOString();
+
+  const entries = items.map((item) => {
+    const e = item.entry;
+    const title = feedEntryTitle(item);
+    const subject = e.subject
+      ? (e.subjectUrl
+        ? `<a href="${escapeHtml(e.subjectUrl)}">${escapeHtml(e.subject)}</a>`
+        : escapeHtml(e.subject))
+      : "";
+    const actionLine = e.action
+      ? `<p>${e.icon ? `${escapeHtml(e.icon)} ` : ""}${escapeHtml(e.action)}${subject ? ` ${subject}` : ""}${e.author ? ` by ${escapeHtml(e.author)}` : ""}${e.rating ? ` — ${escapeHtml(stars(e.rating))}` : ""}</p>`
+      : "";
+    const image = e.images?.[0]
+      ? `<p><img src="${escapeHtml(e.images[0].url)}" alt="${escapeHtml(e.images[0].alt || "")}"></p>`
+      : "";
+    const bodyHtml = item.contentHtml || "";
+    const html = `${actionLine}${image}${bodyHtml}`.trim()
+      || `<p>${escapeHtml(feedEntryTitle(item))}</p>`;
+    return `  <entry xml:lang="${xmlEscape(item.entry.lang || SITE_DEFAULT_LANG)}">
+    <title>${xmlEscape(title)}</title>
+    <link href="${xmlEscape(item.url)}"/>
+    <id>${xmlEscape(item.url)}</id>
+    <published>${xmlEscape(item.published || updated)}</published>
+    <updated>${xmlEscape(item.published || updated)}</updated>
+    <category term="${xmlEscape(item.type)}"/>
+    <content type="html">${xmlEscape(html)}</content>
+  </entry>`;
+  }).join("\n");
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Raúl Jiménez — Activity</title>
+  <subtitle>Notes, links, photos, events, reviews and things read, watched and listened to — self-hosted, not on a platform.</subtitle>
+  <link href="${BASE_URL}/feed.xml" rel="self"/>
+  <link href="${BASE_URL}/"/>
+  <id>${BASE_URL}/</id>
+  <updated>${xmlEscape(updated)}</updated>
+  <author>
+    <name>${xmlEscape(AUTHOR_NAME)}</name>
+    <uri>${xmlEscape(AUTHOR_URL)}</uri>
+  </author>
+${entries}
+</feed>
+`;
+}
+
+function renderAboutHtml() {
+  const body = `
+${BACK_LINK}
+<article class="content e-content prose">
+<h1>About this feed</h1>
+
+<p><strong>This is my activity feed.</strong> It's the kind of thing you'd
+normally post on a social network — short notes, links I found worth keeping,
+photos, events I'm going to, things I've read, watched or listened to — except
+it doesn't live on a platform. It lives on my own domain, and every post is a
+plain file in a public Git repository I control:
+<a href="${SOURCE_REPO}">github.com/hhkaos/posts.rauljimenez.info</a>.</p>
+
+<p>It's built following the <a href="https://indieweb.org/">IndieWeb</a>
+approach: <em>your content, on your site, first</em>. If you're curious why I
+bothered, the <a href="https://indieweb.org/why">reasons</a> and
+<a href="https://indieweb.org/principles">principles</a> are worth a read, and I
+wrote up how I put this together in
+<a href="${ABOUT_POST}">First steps into the IndieWeb</a>.</p>
+
+<h2>Not just the usual "post" types</h2>
+<p>A social network gives you a status box and maybe a photo upload. Here the
+"posts" are typed: notes, bookmarks, likes, replies, reposts, RSVPs, events,
+check-ins, reviews, and separate types for things read, watched and listened
+to. Some of these have no real equivalent on a mainstream network.</p>
+
+<h2>Where else it shows up</h2>
+<p>Not everything here is cross-posted to my social accounts — but a lot of it
+is. When it is, this copy is the canonical one and the social post links back
+to it (the IndieWeb calls this
+<a href="https://indieweb.org/POSSE">POSSE</a>). Either way, the complete and
+permanent record is the <a href="${SOURCE_REPO}">GitHub repo</a>.</p>
+
+<h2>Why not just use social media</h2>
+<p>Because the social platforms we know are not neutral tools. Their incentives
+are not my incentives, they can disappear my content or my account, and the way
+they're designed to hold attention has real costs. If that sounds abstract, the
+documentary <a href="https://www.imdb.com/title/tt11464826/"><em>The Social
+Dilemma</em></a> lays it out well. Owning this myself is a small way of opting
+out.</p>
+
+<h2>License</h2>
+<p>All <strong>content</strong> published on this site — text, photos — is
+licensed <a href="${LICENSE_URL}" rel="license"><strong>Creative Commons
+Attribution 4.0 International (CC&nbsp;BY&nbsp;4.0)</strong></a>. You're free to
+share and adapt it, including commercially, as long as you credit me
+(name + a link back). The site's source code, in the repository above, is a
+separate matter.</p>
+
+<p style="margin-top:2rem"><a href="${BASE_URL}/"><span class="i18n-en">&larr; Back to the timeline</span><span class="i18n-es">&larr; Volver al timeline</span></a>
+· <a href="/feed.xml">RSS</a></p>
+</article>`;
+  return page({
+    title: "About this feed",
+    body,
+    repCard: false,
+    og: {
+      url: `${BASE_URL}/about/`,
+      type: "website",
+      description: "What this activity feed is, why it's self-hosted and not on a social platform, and how the content is licensed.",
+    },
+  });
+}
+
 async function main() {
   await mkdir(SITE_DIR, { recursive: true });
   await writeFile(path.join(SITE_DIR, ".nojekyll"), "");
   await writeFile(path.join(SITE_DIR, "CNAME"), "posts.rauljimenez.info\n");
   await copyFile("scripts/style.css", path.join(SITE_DIR, "style.css"));
+  // Same favicon as www.rauljimenez.info (a copy, so the site is self-contained).
+  await copyFile("scripts/favicon.ico", path.join(SITE_DIR, "favicon.ico"));
 
   // Media uploaded via Micropub (@indiekit/store-github writes it to `media/`).
   // Posts reference these by absolute URL under posts.rauljimenez.info, so the
@@ -800,33 +1196,64 @@ async function main() {
         url,
         published: props.published,
         entry: feedEntry(effectiveType, props, post.content, url),
+        contentHtml: post.content ? renderMarkdown(post.content) : "",
       });
     }
   }
 
   index.sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
-  // Reverse-chronological timeline, grouped under a heading per calendar day.
-  let feedHtml = "";
-  let currentDay = null;
-  for (const p of index) {
-    const day = feedDay(p.published);
-    if (day !== currentDay) {
-      if (currentDay !== null) feedHtml += "</ul>\n";
-      feedHtml += `<h2 class="feed-day">${escapeHtml(day)}</h2>\n<ul class="feed">\n`;
-      currentDay = day;
+  await copyFile("scripts/timeline.js", path.join(SITE_DIR, "timeline.js"));
+  await copyFile("scripts/webmentions.js", path.join(SITE_DIR, "webmentions.js"));
+  await writeFile(path.join(SITE_DIR, "feed.xml"), buildFeed(index));
+
+  await mkdir(path.join(SITE_DIR, "about"), { recursive: true });
+  await writeFile(path.join(SITE_DIR, "about", "index.html"), renderAboutHtml());
+
+  // Split the timeline into numbered pages. `/` is page 1; `/page/2/`, … hold
+  // the rest. Each page stands alone (working prev/next links); timeline.js
+  // stitches them into infinite scroll when it can.
+  const intro = `<header class="site">
+<h1 class="visually-hidden"><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>
+<p class="page-intro i18n-en">The kind of things I'd normally post on a social network — notes, links, photos, events, things I've read or watched — except this feed runs on <a href="${MAIN_SITE}">my own site</a> instead of a platform I don't control. <a href="${BASE_URL}/about/">About this feed &amp; why &rarr;</a> · <a href="/feed.xml">RSS</a></p>
+<p class="page-intro i18n-es">El tipo de cosas que normalmente publicaría en una red social —notas, enlaces, fotos, eventos, lo que he leído o visto—, solo que este feed vive en <a href="${MAIN_SITE_ES}">mi propia web</a> y no en una plataforma que no controlo. <a href="${BASE_URL}/about/">Sobre este feed y por qué &rarr;</a> · <a href="/feed.xml">RSS</a></p>
+</header>`;
+
+  const pageCount = Math.max(1, Math.ceil(index.length / PAGE_SIZE));
+  for (let n = 1; n <= pageCount; n++) {
+    const slice = index.slice((n - 1) * PAGE_SIZE, n * PAGE_SIZE);
+    // Root-relative so the links + timeline.js fetch work on any host.
+    const prev = n === 1 ? "" : n === 2 ? "/" : `/page/${n - 1}/`;
+    const next = n < pageCount ? `/page/${n + 1}/` : "";
+
+    const header = n === 1
+      ? intro
+      : `<header class="site"><h1 class="visually-hidden"><span class="i18n-en">Activity — page ${n} of ${pageCount}</span><span class="i18n-es">Actividad — página ${n} de ${pageCount}</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
+
+    const body = index.length
+      ? `${header}\n${renderTimeline(slice)}\n${pager(prev, next)}`
+      : `${intro}\n<p>Nothing public yet.</p>`;
+
+    const html = page({
+      title: n === 1 ? "Activity" : `Activity — page ${n} of ${pageCount}`,
+      body,
+      repCard: false,
+      og: {
+        url: n === 1 ? `${BASE_URL}/` : `${BASE_URL}/page/${n}/`,
+        type: "website",
+      },
+    });
+
+    if (n === 1) {
+      await writeFile(path.join(SITE_DIR, "index.html"), html);
+    } else {
+      const dir = path.join(SITE_DIR, "page", String(n));
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, "index.html"), html);
     }
-    feedHtml += `${renderFeedCard(p.entry, p.url, p.published)}\n`;
   }
-  if (currentDay !== null) feedHtml += "</ul>";
 
-  const indexBody = index.length
-    ? `<div class="timeline">\n${feedHtml}\n</div>`
-    : `<p>Nothing public yet.</p>`;
-
-  await writeFile(path.join(SITE_DIR, "index.html"), page({ title: "Raul Jimenez — activity", body: indexBody, repCard: false }));
-
-  console.log(`Rendered ${index.length} public post(s) into ${SITE_DIR}/`);
+  console.log(`Rendered ${index.length} public post(s) into ${SITE_DIR}/ (${pageCount} timeline page(s))`);
 }
 
 main();

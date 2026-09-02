@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Renders public posts from this repo as static HTML for posts.rauljimenez.info, and sends outgoing Webmentions for public bookmark/like/reply/rsvp/repost posts.",
   "dependencies": {
+    "franc-min": "^6.2.0",
     "markdown-it": "^14.1.0",
     "yaml": "^2.9.0"
   },
@@ -13,6 +14,9 @@
     "playwright": "^1.62.1"
   },
   "scripts": {
+    "build": "node scripts/render.mjs",
+    "serve": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs --watch",
     "verify": "node scripts/verify-mf2.mjs"
   }
 }

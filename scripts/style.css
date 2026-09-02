@@ -1,11 +1,13 @@
 :root {
   color-scheme: light dark;
-  --bg: #fafaf9;
+  /* Palette aligned with www.rauljimenez.info (Docusaurus) so the two sites
+     read as one: same near-white ground, same orange accent. */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --text: #1c1917;
-  --text-muted: #6b6560;
-  --border: #e7e5e4;
-  --accent: #2563eb;
+  --text: #1c1e21;
+  --text-muted: #606770;
+  --border: #e3e3e3;
+  --accent: #f05924;
   --note: #2563eb;
   --bookmark: #b45309;
   --like: #dc2626;
@@ -22,14 +24,17 @@
   --listen: #db2777;
 }
 
+/* Dark palette. `theme-init` (inline in <head>) normally sets an explicit
+   [data-theme] before first paint, so the media query is just the
+   JS-disabled fallback — the two blocks must stay in sync. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #161513;
-    --surface: #201f1c;
-    --text: #f2f0ed;
-    --text-muted: #a39d96;
-    --border: #35322d;
-    --accent: #60a5fa;
+  :root:not([data-theme="light"]) {
+    --bg: #1b1b1d;
+    --surface: #242526;
+    --text: #e3e3e3;
+    --text-muted: #a0a3a8;
+    --border: #444950;
+    --accent: #f6764a;
     --note: #60a5fa;
     --bookmark: #f2b459;
     --like: #f97070;
@@ -46,6 +51,28 @@
     --listen: #f472b6;
   }
 }
+:root[data-theme="dark"] {
+  --bg: #1b1b1d;
+  --surface: #242526;
+  --text: #e3e3e3;
+  --text-muted: #a0a3a8;
+  --border: #444950;
+  --accent: #f6764a;
+  --note: #60a5fa;
+  --bookmark: #f2b459;
+  --like: #f97070;
+  --reply: #4ade80;
+  --rsvp: #a78bfa;
+  --repost: #22d3ee;
+  --event: #f472b6;
+  --article: #d6d3d1;
+  --photo: #2dd4bf;
+  --checkin: #fb923c;
+  --review: #eab308;
+  --read: #818cf8;
+  --watch: #c084fc;
+  --listen: #f472b6;
+}
 
 * { box-sizing: border-box; }
 
@@ -53,7 +80,121 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  padding-top: 3.75rem; /* clears the fixed navbar */
+}
+
+/* ---- Shared navbar (mirrors www.rauljimenez.info) --------------------- */
+
+nav.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  height: 3.75rem;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.site-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  margin-right: 1rem; /* matches .navbar__brand on www.rauljimenez.info */
+}
+.site-nav__brand img {
+  height: 2rem;
+  width: auto;
+  display: block;
+}
+
+/* Links sit next to the logo on the left, as on www.rauljimenez.info —
+   same 16px size, so switching between the two sites isn't noticeable. */
+.site-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem 1.5rem;
+  flex-wrap: wrap;
+  font-size: 1rem;
+}
+
+.site-nav__link {
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0.25rem 0;
+}
+.site-nav__link:hover { color: var(--accent); }
+.site-nav__link[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Language + light/dark controls — pushed to the right like the Docusaurus
+   navbar's language selector + theme toggle. */
+.site-nav__tools {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.site-nav__lang,
+.site-nav__theme {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.35rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.site-nav__lang { padding: 0.35rem 0.45rem; font-size: 0.85rem; }
+.site-nav__lang:hover,
+.site-nav__theme:hover {
+  color: var(--accent);
+  background: var(--border);
+}
+.site-nav__lang svg,
+.site-nav__theme svg { display: block; }
+/* Show the icon for the current mode (sun in light, moon in dark). The
+   button only does anything with JS, and theme-init always sets an explicit
+   [data-theme] then, so keying off the attribute is enough. */
+.site-nav__theme .icon-moon { display: none; }
+:root[data-theme="dark"] .site-nav__theme .icon-sun { display: none; }
+:root[data-theme="dark"] .site-nav__theme .icon-moon { display: block; }
+
+/* Language: HEAD_INIT_SCRIPT sets [data-lang] pre-paint from ?lang /
+   localStorage / the browser's languages, so a visitor who was browsing
+   www.rauljimenez.info/es/ keeps Spanish chrome here. No JS → English (the
+   static default). Both variants are in the HTML; one is hidden. */
+:root:not([data-lang="es"]) .i18n-es { display: none; }
+:root[data-lang="es"] .i18n-en { display: none; }
+
+@media (max-width: 34rem) {
+  /* Not enough width to keep the full nav on one fixed-height row and no
+     hamburger here — let it sit inline at the top of the page instead. */
+  nav.site-nav {
+    position: static;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.95rem; }
+  .site-nav__tools { margin-left: 0; }
+  body { padding-top: 0; }
 }
 
 .wrap {
@@ -62,33 +203,41 @@ body {
   padding: 2.5rem 1.25rem 4rem;
 }
 
+/* Page intro block (index + deeper timeline pages). */
+/* Kept in the DOM for the document outline / screen readers / SEO, but off
+   the screen — see the note on redundant headings in README. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 header.site {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
   margin-bottom: 2rem;
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border);
 }
 
-header.site h1 {
-  font-size: 1.15rem;
-  margin: 0;
+header.site h1:not(.visually-hidden) {
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
 }
 
-header.site h1 a {
-  color: var(--text);
-  text-decoration: none;
-}
-
-header.site .about {
-  font-size: 0.85rem;
+header.site .page-intro {
+  font-size: 0.92rem;
   color: var(--text-muted);
+  margin: 0;
+  line-height: 1.55;
 }
 
-header.site .about a { color: var(--text-muted); }
+header.site .page-intro a { color: var(--accent); }
 
 .badge {
   display: inline-block;
@@ -123,7 +272,12 @@ header.site .about a { color: var(--text-muted); }
 }
 .review-rating .p-rating { font-weight: 600; color: var(--review); }
 
-article.h-entry img.u-photo {
+/* Any image in a rendered post body / article, whatever the h-* type — the
+   markdown `![](…)` images in review/read/note bodies included. */
+article .content img,
+article.h-entry img.u-photo,
+article.h-review img,
+article.h-event img {
   max-width: 100%;
   height: auto;
   border-radius: 10px;
@@ -357,6 +511,29 @@ a { color: var(--accent); }
 
 .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.9rem; }
 
+/* ---- Timeline pagination --------------------------------------------- */
+
+nav.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.pager__link { color: var(--accent); text-decoration: none; }
+.pager__link:hover { text-decoration: underline; }
+
+#timeline-end { height: 1px; }
+
+/* ---- /about/ prose -------------------------------------------------- */
+
+.prose h1 { font-size: 1.6rem; margin: 0 0 1rem; }
+.prose h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
+.prose p { margin: 0.8rem 0; }
+
 /* POSSE: links to the syndicated copies (u-syndication). */
 .syndication {
   margin-top: 0.4rem;
@@ -364,6 +541,13 @@ a { color: var(--accent); }
   color: var(--text-muted);
 }
 .syndication a { color: var(--text-muted); text-decoration: underline; }
+
+/* "Translate this post" — sits inline in the permalink row. */
+.translate-link {
+  white-space: nowrap;
+  text-decoration: none;
+}
+.translate-link:hover { text-decoration: underline; }
 
 /* Inline author byline (p-author h-card) — compact avatar + name. */
 .p-author.h-card {
@@ -383,3 +567,120 @@ a { color: var(--accent); }
 
 /* Belt and braces: the representative h-card carries [hidden] already. */
 [hidden] { display: none !important; }
+
+/* ---- Webmentions (filled in by /webmentions.js on post pages) -------- */
+.webmentions {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.webmentions__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+/* Facepile: likes / reposts / bookmarks as rows of avatars. */
+.webmentions__facepile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.webmentions__group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.webmentions__faces {
+  display: flex;
+}
+
+.webmentions__faces a {
+  display: block;
+  margin-left: -8px;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+.webmentions__faces a:first-child { margin-left: 0; }
+.webmentions__faces a:hover { transform: translateY(-2px); z-index: 2; }
+
+.webmentions__face,
+.webmentions__avatar {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.webmentions__count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.webmentions__group.is-like .webmentions__count { color: var(--like); }
+.webmentions__group.is-repost .webmentions__count { color: var(--repost); }
+.webmentions__group.is-bookmark .webmentions__count { color: var(--bookmark); }
+
+/* Replies + mentions as cards. */
+.webmentions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.webmentions__item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.webmentions__avatar { flex: 0 0 auto; box-shadow: none; }
+
+.webmentions__body { min-width: 0; flex: 1; }
+
+.webmentions__meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.webmentions__author {
+  display: inline;
+  font-weight: 600;
+  white-space: normal;
+  color: var(--text);
+  text-decoration: none;
+}
+.webmentions__author:hover { text-decoration: underline; }
+
+.webmentions__text {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.webmentions__source {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

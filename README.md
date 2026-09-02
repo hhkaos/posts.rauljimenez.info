@@ -8,6 +8,38 @@ used to experiment with
 site at [www.rauljimenez.info](https://www.rauljimenez.info/) (built with
 Docusaurus, hosted separately).
 
+## Running it locally
+
+You only need [Node](https://nodejs.org/) 18+ (CI uses 22). No database, no
+Indiekit — the renderer just reads the Markdown files in this repo.
+
+```bash
+npm install        # once
+
+npm run dev         # build + serve + rebuild on every change
+```
+
+`npm run dev` prints a URL (`http://localhost:8787/`, or the next free port
+if that's taken). Open it, edit a post file or `scripts/render.mjs` /
+`scripts/style.css`, and it re-renders within ~150 ms — **refresh the
+browser** to see it (there's no live-reload).
+
+While previewing, permalinks and feed links point at the local server (via
+the `PREVIEW_BASE` env var the dev server sets) so you can click around. The
+logo in the header is still loaded from `www.rauljimenez.info`.
+
+Other scripts:
+
+| Command | What it does |
+| --- | --- |
+| `npm run build` | Render `_site/` once (production URLs). |
+| `npm run serve` | Serve the current `_site/` without rebuilding. |
+| `npm run verify` | Parse the built HTML and check the author microformats2. |
+| `node scripts/screenshot.mjs` | Regenerate the per-post OG / syndication PNGs (needs `npx playwright install chromium`). |
+
+`_site/` is git-ignored and rebuilt from scratch each time; deleting it is
+always safe.
+
 ## Structure
 
 | Folder       | Post type | Notes                                        |
@@ -31,6 +63,10 @@ Docusaurus, hosted separately).
 > `photos/` with `post-type: photo` (its Post Type Discovery can't be
 > reordered). `render.mjs` renders any post with a `checkin` property as a
 > check-in regardless of folder.
+
+An optional `lang:` property (`es` / `en`) pins the post's language;
+without it the language is detected from the body (see *Content language
+per post* below).
 
 Each file's YAML front matter includes a `visibility` property
 (`public` / `unlisted` / `private`). **Everything created through the
@@ -114,6 +150,115 @@ Card content per type is built by `feedEntry()` / `renderFeedCard()`. The
 timeline still carries no microformats (no `h-feed`/`h-entry`) — same
 reason the index has no h-card (above).
 
+### Pagination + infinite scroll
+
+The timeline is split into pages of `PAGE_SIZE` (20; override with the
+`TIMELINE_PAGE_SIZE` env var when testing) — `/` is page 1, the rest are
+`/page/2/`, `/page/3/`, … Each page stands alone with working
+`← Newer` / `Older →` links (`rel="prev"`/`rel="next"`), so it works with
+JS disabled. `scripts/timeline.js` (copied to `_site/` next to `style.css`,
+loaded `defer` on every page) is a small progressive enhancement: an
+`IntersectionObserver` on the `#timeline-end` sentinel fetches the next
+page, splices its `.timeline` cards in — deduping a day heading repeated at
+the seam — and follows that page's own sentinel until exhausted.
+
+### Atom feed
+
+`scripts/render.mjs` writes `_site/feed.xml` (Atom 1.0) from the same sorted
+index it already builds — no extra pass over the content tree. Newest
+`FEED_MAX` (50) posts; each entry carries the timeline action line + the
+rendered Markdown body + first image as `content type="html"`. Every page
+links it via `<link rel="alternate" type="application/atom+xml">`, and the
+footer / `/about/` link it visibly.
+
+### Titles, favicon & social sharing
+
+- **`<title>` / `og:title`** are always branded with the full name —
+  `fullTitle()` → `Raúl Jiménez Ortega | <page>` (`… | Activity`,
+  `… | About this feed`, `… | <post title>`), matching
+  `www.rauljimenez.info`.
+- **Favicon**: `scripts/favicon.ico` is a copy of
+  `www.rauljimenez.info/img/favicon.ico`, copied to `_site/favicon.ico` and
+  linked from every page (so the site is self-contained, not hotlinking).
+- **Open Graph + Twitter** tags are emitted on **every** page by `page()`
+  (previously only post pages had them): `description`, `author`,
+  `canonical`, `og:site_name/locale/type/title/description/url/image`,
+  `og:image:alt`, `twitter:card=summary_large_image` + title/description/
+  image/alt, and `article:published_time` / `article:author` on posts.
+- **`og:image`**: post pages use their own `screenshot.png`; the timeline,
+  `/about/` and any fallback use **`_site/social-card.png`** — a **1200×630**
+  (the size every network recommends) shot of the landing page written by
+  `scripts/screenshot.mjs` (`shootSocialCard()`), alongside the per-post
+  screenshots. `og:image:width/height` are emitted only for that card
+  (post screenshots are cropped to the post, so their size varies).
+
+### Shared header + `/about/`
+
+Every page carries a fixed navbar that mirrors the Docusaurus navbar on
+`www.rauljimenez.info` (logo, links back to the main site's sections, the
+orange `#f05924` accent, `system-ui` font, matched light/dark palette) so
+the two sites read as one. The logo is **hotlinked** from
+`www.rauljimenez.info/img/rauljimenez.info.png` (same owner) — vendor it
+into this repo if that dependency is unwanted. Nav config is the
+`NAV_LINKS` / `LOGO_URL` constants in `render.mjs`.
+
+The navbar has the same **light/dark toggle** and **language selector** as
+the main site. Both are driven by `HEAD_INIT_SCRIPT` (inline in `<head>`,
+runs before first paint so there's no flash) which sets `[data-theme]` and
+`[data-lang]` on `<html>`; `style.css` shows the right palette / language
+variant off those attributes. Language is picked from `?lang=es|en`
+(remembered in `localStorage`), else `localStorage`, else
+`navigator.languages` — so a visitor arriving from
+`www.rauljimenez.info/es/` keeps Spanish header, nav, intro and footer.
+Both language variants are emitted in the HTML (`.i18n-en` / `.i18n-es`);
+with no JS the English default shows.
+
+**Headings.** The navbar already marks the current section, so the
+timeline's `<h1>` ("Activity" / "Actividad") would just repeat it — it's
+kept in the DOM but `.visually-hidden` (off-screen, still read by screen
+readers and counted for the outline / SEO), leaving the intro paragraph as
+the visible masthead. Conversely, post pages whose type has no visible
+title (note, bookmark, like, reply, RSVP, repost, check-in, read, watch,
+listen, untitled photo/review) now get a `.visually-hidden` `<h1>` so every
+page has exactly one. Visible titles (articles, events, named
+photos/reviews) are unchanged.
+
+The selector only switches the **chrome** — it sets `[data-lang]`, *not*
+`<html lang>`. `<html lang>` is set per page from the **content** language
+(see below) and must stay put so the browser's own "translate this page"
+offer targets the right language.
+
+### Content language per post
+
+Posts are written in Spanish or English, freely mixed in the timeline.
+Each post's language is resolved by `postLang()` in `render.mjs`:
+
+- an explicit **`lang:` in the front matter** (`es` / `en`) always wins —
+  the manual override;
+- otherwise `franc` (`franc-min`, offline, no API) guesses from the body,
+  restricted to Spanish/English;
+- anything it can't call confidently falls back to `SITE_DEFAULT_LANG`
+  (`en` — also the language of the feed metadata and `/about/`).
+
+Detection is reliable for a sentence or more of real prose; it can miss on
+very short or place-name-heavy posts (e.g. an English note full of Spanish
+toponyms) — add `lang: en` / `lang: es` to that file to fix it.
+
+The resolved language is emitted as `<html lang>` on the post page,
+`lang=""` on the post `<article>` and on each timeline card `<li class="fc">`,
+and `xml:lang` on each Atom `<entry>`. Post pages also get a small
+**"🌐 Ver en español" / "🌐 See in English"** link (in the permalink row)
+pointing at Google Translate's page proxy — free, no key; the browser's
+native page translation is the more durable path and now fires correctly
+because `<html lang>` is right.
+
+`/about/` (`renderAboutHtml()`) explains what this feed is: a
+platform-independent social timeline, the IndieWeb rationale
+(`indieweb.org/why` + `/principles`), POSSE, the GitHub repo as the
+canonical record, why not mainstream social media (*The Social Dilemma*),
+and the content license. **All content on the site is CC BY 4.0**; the
+`/about/` page is the canonical statement of that.
+
 ### Syndication links (POSSE / `u-syndication`)
 
 Posts syndicated to Mastodon/Bluesky carry a `syndication:` list (status
@@ -122,6 +267,33 @@ URLs) in their front matter, written back by Indiekit's
 `<a class="u-syndication">` link ("Also posted on Mastodon, Bluesky") under
 the permalink — the IndieWeb-standard way to point the canonical post at
 its copies, and what Bridgy-style backfeed matches against.
+
+### Received Webmentions (`scripts/webmentions.js`)
+
+Every page advertises a Webmention endpoint
+(`<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">`
+— the hosted webmention.io account shared with `www.`/`links.rauljimenez.info`).
+Individual post pages also carry a `<section id="webmentions" hidden>` and load
+`scripts/webmentions.js` (`defer`, copied to `_site/` next to `style.css` /
+`timeline.js`). Same split as the representative h-card: the `page()` helper's
+`webmentions` option defaults to `repCard`, so the index and `/about/` don't
+get it.
+
+The script is a dependency-free progressive enhancement: on load it reads the
+page's `<link rel="canonical">`, queries webmention.io's public
+`api/mentions.jf2` for that target (both slash forms), and fills the section
+in — likes / reposts / bookmarks as an avatar facepile, replies + mentions as
+cards. Remote content is inserted with `textContent` only. If there's nothing
+to show (or the fetch fails) the section stays `hidden`, so a post with no
+responses renders nothing. `screenshot.mjs` hides `.webmentions`.
+
+Reactions on the Mastodon/Bluesky copies show up here once Bridgy
+(<https://brid.gy>) is pointed at the syndicated accounts to back-feed them as
+Webmentions — not set up yet.
+
+The same widget exists (less tidily) as a React component in
+`hhkaos/hhkaos.github.io` and inline in `hhkaos/littlelink`; unifying the
+three into one shared module is tracked in `hhkaos/littlelink`.
 
 This repo itself is not built or deployed to www.rauljimenez.info. It is
 read and written by the Indiekit server via the GitHub API
