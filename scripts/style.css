@@ -24,8 +24,11 @@
   --listen: #db2777;
 }
 
+/* Dark palette. `theme-init` (inline in <head>) normally sets an explicit
+   [data-theme] before first paint, so the media query is just the
+   JS-disabled fallback — the two blocks must stay in sync. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #1b1b1d;
     --surface: #242526;
     --text: #e3e3e3;
@@ -47,6 +50,28 @@
     --watch: #c084fc;
     --listen: #f472b6;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1b1d;
+  --surface: #242526;
+  --text: #e3e3e3;
+  --text-muted: #a0a3a8;
+  --border: #444950;
+  --accent: #f6764a;
+  --note: #60a5fa;
+  --bookmark: #f2b459;
+  --like: #f97070;
+  --reply: #4ade80;
+  --rsvp: #a78bfa;
+  --repost: #22d3ee;
+  --event: #f472b6;
+  --article: #d6d3d1;
+  --photo: #2dd4bf;
+  --checkin: #fb923c;
+  --review: #eab308;
+  --read: #818cf8;
+  --watch: #c084fc;
+  --listen: #f472b6;
 }
 
 * { box-sizing: border-box; }
@@ -88,13 +113,14 @@ nav.site-nav {
   display: block;
 }
 
-/* Links sit next to the logo on the left, as on www.rauljimenez.info. */
+/* Links sit next to the logo on the left, as on www.rauljimenez.info —
+   same 16px size, so switching between the two sites isn't noticeable. */
 .site-nav__links {
   display: flex;
   align-items: center;
   gap: 0.25rem 1.5rem;
   flex-wrap: wrap;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .site-nav__link {
@@ -109,6 +135,32 @@ nav.site-nav {
   font-weight: 600;
 }
 
+/* Light/dark toggle — pushed to the right like the Docusaurus one. */
+.site-nav__theme {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.site-nav__theme:hover {
+  color: var(--accent);
+  background: var(--border);
+}
+.site-nav__theme svg { display: block; }
+/* Show the icon for the current mode (sun in light, moon in dark). The
+   button only does anything with JS, and theme-init always sets an explicit
+   [data-theme] then, so keying off the attribute is enough. */
+.site-nav__theme .icon-moon { display: none; }
+:root[data-theme="dark"] .site-nav__theme .icon-sun { display: none; }
+:root[data-theme="dark"] .site-nav__theme .icon-moon { display: block; }
+
 @media (max-width: 34rem) {
   /* Not enough width to keep the full nav on one fixed-height row and no
      hamburger here — let it sit inline at the top of the page instead. */
@@ -119,7 +171,8 @@ nav.site-nav {
     gap: 0.4rem 0.75rem;
     padding: 0.6rem 0.75rem;
   }
-  .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.82rem; }
+  .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.95rem; }
+  .site-nav__theme { margin-left: 0; padding: 0.35rem 0; }
   body { padding-top: 0; }
 }
 
