@@ -95,7 +95,6 @@ nav.site-nav {
   height: 3.75rem;
   display: flex;
   align-items: center;
-  gap: 1.25rem;
   padding: 0 1rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -106,6 +105,7 @@ nav.site-nav {
   display: inline-flex;
   align-items: center;
   flex: none;
+  margin-right: 1rem; /* matches .navbar__brand on www.rauljimenez.info */
 }
 .site-nav__brand img {
   height: 2rem;
