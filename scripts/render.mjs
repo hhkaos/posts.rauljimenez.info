@@ -11,6 +11,7 @@
 import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { franc } from "franc-min";
 import MarkdownIt from "markdown-it";
 import YAML from "yaml";
 
@@ -154,6 +155,38 @@ function escapeHtml(string) {
   return String(string).replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[c]);
+}
+
+// Language of the site's own furniture (feed metadata, /about/ prose) and
+// the fallback for a post whose language can't be told. Posts are written
+// in either Spanish or English; nothing else is distinguished.
+const SITE_DEFAULT_LANG = "en";
+
+// Content language of one post, used for `<html lang>` / `xml:lang` / the
+// per-card `lang` on the timeline, and to aim the "translate" link. An
+// explicit `lang:` in the front matter always wins (that's the manual
+// override for when detection is wrong, or for very short posts); otherwise
+// `franc` guesses offline — no API — restricted to es/en, and anything it
+// can't call confidently falls back to the site default.
+function postLang(properties, content) {
+  const explicit = String(properties.lang || "").trim().toLowerCase().slice(0, 2);
+  if (explicit === "es" || explicit === "en") return explicit;
+  const code = franc(markdownToPlain(content || ""), { only: ["spa", "eng"], minLength: 12 });
+  if (code === "spa") return "es";
+  if (code === "eng") return "en";
+  return SITE_DEFAULT_LANG;
+}
+
+// "Translate this post" link. Browsers don't expose their built-in page
+// translation to JS, so this points at Google Translate's page proxy —
+// free, no key. Label + target language are the *other* of es/en, so it
+// reads to the person who needs it. Empty when the language is unknown.
+function translateLink(url, lang) {
+  if (lang !== "es" && lang !== "en") return "";
+  const to = lang === "es" ? "en" : "es";
+  const label = lang === "es" ? "See in English" : "Ver en español";
+  const href = `https://translate.google.com/translate?sl=${lang}&tl=${to}&u=${encodeURIComponent(url)}`;
+  return `<a class="translate-link" href="${escapeHtml(href)}" hreflang="${to}" rel="nofollow noopener">🌐 ${label}</a>`;
 }
 
 function parsePost(raw) {
@@ -326,11 +359,14 @@ ${navLinks("es")}
 }
 
 // Runs before first paint (inline, in <head>) so there's no flash of the
-// wrong theme or language.
+// wrong theme or chrome language.
 //   theme: an explicit choice from localStorage, else the OS preference.
-//   lang:  ?lang=es|en (remembered), else localStorage, else the browser's
-//          languages — so someone who was reading www.rauljimenez.info/es/
-//          keeps Spanish chrome here. No JS → English (the static default).
+//   lang:  this only switches the site's *chrome* (nav, footer, headings)
+//          via [data-lang] — NOT `<html lang>`, which is set server-side to
+//          the language of the post/page content and must stay put so the
+//          browser's own "translate this page" offer is correct.
+//          ?lang=es|en (remembered), else localStorage, else the browser's
+//          languages. No JS → English chrome (the static default).
 const HEAD_INIT_SCRIPT = `<script>
 (function(){var d=document.documentElement;
 function mq(q){return window.matchMedia&&matchMedia(q).matches}
@@ -343,12 +379,12 @@ try{var s=localStorage.getItem("lang");if(s==="es"||s==="en")return s}catch(e){}
 var ls=navigator.languages||[navigator.language||"en"];
 for(var i=0;i<ls.length;i++){if(/^es/i.test(ls[i]))return "es"}
 return "en"}
-var lang=pickLang();d.dataset.lang=lang;d.lang=lang;
+var lang=pickLang();d.dataset.lang=lang;
 addEventListener("DOMContentLoaded",function(){
 var tb=document.querySelector(".site-nav__theme");
 if(tb)tb.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}});
 var lb=document.querySelector(".site-nav__lang");
-if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"es";d.dataset.lang=n;d.lang=n;try{localStorage.setItem("lang",n)}catch(e){}});
+if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"es";d.dataset.lang=n;try{localStorage.setItem("lang",n)}catch(e){}});
 });})();
 </script>`;
 
@@ -361,7 +397,7 @@ if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"e
 // person card and stop looking for the target link in the page body, which
 // breaks Webmentions *sent from* the index. Post pages have an h-entry that
 // outranks the h-card, so it's safe (and useful) there.
-function page({ title, body, og, repCard = true }) {
+function page({ title, body, og, repCard = true, lang = SITE_DEFAULT_LANG }) {
   const socialMeta = og
     ? `
 <link rel="canonical" href="${escapeHtml(og.url)}">
@@ -375,7 +411,7 @@ ${og.image ? `<meta property="og:image" content="${escapeHtml(og.image)}">` : ""
     : "";
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${escapeHtml(lang)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -409,8 +445,9 @@ ${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${
 </div>`;
 }
 
-function renderPermalink(url, properties) {
-  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}</p>${syndicationLinks(properties)}`;
+function renderPermalink(url, properties, lang) {
+  const translate = translateLink(url, lang);
+  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}${translate ? ` · ${translate}` : ""}</p>${syndicationLinks(properties)}`;
 }
 
 // IndieWeb POSSE: link the canonical post to its syndicated copies with
@@ -457,10 +494,11 @@ function renderEventHtml({ url, properties, content }) {
   const end = properties.end || "";
   const location = locationText(properties.location);
   const eventUrl = properties.url;
+  const lang = postLang(properties, content);
 
   const body = `
 ${BACK_LINK}
-<article class="h-event">
+<article class="h-event" lang="${lang}">
 ${renderMetaRow("event", published)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <p class="event-when">
@@ -474,12 +512,13 @@ ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : 
   eventUrl
     ? `<a href="${escapeHtml(url)}">Permalink</a>`
     : `<a class="u-url" href="${escapeHtml(url)}">Permalink</a>`
-} · ${authorHCard()}</p>${syndicationLinks(properties)}
+} · ${authorHCard()}${translateLink(url, lang) ? ` · ${translateLink(url, lang)}` : ""}</p>${syndicationLinks(properties)}
 </article>`;
 
   const when = [formatDate(start), end && `– ${formatDate(end)}`].filter(Boolean).join(" ");
   return page({
     title: name,
+    lang,
     body,
     og: {
       url,
@@ -508,19 +547,21 @@ function photoImgs(photos) {
 function renderPhotoHtml({ url, properties, content }) {
   const published = properties.published || "";
   const photos = photoList(properties.photo);
+  const lang = postLang(properties, content);
 
   const body = `
 ${BACK_LINK}
-<article class="h-entry">
+<article class="h-entry" lang="${lang}">
 ${renderMetaRow("photo", published)}
 ${properties.name ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>` : ""}
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: properties.name || `Photo — ${formatDate(published)}`,
+    lang,
     body,
     og: { url, type: "article", image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
   });
@@ -530,16 +571,18 @@ ${renderPermalink(url, properties)}
 function renderArticleHtml({ url, properties, content }) {
   const published = properties.published || "";
   const name = properties.name || "Article";
+  const lang = postLang(properties, content);
   const body = `
 ${BACK_LINK}
-<article class="h-entry">
+<article class="h-entry" lang="${lang}">
 ${renderMetaRow("article", published)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <div class="content e-content">${renderMarkdown(content)}</div>
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
   return page({
     title: name,
+    lang,
     body,
     og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
   });
@@ -564,18 +607,20 @@ function renderCheckinHtml({ url, properties, content }) {
   }${lat && lon ? `<data class="p-latitude" value="${escapeHtml(lat)}"></data><data class="p-longitude" value="${escapeHtml(lon)}"></data>` : ""}</span>`;
 
   const photos = photoList(properties.photo);
+  const lang = postLang(properties, content);
   const body = `
 ${BACK_LINK}
-<article class="h-entry">
+<article class="h-entry" lang="${lang}">
 ${renderMetaRow("checkin", published)}
 <p class="target">📍 Checked in at ${venue}</p>
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: `Check-in at ${name}`,
+    lang,
     body,
     og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
   });
@@ -591,6 +636,7 @@ function renderReviewHtml({ url, properties, content }) {
   const rating = Number(properties.rating);
   const hasRating = Number.isFinite(rating);
   const headline = properties.name || "";
+  const lang = postLang(properties, content);
 
   const item = `<span class="p-item h-item">${
     itemUrl
@@ -600,17 +646,18 @@ function renderReviewHtml({ url, properties, content }) {
 
   const body = `
 ${BACK_LINK}
-<article class="h-review">
+<article class="h-review" lang="${lang}">
 ${renderMetaRow("review", published)}
 <p class="target">📝 Review of ${item}</p>
 ${headline ? `<h1 class="p-name">${escapeHtml(headline)}</h1>` : ""}
 ${hasRating ? `<p class="review-rating">Rating: <data class="p-rating" value="${rating}">${rating}</data><data class="p-best" value="5"></data><data class="p-worst" value="1"></data> / 5</p>` : ""}
 <div class="content e-content p-description">${renderMarkdown(content)}</div>
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: headline || `Review of ${itemName}`,
+    lang,
     body,
     og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
   });
@@ -636,6 +683,7 @@ function renderConsumedHtml(type, { url, properties, content }) {
   const hasRating = Number.isFinite(rating);
   const status = spec.statusProp ? String(properties[spec.statusProp] || "").toLowerCase() : "";
   const verb = status ? (READ_STATUS_LABEL[status] || spec.verb) : spec.verb;
+  const lang = postLang(properties, content);
 
   const work = `<span class="${spec.uClass} h-cite">${
     workUrl
@@ -645,16 +693,17 @@ function renderConsumedHtml(type, { url, properties, content }) {
 
   const body = `
 ${BACK_LINK}
-<article class="h-entry">
+<article class="h-entry" lang="${lang}">
 ${renderMetaRow(type, published)}
 ${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
 <p class="target">${spec.icon} ${escapeHtml(verb)} ${work}${hasRating ? ` — <data class="p-rating" value="${rating}">${rating}/5</data>` : ""}</p>
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   return page({
     title: `${verb} ${workName}`,
+    lang,
     body,
     og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
   });
@@ -676,21 +725,23 @@ function renderPostHtml({ type, url, properties, content }) {
   const target = targetOf(properties);
   const published = properties.published || "";
   const rsvp = type === "rsvp" ? properties.rsvp : "";
+  const lang = postLang(properties, content);
 
   const body = `
 ${BACK_LINK}
-<article class="h-entry">
+<article class="h-entry" lang="${lang}">
 ${renderMetaRow(type, published)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
 <div class="content e-content">${renderMarkdown(content)}</div>
-${renderPermalink(url, properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   const fallbackDescription =
     (TYPE_VERB[type] && target ? `${TYPE_VERB[type]} ${target}` : `${TYPE_LABEL[type]} · posts.rauljimenez.info`);
   return page({
     title: properties.name || `${TYPE_LABEL[type]} — ${formatDate(published)}`,
+    lang,
     body,
     og: {
       url,
@@ -713,7 +764,7 @@ function feedEntry(type, properties, content, _url) {
   const e = {
     type, badge: TYPE_LABEL[type], icon: "", action: "", subject: "",
     subjectUrl: "", author: "", rating: null, headline: "", excerpt: "",
-    images: [], contextHost: "", whenLine: "",
+    images: [], contextHost: "", whenLine: "", lang: postLang(properties, content),
   };
   const body = excerptOf(content);
 
@@ -843,7 +894,7 @@ function renderFeedCard(e, url, published) {
   const excerpt = e.excerpt ? `<p class="fc-excerpt">${escapeHtml(e.excerpt)}</p>` : "";
   const context = e.contextHost ? `<p class="fc-context">${escapeHtml(e.contextHost)}</p>` : "";
 
-  return `<li class="fc fc--${e.type}">
+  return `<li class="fc fc--${e.type}" lang="${escapeHtml(e.lang || SITE_DEFAULT_LANG)}">
 <a class="fc-perma" href="${escapeHtml(url)}" aria-label="Open this post"></a>
 <div class="fc-head">
 <span class="badge ${e.type}">${escapeHtml(e.badge)}</span>
@@ -920,7 +971,7 @@ function buildFeed(index) {
     const bodyHtml = item.contentHtml || "";
     const html = `${actionLine}${image}${bodyHtml}`.trim()
       || `<p>${escapeHtml(feedEntryTitle(item))}</p>`;
-    return `  <entry>
+    return `  <entry xml:lang="${xmlEscape(item.entry.lang || SITE_DEFAULT_LANG)}">
     <title>${xmlEscape(title)}</title>
     <link href="${xmlEscape(item.url)}"/>
     <id>${xmlEscape(item.url)}</id>

@@ -527,6 +527,13 @@ nav.pager {
 }
 .syndication a { color: var(--text-muted); text-decoration: underline; }
 
+/* "Translate this post" — sits inline in the permalink row. */
+.translate-link {
+  white-space: nowrap;
+  text-decoration: none;
+}
+.translate-link:hover { text-decoration: underline; }
+
 /* Inline author byline (p-author h-card) — compact avatar + name. */
 .p-author.h-card {
   display: inline-flex;

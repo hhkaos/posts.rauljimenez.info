@@ -64,6 +64,10 @@ always safe.
 > reordered). `render.mjs` renders any post with a `checkin` property as a
 > check-in regardless of folder.
 
+An optional `lang:` property (`es` / `en`) pins the post's language;
+without it the language is detected from the body (see *Content language
+per post* below).
+
 Each file's YAML front matter includes a `visibility` property
 (`public` / `unlisted` / `private`). **Everything created through the
 Indiekit server defaults to `public`** — it's an explicit act of
@@ -186,7 +190,36 @@ variant off those attributes. Language is picked from `?lang=es|en`
 `navigator.languages` — so a visitor arriving from
 `www.rauljimenez.info/es/` keeps Spanish header, nav, intro and footer.
 Both language variants are emitted in the HTML (`.i18n-en` / `.i18n-es`);
-with no JS the English default shows. Post-card content is English only.
+with no JS the English default shows.
+
+The selector only switches the **chrome** — it sets `[data-lang]`, *not*
+`<html lang>`. `<html lang>` is set per page from the **content** language
+(see below) and must stay put so the browser's own "translate this page"
+offer targets the right language.
+
+### Content language per post
+
+Posts are written in Spanish or English, freely mixed in the timeline.
+Each post's language is resolved by `postLang()` in `render.mjs`:
+
+- an explicit **`lang:` in the front matter** (`es` / `en`) always wins —
+  the manual override;
+- otherwise `franc` (`franc-min`, offline, no API) guesses from the body,
+  restricted to Spanish/English;
+- anything it can't call confidently falls back to `SITE_DEFAULT_LANG`
+  (`en` — also the language of the feed metadata and `/about/`).
+
+Detection is reliable for a sentence or more of real prose; it can miss on
+very short or place-name-heavy posts (e.g. an English note full of Spanish
+toponyms) — add `lang: en` / `lang: es` to that file to fix it.
+
+The resolved language is emitted as `<html lang>` on the post page,
+`lang=""` on the post `<article>` and on each timeline card `<li class="fc">`,
+and `xml:lang` on each Atom `<entry>`. Post pages also get a small
+**"🌐 Ver en español" / "🌐 See in English"** link (in the permalink row)
+pointing at Google Translate's page proxy — free, no key; the browser's
+native page translation is the more durable path and now fires correctly
+because `<html lang>` is right.
 
 `/about/` (`renderAboutHtml()`) explains what this feed is: a
 platform-independent social timeline, the IndieWeb rationale
