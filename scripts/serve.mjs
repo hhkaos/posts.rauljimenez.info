@@ -73,10 +73,12 @@ server.on("error", (error) => {
 server.on("listening", async () => {
   const { port } = server.address();
   console.log(`\n  Preview:  http://localhost:${port}/\n`);
-  if (WATCH) {
-    await render(port); // initial build, now that we know the real port
-    startWatch(port);
-  }
+  // Always re-render for the real port so every internal link / feed URL
+  // points at this preview, not production — whatever `_site/` held before
+  // (e.g. a prior `npm run build` with canonical URLs). `--watch` then only
+  // adds the rebuild-on-change loop.
+  await render(port);
+  if (WATCH) startWatch(port);
 });
 server.listen(PORT, "127.0.0.1");
 

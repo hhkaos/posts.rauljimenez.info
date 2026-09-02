@@ -126,7 +126,7 @@ async function main() {
 
   // Trim the site chrome so the post itself fills the card.
   const cardCss = `
-    nav.site-nav, header.site, a.back, footer.site, .webmentions { display: none !important; }
+    nav.site-nav, header.site, a.back, footer.site, .webmentions, .respond-toggle { display: none !important; }
     body { padding-top: 0 !important; }
     .wrap { padding: 2rem 2.5rem; max-width: none; }
     article .content { overflow: hidden; }

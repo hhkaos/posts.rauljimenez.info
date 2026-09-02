@@ -18,6 +18,11 @@
  * line to each card, batching every visible permalink into one API call and
  * watching for cards spliced in by the infinite scroll.
  *
+ * Also progressively enhances the post-page "Respond" area: the <details>
+ * toggle scrolls into view when opened on a phone, and on submit the form
+ * swaps to a thank-you line. Both the toggle and the form (which posts to a
+ * hidden iframe) work with JS disabled — this only adds the niceties.
+ *
  * Remote mention content is inserted with textContent only — never as HTML.
  *
  * Candidate shared module: the same job is done by a React component in
@@ -26,6 +31,40 @@
  */
 (function () {
   "use strict";
+
+  // "Respond" affordance — wired before the fetch/URL guard so it still
+  // works on browsers too old for the mentions fetch below. The <details>
+  // toggle and the form both work with no JS; this only adds niceties.
+  (function initRespond() {
+    var det = document.querySelector(".respond-toggle");
+    if (det) {
+      // On a phone the panel can open below the fold — pull it into view.
+      det.addEventListener("toggle", function () {
+        if (
+          det.open &&
+          window.matchMedia &&
+          window.matchMedia("(max-width: 34rem)").matches
+        ) {
+          det.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      });
+    }
+
+    var form = document.querySelector(".respond__form");
+    if (!form) return;
+    var block = form.closest(".respond__block") || form.parentNode;
+    var thanks = block.querySelector(".respond__thanks");
+    // The submit event only fires after constraint validation passes; the
+    // form still posts natively to its hidden iframe (works with JS off).
+    form.addEventListener("submit", function () {
+      setTimeout(function () {
+        [].forEach.call(block.children, function (el) {
+          if (el !== thanks) el.hidden = true;
+        });
+        if (thanks) thanks.hidden = false;
+      }, 0);
+    });
+  })();
 
   if (!window.fetch || !window.URL) return;
 

@@ -87,6 +87,10 @@ const toCanonical = (u) =>
   BASE_URL !== CANONICAL_BASE && u.startsWith(BASE_URL)
     ? CANONICAL_BASE + u.slice(BASE_URL.length)
     : u;
+// The shared webmention.io endpoint (the `links.rauljimenez.info` account).
+// Advertised in every page's <head> and posted to by the "Respond" form.
+const WEBMENTION_ENDPOINT =
+  "https://webmention.io/links.rauljimenez.info/webmention";
 const MAIN_SITE = "https://www.rauljimenez.info/";
 const MAIN_SITE_ES = "https://www.rauljimenez.info/es/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
@@ -159,12 +163,12 @@ function repHCard() {
 </div>`;
 }
 
-// Inline author for an h-entry / h-event / h-review. Parses as a nested
-// h-card with explicit `u-url`, `u-photo` and `p-name` children (implied
-// `url` is not derived once the h-card has a `u-photo` child, so it must
-// be explicit). Compact avatar styling lives in style.css (.p-author.h-card).
+// Nested author h-card for an h-entry / h-event / h-review. Not shown — the
+// site has one author (me) on every post, so a visible byline is noise — but
+// kept in the markup (hidden) as an explicit `author` property so Webmention
+// consumers that read a mention's author from mf2 still get name/url/photo.
 function authorHCard() {
-  return `<span class="p-author h-card"><a class="u-url" href="${AUTHOR_URL}" rel="author"><img class="u-photo" src="${AUTHOR_PHOTO}" alt=""><span class="p-name">${escapeHtml(AUTHOR_NAME)}</span></a></span>`;
+  return `<span class="p-author h-card" hidden><a class="p-name u-url" href="${AUTHOR_URL}" rel="author">${escapeHtml(AUTHOR_NAME)}</a><img class="u-photo" src="${AUTHOR_PHOTO}" alt=""></span>`;
 }
 
 // Mirrors the default applied in indiekit.config.js's postTemplate:
@@ -208,7 +212,8 @@ function translateLink(url, lang) {
   if (lang !== "es" && lang !== "en") return "";
   const to = lang === "es" ? "en" : "es";
   const label = lang === "es" ? "See in English" : "Ver en español";
-  const href = `https://translate.google.com/translate?sl=${lang}&tl=${to}&u=${encodeURIComponent(url)}`;
+  // Always the canonical URL — Google Translate can't fetch a localhost preview.
+  const href = `https://translate.google.com/translate?sl=${lang}&tl=${to}&u=${encodeURIComponent(toCanonical(url))}`;
   return `<a class="translate-link" href="${escapeHtml(href)}" hreflang="${to}" rel="nofollow noopener">🌐 ${label}</a>`;
 }
 
@@ -362,6 +367,16 @@ function navLinks(lang) {
 function siteNav() {
   return `<nav class="site-nav">
 <a class="site-nav__brand" href="${MAIN_SITE}"><img src="${LOGO_URL}" alt="Raúl Jiménez Ortega"></a>
+<button class="site-nav__toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="site-nav-menu">
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+</button>
+<div class="site-nav__menu" id="site-nav-menu">
+<div class="site-nav__drawer-head">
+<span class="i18n-en">Menu</span><span class="i18n-es">Menú</span>
+<button class="site-nav__close" type="button" aria-label="Close menu">
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41L10.59 13.4l-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.29z"/></svg>
+</button>
+</div>
 <div class="site-nav__links i18n-en">
 ${navLinks("en")}
 </div>
@@ -378,6 +393,8 @@ ${navLinks("es")}
 <svg class="icon-moon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27A7.014 7.014 0 0 1 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49z"/></svg>
 </button>
 </div>
+</div>
+<div class="site-nav__backdrop" hidden></div>
 </nav>`;
 }
 
@@ -408,6 +425,14 @@ var tb=document.querySelector(".site-nav__theme");
 if(tb)tb.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}});
 var lb=document.querySelector(".site-nav__lang");
 if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"es";d.dataset.lang=n;try{localStorage.setItem("lang",n)}catch(e){}});
+var nav=document.querySelector(".site-nav");
+if(nav){var tg=nav.querySelector(".site-nav__toggle"),cl=nav.querySelector(".site-nav__close"),bd=nav.querySelector(".site-nav__backdrop");
+function setMenu(o){nav.classList.toggle("is-open",o);document.body.classList.toggle("nav-open",o);if(bd)bd.hidden=!o;if(tg)tg.setAttribute("aria-expanded",o?"true":"false");}
+if(tg)tg.addEventListener("click",function(){setMenu(!nav.classList.contains("is-open"))});
+if(cl)cl.addEventListener("click",function(){setMenu(false)});
+if(bd)bd.addEventListener("click",function(){setMenu(false)});
+document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(false)});
+[].forEach.call(nav.querySelectorAll(".site-nav__link"),function(a){a.addEventListener("click",function(){setMenu(false)})});}
 });})();
 </script>`;
 
@@ -471,7 +496,7 @@ function page({ title, body, og, repCard = true, webmentions = repCard, lang = S
 <title>${escapeHtml(branded)}</title>${socialMeta}
 ${HEAD_INIT_SCRIPT}
 <link rel="icon" href="/favicon.ico">
-<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">
+<link rel="webmention" href="${WEBMENTION_ENDPOINT}">
 <link rel="stylesheet" href="/style.css">
 <link rel="alternate" type="application/atom+xml" title="Raúl Jiménez — Activity" href="/feed.xml">
 </head>
@@ -515,41 +540,147 @@ function webmentionsSection(pageUrl) {
 </section>`;
 }
 
-function renderMetaRow(type, published) {
+// The date at the top of a post *is* the permalink (standard h-entry
+// pattern) — it carries `u-url` + `dt-published`, so there's no separate
+// visible "Permalink" line further down (you're already on the page).
+function renderMetaRow(type, published, url) {
+  const date = published
+    ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(formatDateTime(published))}</time>`
+    : "";
+  const dateLink =
+    date && url
+      ? `<a class="u-url permalink" href="${escapeHtml(url)}">${date}</a>`
+      : date || (url ? `<a class="u-url" href="${escapeHtml(url)}" hidden></a>` : "");
   return `<div class="meta">
 <span class="badge ${type}">${escapeHtml(TYPE_LABEL[type])}</span>
-${published ? `<time class="dt-published" datetime="${escapeHtml(published)}">${escapeHtml(formatDateTime(published))}</time>` : ""}
+${dateLink}
 </div>`;
 }
 
+// The footer row under a post: only the "translate" link when it applies,
+// plus the hidden nested author h-card (kept for Webmention consumers that
+// read the mention's author from mf2 — it's the site owner on every post,
+// so there's nothing to gain from showing it).
 function renderPermalink(url, properties, lang) {
   const translate = translateLink(url, lang);
-  return `<p style="margin-top:1.5rem"><a class="u-url" href="${escapeHtml(url)}">Permalink</a> · ${authorHCard()}${translate ? ` · ${translate}` : ""}</p>${syndicationLinks(properties)}`;
+  const footer = translate
+    ? `<p class="post-footer">${translate}</p>`
+    : "";
+  return `${footer}${authorHCard()}${respondSection(url, properties, lang)}`;
 }
 
-// IndieWeb POSSE: link the canonical post to its syndicated copies with
-// `u-syndication` (also lets Bridgy-style backfeed match them). `syndication`
-// in the front matter is an array of status URLs written back by
-// @indiekit/endpoint-syndicate.
-const SYNDICATION_LABEL = {
-  "mastodon.social": "Mastodon",
-  "bsky.app": "Bluesky",
+// The "Respond" block under each post: the IndieWeb reply affordance.
+// It folds in what used to be a separate "Also posted on …" line — the
+// per-network links here still carry `class="u-syndication"`, so the
+// canonical post stays machine-linked to its syndicated copies (POSSE best
+// practice, and how Bridgy-style backfeed matches them).
+//
+// `syndication` in the front matter is an array of status URLs written back
+// by @indiekit/endpoint-syndicate.
+const SYNDICATION_NETWORKS = {
+  "mastodon.social": {
+    label: "Mastodon",
+    cls: "is-mastodon",
+    // simple-icons: Mastodon
+    icon: '<path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.66 9.143c.073 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.222-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.667-1.67 1.976v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.504 2.962 1.51l.638 1.06.638-1.06c.66-1.006 1.65-1.51 2.96-1.51 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z"/>',
+  },
+  "bsky.app": {
+    label: "Bluesky",
+    cls: "is-bluesky",
+    // simple-icons: Bluesky
+    icon: '<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C16.046 4.747 13.087 8.686 12 10.8z"/>',
+  },
 };
-function syndicationLabel(href) {
+function syndicationNetwork(href) {
   try {
     const host = new URL(href).hostname.replace(/^www\./, "");
-    return SYNDICATION_LABEL[host] || host;
+    return (
+      SYNDICATION_NETWORKS[host] || {
+        label: host,
+        cls: "",
+        icon: '<path d="M12 0a12 12 0 100 24 12 12 0 000-24zm0 4.8a2.4 2.4 0 110 4.8 2.4 2.4 0 010-4.8zM12 19.2a5.76 5.76 0 01-4.8-2.573c.024-1.59 3.2-2.46 4.8-2.46 1.591 0 4.776.87 4.8 2.46A5.76 5.76 0 0112 19.2z"/>',
+      }
+    );
   } catch {
-    return href;
+    return null;
   }
 }
-function syndicationLinks(properties) {
-  const urls = [].concat(properties?.syndication || []).filter((u) => typeof u === "string" && u);
-  if (!urls.length) return "";
-  const links = urls
-    .map((u) => `<a class="u-syndication" href="${escapeHtml(u)}">${escapeHtml(syndicationLabel(u))}</a>`)
-    .join(", ");
-  return `\n<p class="syndication">Also posted on ${links}</p>`;
+
+// Bilingual <span> pair (CSS shows one via [data-lang]).
+function i18nSpan(en, es) {
+  return `<span class="i18n-en">${escapeHtml(en)}</span><span class="i18n-es">${escapeHtml(es)}</span>`;
+}
+
+function respondSection(url, properties, lang) {
+  const target = toCanonical(url);
+  const synUrls = []
+    .concat(properties?.syndication || [])
+    .filter((u) => typeof u === "string" && u);
+
+  const networks = synUrls
+    .map((u) => ({ url: u, net: syndicationNetwork(u) }))
+    .filter((x) => x.net);
+
+  // Block 1 — the syndicated copies. The links carry `u-syndication`, so
+  // they double as the POSSE machine-links (no separate "Also posted on").
+  const social = networks.length
+    ? `
+<div class="respond__block">
+<p class="respond__label">${i18nSpan("Also posted on:", "También publicado en:")}</p>
+<div class="respond__networks">
+${networks
+  .map(
+    ({ url: u, net }) =>
+      `<a class="respond__net u-syndication ${net.cls}" href="${escapeHtml(u)}" rel="nofollow"><svg class="respond__logo" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="currentColor">${net.icon}</svg><span>${escapeHtml(net.label)}</span><svg class="respond__ext" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="currentColor"><path d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3zM5 5h5v2H7v10h10v-3h2v5H5V5z"/></svg></a>`,
+  )
+  .join("\n")}
+</div>
+<p class="respond__hint">${i18nSpan(
+        "Open it there to reply, like or boost — it flows back here.",
+        "Ábrelo ahí para responder, dar me gusta o compartir — vuelve aquí por Webmention.",
+      )}</p>
+</div>`
+    : `
+<div class="respond__block">
+<p class="respond__hint respond__hint--none">${i18nSpan(
+        "This post wasn’t cross-posted to social media.",
+        "Este post no se ha compartido en redes sociales.",
+      )}</p>
+</div>`;
+
+  // Collapsed behind a native <details> so it takes no space until opened
+  // (and still works with JS disabled — webmentions.js only adds the
+  // scroll-into-view nicety on small screens).
+  return `
+<details class="respond-toggle">
+<summary class="respond-toggle__btn">
+<svg class="respond-toggle__icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+<span class="i18n-en">Respond</span><span class="i18n-es">Responder</span>
+<svg class="respond-toggle__chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+</summary>
+<section class="respond" aria-label="Respond to this post">
+${social}
+<div class="respond__block">
+<p class="respond__label">${i18nSpan("Respond from your own site:", "Responde desde tu propia web:")}</p>
+<form class="respond__form" method="post" action="${WEBMENTION_ENDPOINT}" target="respond-sink">
+<input type="hidden" name="target" value="${escapeHtml(target)}">
+<div class="respond__field">
+<input class="respond__url" id="respond-source" type="url" name="source" required placeholder="https://tu-web.example/…" autocomplete="url" spellcheck="false" inputmode="url" aria-label="URL of your response">
+<button class="respond__submit" type="submit">${i18nSpan("Send webmention", "Enviar webmention")}</button>
+</div>
+</form>
+<p class="respond__hint">${i18nSpan(
+    "Publish a reply on your site, then paste its URL — it’ll appear above once verified.",
+    "Publica una respuesta en tu web y pega aquí su URL — aparecerá arriba cuando se verifique.",
+  )}</p>
+<p class="respond__thanks" role="status" hidden>${i18nSpan(
+    "Thanks! Your response will show up here once webmention.io verifies it.",
+    "¡Gracias! Tu respuesta aparecerá aquí cuando webmention.io la verifique.",
+  )}</p>
+</div>
+<iframe class="respond__sink" name="respond-sink" title="" aria-hidden="true" tabindex="-1"></iframe>
+</section>
+</details>`;
 }
 
 function ogDescription(text, fallback) {
@@ -576,7 +707,7 @@ function renderEventHtml({ url, properties, content }) {
   const body = `
 ${BACK_LINK}
 <article class="h-event" lang="${lang}">
-${renderMetaRow("event", published)}
+${renderMetaRow("event", published, eventUrl ? "" : url)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <p class="event-when">
 ${start ? `<time class="dt-start" datetime="${escapeHtml(start)}">${escapeHtml(formatDate(start))}</time>` : ""}
@@ -585,11 +716,7 @@ ${end ? ` – <time class="dt-end" datetime="${escapeHtml(end)}">${escapeHtml(fo
 ${location ? `<p class="event-where">📍 <span class="p-location">${escapeHtml(location)}</span></p>` : ""}
 ${eventUrl ? `<p class="target"><a class="u-url" href="${escapeHtml(eventUrl)}">${escapeHtml(eventUrl)}</a></p>` : ""}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
-<p style="margin-top:1.5rem">${
-  eventUrl
-    ? `<a href="${escapeHtml(url)}">Permalink</a>`
-    : `<a class="u-url" href="${escapeHtml(url)}">Permalink</a>`
-} · ${authorHCard()}${translateLink(url, lang) ? ` · ${translateLink(url, lang)}` : ""}</p>${syndicationLinks(properties)}
+${renderPermalink(url, properties, lang)}
 </article>`;
 
   const when = [formatDate(start), end && `– ${formatDate(end)}`].filter(Boolean).join(" ");
@@ -629,7 +756,7 @@ function renderPhotoHtml({ url, properties, content }) {
   const body = `
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
-${renderMetaRow("photo", published)}
+${renderMetaRow("photo", published, url)}
 ${properties.name
   ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>`
   : `<h1 class="visually-hidden">${escapeHtml(`Photo — ${formatDate(published)}`)}</h1>`}
@@ -654,7 +781,7 @@ function renderArticleHtml({ url, properties, content }) {
   const body = `
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
-${renderMetaRow("article", published)}
+${renderMetaRow("article", published, url)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <div class="content e-content">${renderMarkdown(content)}</div>
 ${renderPermalink(url, properties, lang)}
@@ -691,7 +818,7 @@ function renderCheckinHtml({ url, properties, content }) {
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
 <h1 class="visually-hidden">${escapeHtml(`Check-in at ${name}`)}</h1>
-${renderMetaRow("checkin", published)}
+${renderMetaRow("checkin", published, url)}
 <p class="target">📍 Checked in at ${venue}</p>
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
@@ -727,7 +854,7 @@ function renderReviewHtml({ url, properties, content }) {
   const body = `
 ${BACK_LINK}
 <article class="h-review" lang="${lang}">
-${renderMetaRow("review", published)}
+${renderMetaRow("review", published, url)}
 <p class="target">📝 Review of ${item}</p>
 ${headline
   ? `<h1 class="p-name">${escapeHtml(headline)}</h1>`
@@ -777,7 +904,7 @@ function renderConsumedHtml(type, { url, properties, content }) {
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
 <h1 class="visually-hidden">${escapeHtml(`${verb} ${workName}`)}</h1>
-${renderMetaRow(type, published)}
+${renderMetaRow(type, published, url)}
 ${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
 <p class="target">${spec.icon} ${escapeHtml(verb)} ${work}${hasRating ? ` — <data class="p-rating" value="${rating}">${rating}/5</data>` : ""}</p>
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
@@ -819,7 +946,7 @@ function renderPostHtml({ type, url, properties, content }) {
 ${BACK_LINK}
 <article class="h-entry" lang="${lang}">
 <h1 class="visually-hidden">${escapeHtml(heading)}</h1>
-${renderMetaRow(type, published)}
+${renderMetaRow(type, published, url)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
 <div class="content e-content">${renderMarkdown(content)}</div>
@@ -1091,10 +1218,11 @@ ${entries}
 `;
 }
 
+const ABOUT_POST_ES =
+  "https://www.rauljimenez.info/es/blog/first-steps-into-the-indieweb";
+
 function renderAboutHtml() {
-  const body = `
-${BACK_LINK}
-<article class="content e-content prose">
+  const en = `<article class="content e-content prose">
 <h1>About this feed</h1>
 
 <p><strong>This is my activity feed.</strong> It's the kind of thing you'd
@@ -1140,9 +1268,66 @@ share and adapt it, including commercially, as long as you credit me
 (name + a link back). The site's source code, in the repository above, is a
 separate matter.</p>
 
-<p style="margin-top:2rem"><a href="${BASE_URL}/"><span class="i18n-en">&larr; Back to the timeline</span><span class="i18n-es">&larr; Volver al timeline</span></a>
+<p style="margin-top:2rem"><a href="${BASE_URL}/">&larr; Back to the timeline</a>
 · <a href="/feed.xml">RSS</a></p>
 </article>`;
+
+  const es = `<article class="content prose">
+<h1>Sobre este feed</h1>
+
+<p><strong>Este es mi feed de actividad.</strong> Es el tipo de cosas que
+normalmente publicarías en una red social —notas breves, enlaces que me ha
+parecido que merecía la pena guardar, fotos, eventos a los que voy, cosas que
+he leído, visto o escuchado— salvo que no vive en una plataforma. Vive en mi
+propio dominio, y cada publicación es un simple archivo en un repositorio Git
+público que yo controlo:
+<a href="${SOURCE_REPO}">github.com/hhkaos/posts.rauljimenez.info</a>.</p>
+
+<p>Está construido siguiendo el enfoque <a href="https://indieweb.org/">IndieWeb</a>:
+<em>tu contenido, en tu sitio, primero</em>. Si tienes curiosidad por saber por
+qué me molesté, merece la pena leer las <a href="https://indieweb.org/why">razones</a>
+y los <a href="https://indieweb.org/principles">principios</a>, y conté cómo lo
+monté en <a href="${ABOUT_POST_ES}">Primeros pasos en la IndieWeb</a>.</p>
+
+<h2>No solo los tipos de publicación de siempre</h2>
+<p>Una red social te da una caja de estado y quizá una subida de foto. Aquí las
+publicaciones están tipadas: notas, enlaces, me gusta, respuestas,
+republicaciones, confirmaciones de asistencia (RSVP), eventos, check-ins,
+reseñas, y tipos aparte para lo leído, lo visto y lo escuchado. Algunos no
+tienen equivalente real en una red convencional.</p>
+
+<h2>Dónde más aparece</h2>
+<p>No todo lo que hay aquí se publica también en mis cuentas de redes, pero
+gran parte sí. Cuando es así, esta copia es la canónica y la publicación en la
+red enlaza de vuelta a ella (la IndieWeb lo llama
+<a href="https://indieweb.org/POSSE">POSSE</a>). En cualquier caso, el registro
+completo y permanente es el <a href="${SOURCE_REPO}">repositorio de GitHub</a>.</p>
+
+<h2>Por qué no usar sin más las redes sociales</h2>
+<p>Porque las plataformas sociales que conocemos no son herramientas neutrales.
+Sus incentivos no son los míos, pueden hacer desaparecer mi contenido o mi
+cuenta, y la forma en que están diseñadas para retener la atención tiene costes
+reales. Si suena abstracto, el documental
+<a href="https://www.imdb.com/title/tt11464826/"><em>El dilema de las redes
+sociales</em></a> lo explica bien. Tener esto bajo mi control es una pequeña
+forma de no entrar en ese juego.</p>
+
+<h2>Licencia</h2>
+<p>Todo el <strong>contenido</strong> publicado en este sitio —texto, fotos— se
+distribuye bajo licencia <a href="${LICENSE_URL}" rel="license"><strong>Creative
+Commons Atribución 4.0 Internacional (CC&nbsp;BY&nbsp;4.0)</strong></a>. Eres
+libre de compartirlo y adaptarlo, incluso comercialmente, siempre que me cites
+(nombre + un enlace de vuelta). El código fuente del sitio, en el repositorio
+de arriba, es un asunto aparte.</p>
+
+<p style="margin-top:2rem"><a href="${BASE_URL}/">&larr; Volver al timeline</a>
+· <a href="/feed.xml">RSS</a></p>
+</article>`;
+
+  const body = `${BACK_LINK}
+<div class="i18n-en">${en}</div>
+<div class="i18n-es">${es}</div>`;
+
   return page({
     title: "About this feed",
     body,

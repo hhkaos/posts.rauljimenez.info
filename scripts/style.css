@@ -182,19 +182,102 @@ nav.site-nav {
 :root:not([data-lang="es"]) .i18n-es { display: none; }
 :root[data-lang="es"] .i18n-en { display: none; }
 
-@media (max-width: 34rem) {
-  /* Not enough width to keep the full nav on one fixed-height row and no
-     hamburger here — let it sit inline at the top of the page instead. */
-  nav.site-nav {
-    position: static;
-    height: auto;
-    flex-wrap: wrap;
-    gap: 0.4rem 0.75rem;
-    padding: 0.6rem 0.75rem;
+/* Desktop: the menu wrapper is transparent to layout — its children (links,
+   tools) lay out directly in the nav flex row as before. The hamburger,
+   drawer header and close button only exist on mobile. */
+.site-nav__menu { display: contents; }
+.site-nav__toggle,
+.site-nav__close,
+.site-nav__drawer-head { display: none; }
+
+@media (max-width: 48rem) {
+  /* Mobile: links + tools move into an off-canvas drawer (mirrors the
+     www.rauljimenez.info Docusaurus navbar) toggled by the hamburger. */
+  nav.site-nav { height: 3.25rem; padding: 0 0.5rem; }
+  body { padding-top: 3.25rem; }
+  .site-nav__brand { margin-right: 0; }
+  .site-nav__brand img { height: 1.9rem; }
+
+  .site-nav__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 0.35rem;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--text);
+    cursor: pointer;
   }
-  .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.95rem; }
-  .site-nav__tools { margin-left: 0; }
-  body { padding-top: 0; }
+  .site-nav__toggle:hover { color: var(--accent); background: var(--border); }
+
+  .site-nav__menu {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(19rem, 80vw);
+    padding: 0.6rem 1rem 2rem;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    box-shadow: 3px 0 20px rgba(0, 0, 0, 0.28);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.24s ease, visibility 0.24s;
+    overflow-y: auto;
+    z-index: 30;
+  }
+  .site-nav.is-open .site-nav__menu {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .site-nav__drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.15rem 0 0.6rem;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+  .site-nav__close {
+    display: inline-flex;
+    padding: 0.3rem;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .site-nav__close:hover { color: var(--accent); background: var(--border); }
+
+  .site-nav__links { flex-direction: column; align-items: stretch; gap: 0; font-size: 1rem; }
+  .site-nav__link {
+    padding: 0.7rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .site-nav__link[aria-current="page"] { font-weight: 700; }
+
+  .site-nav__tools { margin-left: 0; margin-top: 0.75rem; gap: 0.4rem; }
+  .site-nav__lang,
+  .site-nav__theme { padding: 0.5rem; }
+
+  .site-nav__backdrop:not([hidden]) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 20;
+  }
+  body.nav-open { overflow: hidden; }
 }
 
 .wrap {
@@ -555,36 +638,183 @@ nav.pager {
 .prose h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
 .prose p { margin: 0.8rem 0; }
 
-/* POSSE: links to the syndicated copies (u-syndication). */
-.syndication {
-  margin-top: 0.4rem;
+/* ---- "Respond" area under each post (IndieWeb reply affordance) -------
+   Collapsed behind a <details> "Respond" button so it costs no vertical
+   space until asked for (works with no JS — native disclosure). Inside:
+   two labelled blocks — the syndicated copies (links double as the POSSE
+   u-syndication links), and a "reply from your own site" webmention form. */
+.respond-toggle {
+  margin-top: 1.75rem;
+  border-radius: 12px;
+  transition: background-color 0.15s ease;
+}
+/* Open: the panel becomes a lightly tinted card instead of sitting under a
+   horizontal rule — no separator line either side. */
+.respond-toggle[open] {
+  background: color-mix(in srgb, var(--text) 4%, var(--bg));
+  padding: 0.4rem 1rem 1.35rem;
+}
+.respond-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+.respond-toggle__btn::-webkit-details-marker { display: none; }
+.respond-toggle__btn:hover { border-color: var(--accent); color: var(--accent); }
+.respond-toggle__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.respond-toggle__icon { flex: 0 0 auto; }
+.respond-toggle__chev {
+  flex: 0 0 auto;
+  margin-left: 0.1rem;
+  transition: transform 0.15s ease;
+}
+.respond-toggle[open] .respond-toggle__chev { transform: rotate(180deg); }
+.respond-toggle[open] .respond-toggle__btn {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.respond { margin-top: 1.1rem; }
+.respond__block + .respond__block { margin-top: 1.5rem; }
+.respond__label {
   font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.6rem;
+}
+.respond__hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
   color: var(--text-muted);
 }
-.syndication a { color: var(--text-muted); text-decoration: underline; }
+.respond__hint--none { margin: 0; font-style: italic; }
+.respond__networks {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5rem;
+}
+.respond__net {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+.respond__net:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.respond__logo { flex: 0 0 auto; }
+.respond__ext { flex: 0 0 auto; opacity: 0.5; margin-left: -0.15rem; }
+.respond__net.is-mastodon .respond__logo { color: #6364ff; }
+.respond__net.is-bluesky .respond__logo { color: #0a7aff; }
+:root:not([data-theme="light"]) .respond__net.is-mastodon .respond__logo { color: #8c8dff; }
+:root:not([data-theme="light"]) .respond__net.is-bluesky .respond__logo { color: #4aa8ff; }
+:root[data-theme="dark"] .respond__net.is-mastodon .respond__logo { color: #8c8dff; }
+:root[data-theme="dark"] .respond__net.is-bluesky .respond__logo { color: #4aa8ff; }
 
-/* "Translate this post" — sits inline in the permalink row. */
+.respond__field {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5rem;
+  max-width: 34rem;
+}
+.respond__url {
+  flex: 1 1 15rem;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+.respond__url:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+.respond__submit {
+  padding: 0.55rem 1.1rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.respond__submit:hover { filter: brightness(0.94); }
+.respond__thanks {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  color: var(--reply);
+}
+.respond__sink {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 0;
+  visibility: hidden;
+}
+
+/* Mobile: make the toggle a full-width, comfortably tappable target, and
+   let the form controls stack instead of squeezing. */
+@media (max-width: 34rem) {
+  .respond-toggle__btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.7rem 1rem;
+  }
+  .respond__field { flex-direction: column; align-items: stretch; }
+  .respond__url { flex: 0 0 auto; }
+  .respond__submit { width: 100%; }
+}
+
+/* The post date at the top doubles as the permalink (u-url). */
+.meta .permalink {
+  color: inherit;
+  text-decoration: none;
+}
+.meta .permalink:hover { color: var(--accent); }
+
+/* Footer row under a post — just the "translate this post" link, when it
+   applies (the author h-card next to it is hidden, mf2 only). */
+.post-footer {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
 .translate-link {
   white-space: nowrap;
   text-decoration: none;
 }
 .translate-link:hover { text-decoration: underline; }
-
-/* Inline author byline (p-author h-card) — compact avatar + name. */
-.p-author.h-card {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35em;
-  white-space: nowrap;
-}
-
-.p-author.h-card .u-photo {
-  width: 1.3em;
-  height: 1.3em;
-  border-radius: 50%;
-  object-fit: cover;
-  vertical-align: middle;
-}
 
 /* Belt and braces: the representative h-card carries [hidden] already. */
 [hidden] { display: none !important; }

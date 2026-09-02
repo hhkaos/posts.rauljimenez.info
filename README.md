@@ -24,9 +24,14 @@ if that's taken). Open it, edit a post file or `scripts/render.mjs` /
 `scripts/style.css`, and it re-renders within ~150 ms — **refresh the
 browser** to see it (there's no live-reload).
 
-While previewing, permalinks and feed links point at the local server (via
-the `PREVIEW_BASE` env var the dev server sets) so you can click around. The
-logo in the header is still loaded from `www.rauljimenez.info`.
+While previewing, every internal link — permalinks, the "← All activity"
+back link, the `/about/` link in the masthead, feed links — points at the
+local server (via the `PREVIEW_BASE` env var the dev server sets), so you
+can click around. `serve.mjs` re-renders once on startup for the real port,
+so `npm run serve` alone is enough; `--watch` (`npm run dev`) only adds
+rebuild-on-change. Links that are *meant* to leave the feed (the header
+logo, "my own site" → `www.rauljimenez.info`, the Google-Translate link)
+stay absolute.
 
 Other scripts:
 
@@ -213,6 +218,15 @@ variant off those attributes. Language is picked from `?lang=es|en`
 Both language variants are emitted in the HTML (`.i18n-en` / `.i18n-es`);
 with no JS the English default shows.
 
+**Mobile (`≤48rem`)** — the links + language/theme controls move into a
+left **slide-in drawer** (backdrop, `✕`, `Esc` / backdrop / link-tap all
+close it, body scroll locked), mirroring the Docusaurus navbar's drawer.
+The hamburger + drawer chrome only exist below the breakpoint; on desktop
+`.site-nav__menu` is `display:contents` so its children lay out in the nav
+row exactly as before. Wiring is a few lines appended to the
+`HEAD_INIT_SCRIPT` `DOMContentLoaded` block (toggles `.site-nav.is-open` +
+`body.nav-open`).
+
 **Headings.** The navbar already marks the current section, so the
 timeline's `<h1>` ("Activity" / "Actividad") would just repeat it — it's
 kept in the DOM but `.visually-hidden` (off-screen, still read by screen
@@ -247,26 +261,56 @@ toponyms) — add `lang: en` / `lang: es` to that file to fix it.
 The resolved language is emitted as `<html lang>` on the post page,
 `lang=""` on the post `<article>` and on each timeline card `<li class="fc">`,
 and `xml:lang` on each Atom `<entry>`. Post pages also get a small
-**"🌐 Ver en español" / "🌐 See in English"** link (in the permalink row)
-pointing at Google Translate's page proxy — free, no key; the browser's
-native page translation is the more durable path and now fires correctly
-because `<html lang>` is right.
+**"🌐 Ver en español" / "🌐 See in English"** link (in the footer row under
+the post) pointing at Google Translate's page proxy — free, no key, always
+built from the canonical URL; the browser's native page translation is the
+more durable path and now fires correctly because `<html lang>` is right.
+
+### Post header / footer rows
+
+The **date** in a post's meta row *is* the permalink — it carries
+`u-url` + `dt-published` (standard h-entry pattern), so there's no separate
+visible "Permalink" line lower down (`renderMetaRow(type, published, url)`).
+The **author** is never shown — one person publishes everything here, so a
+byline is noise — but a nested `p-author h-card` stays in the markup
+(`hidden`) so Webmention consumers that read a mention's author from mf2
+still get name/url/photo. The footer row under a post is therefore just the
+"translate" link, when it applies.
 
 `/about/` (`renderAboutHtml()`) explains what this feed is: a
 platform-independent social timeline, the IndieWeb rationale
 (`indieweb.org/why` + `/principles`), POSSE, the GitHub repo as the
 canonical record, why not mainstream social media (*The Social Dilemma*),
 and the content license. **All content on the site is CC BY 4.0**; the
-`/about/` page is the canonical statement of that.
+`/about/` page is the canonical statement of that. It's **fully bilingual**
+— `renderAboutHtml()` emits a complete `.i18n-en` and `.i18n-es` `<article>`
+and `[data-lang]` shows one, so a visitor from `www.rauljimenez.info/es/`
+reads it in Spanish.
 
-### Syndication links (POSSE / `u-syndication`)
+### "Respond" block + syndication links (POSSE / `u-syndication`)
 
-Posts syndicated to Mastodon/Bluesky carry a `syndication:` list (status
-URLs) in their front matter, written back by Indiekit's
-`@indiekit/endpoint-syndicate`. `render.mjs` turns each into an
-`<a class="u-syndication">` link ("Also posted on Mastodon, Bluesky") under
-the permalink — the IndieWeb-standard way to point the canonical post at
-its copies, and what Bridgy-style backfeed matches against.
+Every post page ends with a **`<details class="respond-toggle">`** (built by
+`respondSection()` in `render.mjs`, inside the `h-entry`, hidden from the OG
+screenshot). Collapsed by default — just a pill-shaped "Respond / Responder"
+`<summary>` button — so it costs no vertical space until opened. Native
+disclosure: works with no JS (`webmentions.js` only adds a
+scroll-into-view when it opens on a phone, `≤34rem`). Open, it becomes a
+lightly tinted card (no horizontal separator rules); on mobile the button
+is full-width and the form controls stack. Inside the `<section class="respond">`:
+
+- **Network buttons** — for each `syndication:` entry in the front matter
+  (status URLs written back by `@indiekit/endpoint-syndicate` after a
+  Mastodon/Bluesky cross-post), a button with the network's logo linking to
+  that copy, where a reader can reply / like / boost natively. Each button
+  carries `class="u-syndication"`, so these *are* the IndieWeb POSSE links
+  that point the canonical post at its copies and that Bridgy-style backfeed
+  matches against — there is no longer a separate "Also posted on …" line.
+- **Webmention form** — a plain `method="post"` form to the shared
+  webmention.io endpoint (`WEBMENTION_ENDPOINT`), `target` = the canonical
+  post URL, `source` = a URL the reader types. It posts to a hidden iframe
+  so it works with JS off; `webmentions.js` swaps in a thank-you line on
+  submit. Verified mentions then show up in the "Responses from around the
+  web" section above it (and fire the push+email pipeline).
 
 ### Received Webmentions (`scripts/webmentions.js`)
 
