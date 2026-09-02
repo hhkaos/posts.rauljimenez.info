@@ -268,6 +268,33 @@ URLs) in their front matter, written back by Indiekit's
 the permalink — the IndieWeb-standard way to point the canonical post at
 its copies, and what Bridgy-style backfeed matches against.
 
+### Received Webmentions (`scripts/webmentions.js`)
+
+Every page advertises a Webmention endpoint
+(`<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">`
+— the hosted webmention.io account shared with `www.`/`links.rauljimenez.info`).
+Individual post pages also carry a `<section id="webmentions" hidden>` and load
+`scripts/webmentions.js` (`defer`, copied to `_site/` next to `style.css` /
+`timeline.js`). Same split as the representative h-card: the `page()` helper's
+`webmentions` option defaults to `repCard`, so the index and `/about/` don't
+get it.
+
+The script is a dependency-free progressive enhancement: on load it reads the
+page's `<link rel="canonical">`, queries webmention.io's public
+`api/mentions.jf2` for that target (both slash forms), and fills the section
+in — likes / reposts / bookmarks as an avatar facepile, replies + mentions as
+cards. Remote content is inserted with `textContent` only. If there's nothing
+to show (or the fetch fails) the section stays `hidden`, so a post with no
+responses renders nothing. `screenshot.mjs` hides `.webmentions`.
+
+Reactions on the Mastodon/Bluesky copies show up here once Bridgy
+(<https://brid.gy>) is pointed at the syndicated accounts to back-feed them as
+Webmentions — not set up yet.
+
+The same widget exists (less tidily) as a React component in
+`hhkaos/hhkaos.github.io` and inline in `hhkaos/littlelink`; unifying the
+three into one shared module is tracked in `hhkaos/littlelink`.
+
 This repo itself is not built or deployed to www.rauljimenez.info. It is
 read and written by the Indiekit server via the GitHub API
 (`@indiekit/store-github`), and separately rendered by its own GitHub Action

@@ -567,3 +567,120 @@ nav.pager {
 
 /* Belt and braces: the representative h-card carries [hidden] already. */
 [hidden] { display: none !important; }
+
+/* ---- Webmentions (filled in by /webmentions.js on post pages) -------- */
+.webmentions {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.webmentions__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
+/* Facepile: likes / reposts / bookmarks as rows of avatars. */
+.webmentions__facepile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.webmentions__group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.webmentions__faces {
+  display: flex;
+}
+
+.webmentions__faces a {
+  display: block;
+  margin-left: -8px;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+.webmentions__faces a:first-child { margin-left: 0; }
+.webmentions__faces a:hover { transform: translateY(-2px); z-index: 2; }
+
+.webmentions__face,
+.webmentions__avatar {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.webmentions__count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.webmentions__group.is-like .webmentions__count { color: var(--like); }
+.webmentions__group.is-repost .webmentions__count { color: var(--repost); }
+.webmentions__group.is-bookmark .webmentions__count { color: var(--bookmark); }
+
+/* Replies + mentions as cards. */
+.webmentions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.webmentions__item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.webmentions__avatar { flex: 0 0 auto; box-shadow: none; }
+
+.webmentions__body { min-width: 0; flex: 1; }
+
+.webmentions__meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.webmentions__author {
+  display: inline;
+  font-weight: 600;
+  white-space: normal;
+  color: var(--text);
+  text-decoration: none;
+}
+.webmentions__author:hover { text-decoration: underline; }
+
+.webmentions__text {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.webmentions__source {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

@@ -413,7 +413,10 @@ if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"e
 // person card and stop looking for the target link in the page body, which
 // breaks Webmentions *sent from* the index. Post pages have an h-entry that
 // outranks the h-card, so it's safe (and useful) there.
-function page({ title, body, og, repCard = true, lang = SITE_DEFAULT_LANG }) {
+// `webmentions` (defaults to the same value as `repCard`): render the
+// "Responses from around the web" section + load /webmentions.js. Same split
+// as repCard — individual post pages get it, the index/about pages don't.
+function page({ title, body, og, repCard = true, webmentions = repCard, lang = SITE_DEFAULT_LANG }) {
   const o = og || {};
   const branded = fullTitle(title);
   const url = o.url || `${BASE_URL}/`;
@@ -461,6 +464,7 @@ function page({ title, body, og, repCard = true, lang = SITE_DEFAULT_LANG }) {
 <title>${escapeHtml(branded)}</title>${socialMeta}
 ${HEAD_INIT_SCRIPT}
 <link rel="icon" href="/favicon.ico">
+<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">
 <link rel="stylesheet" href="/style.css">
 <link rel="alternate" type="application/atom+xml" title="Raúl Jiménez — Activity" href="/feed.xml">
 </head>
@@ -469,6 +473,7 @@ ${siteNav()}
 <div class="wrap">
 ${repCard ? repHCard() : ""}
 ${body}
+${webmentions ? webmentionsSection() : ""}
 <footer class="site">
 <a class="i18n-en" href="${MAIN_SITE}">www.rauljimenez.info</a><a class="i18n-es" href="${MAIN_SITE_ES}">www.rauljimenez.info</a>
 <a href="${BASE_URL}/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
@@ -477,9 +482,25 @@ ${body}
 </footer>
 </div>
 <script src="/timeline.js" defer></script>
+${webmentions ? `<script src="/webmentions.js" defer></script>` : ""}
 </body>
 </html>
 `;
+}
+
+// The container that /webmentions.js fills in at page load with the likes,
+// reposts, replies and mentions webmention.io has collected for this URL
+// (including the ones Bridgy back-feeds from the Mastodon/Bluesky copies).
+// Starts `hidden`; the script reveals it only when there's something to show,
+// so a post with no responses renders nothing. Progressive enhancement —
+// same deal as timeline.js. The `<link rel="canonical">` in the head is the
+// target the script queries by.
+function webmentionsSection() {
+  return `<section class="webmentions" id="webmentions" hidden aria-labelledby="webmentions-title" data-wm-api="https://webmention.io/api/mentions.jf2">
+<h2 class="webmentions__title" id="webmentions-title"><span class="i18n-en">Responses from around the web</span><span class="i18n-es">Respuestas de la web</span></h2>
+<div class="webmentions__facepile" id="webmentions-facepile" hidden></div>
+<ol class="webmentions__list" id="webmentions-list"></ol>
+</section>`;
 }
 
 function renderMetaRow(type, published) {
@@ -1183,6 +1204,7 @@ async function main() {
   index.sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
   await copyFile("scripts/timeline.js", path.join(SITE_DIR, "timeline.js"));
+  await copyFile("scripts/webmentions.js", path.join(SITE_DIR, "webmentions.js"));
   await writeFile(path.join(SITE_DIR, "feed.xml"), buildFeed(index));
 
   await mkdir(path.join(SITE_DIR, "about"), { recursive: true });
