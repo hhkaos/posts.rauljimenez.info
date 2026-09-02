@@ -80,6 +80,7 @@ const SITE_DIR = "_site";
 // set it for the CI build that actually deploys.
 const BASE_URL = process.env.PREVIEW_BASE || "https://posts.rauljimenez.info";
 const MAIN_SITE = "https://www.rauljimenez.info/";
+const MAIN_SITE_ES = "https://www.rauljimenez.info/es/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
 const SOURCE_REPO = "https://github.com/hhkaos/posts.rauljimenez.info";
 const LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
@@ -94,11 +95,26 @@ const FEED_MAX = 50;
 // so the two sites read as one. The logo is hotlinked from the main site
 // (same owner); vendor it into this repo if that dependency is unwanted.
 const LOGO_URL = "https://www.rauljimenez.info/img/rauljimenez.info.png";
+// Labels + hrefs mirror the main site's own navbar in each language, so a
+// visitor arriving from the Spanish site keeps Spanish chrome (see the
+// [data-lang] handling in HEAD_INIT_SCRIPT + style.css).
 const NAV_LINKS = [
-  { label: "🧠 Digital Brain", href: "https://www.rauljimenez.info/docs/digital-brain" },
-  { label: "📝 Blog", href: "https://www.rauljimenez.info/blog" },
-  { label: "📡 Activity", href: `${BASE_URL}/`, current: true },
-  { label: "🤓 About me", href: "https://www.rauljimenez.info/docs/category/-about-me" },
+  {
+    label: "🧠 Digital Brain", href: "https://www.rauljimenez.info/docs/digital-brain",
+    es: { label: "🧠 Mi cerebro digital", href: "https://www.rauljimenez.info/es/docs/digital-brain" },
+  },
+  {
+    label: "📝 Blog", href: "https://www.rauljimenez.info/blog",
+    es: { label: "📝 Blog", href: "https://www.rauljimenez.info/es/blog" },
+  },
+  {
+    label: "📡 Activity", href: `${BASE_URL}/`, current: true,
+    es: { label: "📡 Actividad", href: `${BASE_URL}/` },
+  },
+  {
+    label: "🤓 About me", href: "https://www.rauljimenez.info/docs/category/-about-me",
+    es: { label: "🤓 Sobre mí", href: "https://www.rauljimenez.info/es/docs/category/-about-me" },
+  },
 ];
 
 // Author identity. Webmention receivers (e.g. webmention.io) extract the
@@ -273,33 +289,67 @@ function isCoordinateName(name) {
   return /\d\s*°/.test(String(name || ""));
 }
 
+// "Back to the timeline" link at the top of every post page (both languages
+// emitted; CSS shows one per `:root[data-lang]`).
+const BACK_LINK = `<a class="back" href="${BASE_URL}/"><span class="i18n-en">&larr; All activity</span><span class="i18n-es">&larr; Toda la actividad</span></a>`;
+
 // Fixed navbar shared with www.rauljimenez.info. Rendered outside `.wrap`.
 // Layout mirrors the Docusaurus navbar: brand + links on the left, the
-// light/dark toggle pushed to the right.
+// language + light/dark controls on the right. Both language variants of
+// the links are emitted; CSS shows one per `:root[data-lang]`.
+function navLinks(lang) {
+  return NAV_LINKS.map((l) => {
+    const v = lang === "es" ? l.es : l;
+    return `<a class="site-nav__link"${l.current ? ' aria-current="page"' : ""} href="${escapeHtml(v.href)}">${escapeHtml(v.label)}</a>`;
+  }).join("\n");
+}
 function siteNav() {
-  const links = NAV_LINKS.map((l) =>
-    `<a class="site-nav__link"${l.current ? ' aria-current="page"' : ""} href="${escapeHtml(l.href)}">${escapeHtml(l.label)}</a>`,
-  ).join("\n");
   return `<nav class="site-nav">
 <a class="site-nav__brand" href="${MAIN_SITE}"><img src="${LOGO_URL}" alt="Raúl Jiménez Ortega"></a>
-<div class="site-nav__links">
-${links}
+<div class="site-nav__links i18n-en">
+${navLinks("en")}
 </div>
+<div class="site-nav__links i18n-es">
+${navLinks("es")}
+</div>
+<div class="site-nav__tools">
+<button class="site-nav__lang" type="button" aria-label="Change language — cambiar idioma" title="English · Español">
+<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.82 7.82 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26zm.81 2h2.95c.32 1.25.78 2.45 1.38 3.56A8.03 8.03 0 0 1 5.07 16zm2.95-8H5.07a8.03 8.03 0 0 1 4.33-3.56C8.8 5.55 8.34 6.75 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82A13.9 13.9 0 0 1 12 19.96zM14.34 14H9.66a14.9 14.9 0 0 1 0-4h4.68a14.9 14.9 0 0 1 0 4zm.26 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14a16.5 16.5 0 0 0 0-4h3.38a7.82 7.82 0 0 1 0 4h-3.38z"/></svg>
+<span class="i18n-en">ES</span><span class="i18n-es">EN</span>
+</button>
 <button class="site-nav__theme" type="button" aria-label="Switch between dark and light mode" title="Switch between dark and light mode">
 <svg class="icon-sun" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1zM4.22 4.22a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42L4.22 5.64a1 1 0 0 1 0-1.42zm12.02 12.02a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42l-1.06-1.06a1 1 0 0 1 0-1.42zM2 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1zm17 0a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1zM4.22 19.78a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0zM16.24 7.76a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 1 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0z"/></svg>
 <svg class="icon-moon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27A7.014 7.014 0 0 1 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49z"/></svg>
 </button>
+</div>
 </nav>`;
 }
 
-// Runs before first paint (inline, in <head>) so there's no theme flash:
-// an explicit choice is stored in localStorage, otherwise follow the OS.
-const THEME_INIT_SCRIPT = `<script>
-(function(){var d=document.documentElement;function sys(){return window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}
-var s=null;try{s=localStorage.getItem("theme")}catch(e){}
-d.dataset.theme=s==="dark"||s==="light"?s:sys();
+// Runs before first paint (inline, in <head>) so there's no flash of the
+// wrong theme or language.
+//   theme: an explicit choice from localStorage, else the OS preference.
+//   lang:  ?lang=es|en (remembered), else localStorage, else the browser's
+//          languages — so someone who was reading www.rauljimenez.info/es/
+//          keeps Spanish chrome here. No JS → English (the static default).
+const HEAD_INIT_SCRIPT = `<script>
+(function(){var d=document.documentElement;
+function mq(q){return window.matchMedia&&matchMedia(q).matches}
+var t=null;try{t=localStorage.getItem("theme")}catch(e){}
+d.dataset.theme=t==="dark"||t==="light"?t:(mq("(prefers-color-scheme: dark)")?"dark":"light");
 try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(e){try{if(!localStorage.getItem("theme"))d.dataset.theme=e.matches?"dark":"light"}catch(_){}})}catch(e){}
-addEventListener("DOMContentLoaded",function(){var b=document.querySelector(".site-nav__theme");if(!b)return;b.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}})});})();
+function pickLang(){
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="es"||q==="en"){localStorage.setItem("lang",q);return q}}catch(e){}
+try{var s=localStorage.getItem("lang");if(s==="es"||s==="en")return s}catch(e){}
+var ls=navigator.languages||[navigator.language||"en"];
+for(var i=0;i<ls.length;i++){if(/^es/i.test(ls[i]))return "es"}
+return "en"}
+var lang=pickLang();d.dataset.lang=lang;d.lang=lang;
+addEventListener("DOMContentLoaded",function(){
+var tb=document.querySelector(".site-nav__theme");
+if(tb)tb.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}});
+var lb=document.querySelector(".site-nav__lang");
+if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"es";d.dataset.lang=n;d.lang=n;try{localStorage.setItem("lang",n)}catch(e){}});
+});})();
 </script>`;
 
 // `og` (optional): { url, description, image, type } for a post page.
@@ -330,7 +380,7 @@ ${og.image ? `<meta property="og:image" content="${escapeHtml(og.image)}">` : ""
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>${socialMeta}
-${THEME_INIT_SCRIPT}
+${HEAD_INIT_SCRIPT}
 <link rel="stylesheet" href="/style.css">
 <link rel="alternate" type="application/atom+xml" title="Raúl Jiménez — Activity" href="/feed.xml">
 </head>
@@ -340,10 +390,10 @@ ${siteNav()}
 ${repCard ? repHCard() : ""}
 ${body}
 <footer class="site">
-<a href="${MAIN_SITE}">www.rauljimenez.info</a>
-<a href="${BASE_URL}/about/">About this feed</a>
+<a class="i18n-en" href="${MAIN_SITE}">www.rauljimenez.info</a><a class="i18n-es" href="${MAIN_SITE_ES}">www.rauljimenez.info</a>
+<a href="${BASE_URL}/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
 <a href="/feed.xml">RSS</a>
-<a href="${SOURCE_REPO}">Source on GitHub</a>
+<a href="${SOURCE_REPO}"><span class="i18n-en">Source on GitHub</span><span class="i18n-es">Código en GitHub</span></a>
 </footer>
 </div>
 <script src="/timeline.js" defer></script>
@@ -409,7 +459,7 @@ function renderEventHtml({ url, properties, content }) {
   const eventUrl = properties.url;
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="h-event">
 ${renderMetaRow("event", published)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
@@ -460,7 +510,7 @@ function renderPhotoHtml({ url, properties, content }) {
   const photos = photoList(properties.photo);
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="h-entry">
 ${renderMetaRow("photo", published)}
 ${properties.name ? `<h1 class="p-name">${escapeHtml(properties.name)}</h1>` : ""}
@@ -481,7 +531,7 @@ function renderArticleHtml({ url, properties, content }) {
   const published = properties.published || "";
   const name = properties.name || "Article";
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="h-entry">
 ${renderMetaRow("article", published)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
@@ -515,7 +565,7 @@ function renderCheckinHtml({ url, properties, content }) {
 
   const photos = photoList(properties.photo);
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="h-entry">
 ${renderMetaRow("checkin", published)}
 <p class="target">📍 Checked in at ${venue}</p>
@@ -549,7 +599,7 @@ function renderReviewHtml({ url, properties, content }) {
   }${it.author ? ` by <span class="p-author">${escapeHtml(it.author)}</span>` : ""}</span>`;
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="h-review">
 ${renderMetaRow("review", published)}
 <p class="target">📝 Review of ${item}</p>
@@ -594,7 +644,7 @@ function renderConsumedHtml(type, { url, properties, content }) {
   }${w.author ? ` by <span class="p-author">${escapeHtml(w.author)}</span>` : ""}</span>`;
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="h-entry">
 ${renderMetaRow(type, published)}
 ${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
@@ -628,7 +678,7 @@ function renderPostHtml({ type, url, properties, content }) {
   const rsvp = type === "rsvp" ? properties.rsvp : "";
 
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="h-entry">
 ${renderMetaRow(type, published)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
@@ -900,7 +950,7 @@ ${entries}
 
 function renderAboutHtml() {
   const body = `
-<a class="back" href="${BASE_URL}/">&larr; All activity</a>
+${BACK_LINK}
 <article class="content e-content prose">
 <h1>About this feed</h1>
 
@@ -947,7 +997,7 @@ share and adapt it, including commercially, as long as you credit me
 (name + a link back). The site's source code, in the repository above, is a
 separate matter.</p>
 
-<p style="margin-top:2rem"><a href="${BASE_URL}/">&larr; Back to the timeline</a>
+<p style="margin-top:2rem"><a href="${BASE_URL}/"><span class="i18n-en">&larr; Back to the timeline</span><span class="i18n-es">&larr; Volver al timeline</span></a>
 · <a href="/feed.xml">RSS</a></p>
 </article>`;
   return page({
@@ -1032,8 +1082,9 @@ async function main() {
   // the rest. Each page stands alone (working prev/next links); timeline.js
   // stitches them into infinite scroll when it can.
   const intro = `<header class="site">
-<h1>Activity</h1>
-<p class="page-intro">The kind of things I'd normally post on a social network — notes, links, photos, events, things I've read or watched — except this feed runs on <a href="${MAIN_SITE}">my own site</a> instead of a platform I don't control. <a href="${BASE_URL}/about/">About this feed &amp; why &rarr;</a> · <a href="/feed.xml">RSS</a></p>
+<h1><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>
+<p class="page-intro i18n-en">The kind of things I'd normally post on a social network — notes, links, photos, events, things I've read or watched — except this feed runs on <a href="${MAIN_SITE}">my own site</a> instead of a platform I don't control. <a href="${BASE_URL}/about/">About this feed &amp; why &rarr;</a> · <a href="/feed.xml">RSS</a></p>
+<p class="page-intro i18n-es">El tipo de cosas que normalmente publicaría en una red social —notas, enlaces, fotos, eventos, lo que he leído o visto—, solo que este feed vive en <a href="${MAIN_SITE_ES}">mi propia web</a> y no en una plataforma que no controlo. <a href="${BASE_URL}/about/">Sobre este feed y por qué &rarr;</a> · <a href="/feed.xml">RSS</a></p>
 </header>`;
 
   const pageCount = Math.max(1, Math.ceil(index.length / PAGE_SIZE));
@@ -1045,7 +1096,7 @@ async function main() {
 
     const header = n === 1
       ? intro
-      : `<header class="site"><h1>Activity</h1><p class="page-intro">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></p></header>`;
+      : `<header class="site"><h1><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
 
     const body = index.length
       ? `${header}\n${renderTimeline(slice)}\n${pager(prev, next)}`

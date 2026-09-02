@@ -135,24 +135,38 @@ nav.site-nav {
   font-weight: 600;
 }
 
-/* Light/dark toggle — pushed to the right like the Docusaurus one. */
-.site-nav__theme {
+/* Language + light/dark controls — pushed to the right like the Docusaurus
+   navbar's language selector + theme toggle. */
+.site-nav__tools {
   margin-left: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.site-nav__lang,
+.site-nav__theme {
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.3rem;
   padding: 0.35rem;
   border: 0;
   border-radius: 6px;
   background: none;
   color: var(--text);
   cursor: pointer;
+  font: inherit;
 }
+.site-nav__lang { padding: 0.35rem 0.45rem; font-size: 0.85rem; }
+.site-nav__lang:hover,
 .site-nav__theme:hover {
   color: var(--accent);
   background: var(--border);
 }
+.site-nav__lang svg,
 .site-nav__theme svg { display: block; }
 /* Show the icon for the current mode (sun in light, moon in dark). The
    button only does anything with JS, and theme-init always sets an explicit
@@ -160,6 +174,13 @@ nav.site-nav {
 .site-nav__theme .icon-moon { display: none; }
 :root[data-theme="dark"] .site-nav__theme .icon-sun { display: none; }
 :root[data-theme="dark"] .site-nav__theme .icon-moon { display: block; }
+
+/* Language: HEAD_INIT_SCRIPT sets [data-lang] pre-paint from ?lang /
+   localStorage / the browser's languages, so a visitor who was browsing
+   www.rauljimenez.info/es/ keeps Spanish chrome here. No JS → English (the
+   static default). Both variants are in the HTML; one is hidden. */
+:root:not([data-lang="es"]) .i18n-es { display: none; }
+:root[data-lang="es"] .i18n-en { display: none; }
 
 @media (max-width: 34rem) {
   /* Not enough width to keep the full nav on one fixed-height row and no
@@ -172,7 +193,7 @@ nav.site-nav {
     padding: 0.6rem 0.75rem;
   }
   .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.95rem; }
-  .site-nav__theme { margin-left: 0; padding: 0.35rem 0; }
+  .site-nav__tools { margin-left: 0; }
   body { padding-top: 0; }
 }
 
