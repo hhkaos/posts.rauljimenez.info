@@ -584,16 +584,16 @@ nav.pager {
 /* Facepile: likes / reposts / bookmarks as rows of avatars. */
 .webmentions__facepile {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
   margin-bottom: 1.25rem;
 }
 
 .webmentions__group {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .webmentions__faces {
@@ -625,8 +625,16 @@ nav.pager {
 }
 
 .webmentions__count {
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
+}
+.webmentions__glyph {
+  font-size: 1.05rem;
+  line-height: 1;
 }
 .webmentions__group.is-like .webmentions__count { color: var(--like); }
 .webmentions__group.is-repost .webmentions__count { color: var(--repost); }

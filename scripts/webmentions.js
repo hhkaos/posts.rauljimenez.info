@@ -90,9 +90,21 @@
     };
   }
 
+  // webmention.io / Bridgy mangle emojis into runs of "?" (and sometimes the
+  // U+FFFD replacement char) when they extract plain text from a toot/skeet.
+  // We can't recover the emoji, so drop the debris cleanly rather than show it.
+  function stripMojibake(s) {
+    return String(s || "")
+      .replace(/�+/g, "")
+      .replace(/\s*\?{3,}\s*/g, " ")
+      .replace(/\s+([.,!?;:…])/g, "$1")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  }
+
   function mentionText(m) {
     var c = m.content || {};
-    return truncate(c.text || stripTags(c.html));
+    return truncate(stripMojibake(c.text || stripTags(c.html)));
   }
 
   function fmtDate(v) {
@@ -134,9 +146,9 @@
 
   // --- render ----------------------------------------------------------
   var FACEPILE = {
-    "like-of": { cls: "is-like", en: ["like", "likes"], es: ["me gusta", "me gusta"] },
-    "repost-of": { cls: "is-repost", en: ["repost", "reposts"], es: ["compartido", "compartidos"] },
-    "bookmark-of": { cls: "is-bookmark", en: ["bookmark", "bookmarks"], es: ["guardado", "guardados"] }
+    "like-of": { cls: "is-like", glyph: "♥", en: ["like", "likes"], es: ["me gusta", "me gusta"] },
+    "repost-of": { cls: "is-repost", glyph: "↻", en: ["repost", "reposts"], es: ["compartido", "compartidos"] },
+    "bookmark-of": { cls: "is-bookmark", glyph: "⚑", en: ["bookmark", "bookmarks"], es: ["guardado", "guardados"] }
   };
   var THREAD = {
     "in-reply-to": { en: "replied", es: "respondió" },
@@ -167,14 +179,22 @@
     group.appendChild(faces);
 
     var n = Object.keys(seen).length;
-    var label = document.createElement("span");
-    label.className = "webmentions__count";
-    bilingual(
-      label,
-      n + " " + (n === 1 ? meta.en[0] : meta.en[1]),
-      n + " " + (n === 1 ? meta.es[0] : meta.es[1])
-    );
-    group.appendChild(label);
+    var es = document.documentElement.getAttribute("data-lang") === "es";
+    var word = n === 1 ? (es ? meta.es[0] : meta.en[0]) : (es ? meta.es[1] : meta.en[1]);
+    group.setAttribute("aria-label", n + " " + word);
+    group.title = n + " " + word;
+
+    var count = document.createElement("span");
+    count.className = "webmentions__count";
+    var glyph = document.createElement("span");
+    glyph.className = "webmentions__glyph";
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.textContent = meta.glyph;
+    var num = document.createElement("span");
+    num.textContent = String(n);
+    count.appendChild(glyph);
+    count.appendChild(num);
+    group.appendChild(count);
     return group;
   }
 

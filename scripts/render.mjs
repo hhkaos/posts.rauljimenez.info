@@ -79,7 +79,8 @@ const SITE_DIR = "_site";
 // The live site. Override with PREVIEW_BASE (e.g. http://localhost:8000) for
 // local preview so permalinks/feed links resolve to the local server — never
 // set it for the CI build that actually deploys.
-const BASE_URL = process.env.PREVIEW_BASE || "https://posts.rauljimenez.info";
+const CANONICAL_BASE = "https://posts.rauljimenez.info";
+const BASE_URL = process.env.PREVIEW_BASE || CANONICAL_BASE;
 const MAIN_SITE = "https://www.rauljimenez.info/";
 const MAIN_SITE_ES = "https://www.rauljimenez.info/es/";
 const ABOUT_POST = "https://www.rauljimenez.info/blog/first-steps-into-the-indieweb";
@@ -473,7 +474,7 @@ ${siteNav()}
 <div class="wrap">
 ${repCard ? repHCard() : ""}
 ${body}
-${webmentions ? webmentionsSection() : ""}
+${webmentions ? webmentionsSection(url) : ""}
 <footer class="site">
 <a class="i18n-en" href="${MAIN_SITE}">www.rauljimenez.info</a><a class="i18n-es" href="${MAIN_SITE_ES}">www.rauljimenez.info</a>
 <a href="${BASE_URL}/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
@@ -494,9 +495,15 @@ ${webmentions ? `<script src="/webmentions.js" defer></script>` : ""}
 // Starts `hidden`; the script reveals it only when there's something to show,
 // so a post with no responses renders nothing. Progressive enhancement —
 // same deal as timeline.js. The `<link rel="canonical">` in the head is the
-// target the script queries by.
-function webmentionsSection() {
-  return `<section class="webmentions" id="webmentions" hidden aria-labelledby="webmentions-title" data-wm-api="https://webmention.io/api/mentions.jf2">
+// target the script queries by — except under PREVIEW_BASE (`npm run dev`),
+// where the canonical would point at localhost and match nothing, so we pin
+// the real production URL with `data-wm-targets` to preview live responses.
+function webmentionsSection(pageUrl) {
+  const previewTarget =
+    BASE_URL !== CANONICAL_BASE && pageUrl.startsWith(BASE_URL)
+      ? ` data-wm-targets="${escapeHtml(CANONICAL_BASE + pageUrl.slice(BASE_URL.length))}"`
+      : "";
+  return `<section class="webmentions" id="webmentions" hidden aria-labelledby="webmentions-title" data-wm-api="https://webmention.io/api/mentions.jf2"${previewTarget}>
 <h2 class="webmentions__title" id="webmentions-title"><span class="i18n-en">Responses from around the web</span><span class="i18n-es">Respuestas de la web</span></h2>
 <div class="webmentions__facepile" id="webmentions-facepile" hidden></div>
 <ol class="webmentions__list" id="webmentions-list"></ol>
