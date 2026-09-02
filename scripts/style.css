@@ -637,6 +637,10 @@ nav.pager {
 .prose h1 { font-size: 1.6rem; margin: 0 0 1rem; }
 .prose h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
 .prose p { margin: 0.8rem 0; }
+.prose ul { margin: 0.8rem 0; padding-left: 1.25rem; }
+.prose li { margin: 0.35rem 0; }
+/* Anchor targets sit under the fixed navbar. */
+.prose h2[id] { scroll-margin-top: 4.5rem; }
 
 /* ---- "Respond" area under each post (IndieWeb reply affordance) -------
    Collapsed behind a <details> "Respond" button so it costs no vertical
@@ -704,6 +708,12 @@ nav.pager {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+.respond__hint a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.respond__hint a:hover { color: var(--accent); }
 .respond__hint--none { margin: 0; font-style: italic; }
 .respond__networks {
   display: flex;

@@ -32,6 +32,33 @@
 (function () {
   "use strict";
 
+  // Bilingual pages (/about) carry the same section id on both the
+  // `.i18n-en` and `.i18n-es` copy; a native anchor jump lands on the first
+  // in the DOM, which may be the hidden-language one. Re-jump to the copy
+  // that's actually visible. (HEAD_INIT_SCRIPT has already set [data-lang]
+  // pre-paint, so the right one is shown by the time this defer script runs.)
+  (function initHashJump() {
+    function jump() {
+      var h = location.hash.slice(1);
+      if (!h) return;
+      var sel;
+      try {
+        sel = '[id="' + (window.CSS && CSS.escape ? CSS.escape(h) : h) + '"]';
+      } catch (e) {
+        return;
+      }
+      var els = document.querySelectorAll(sel);
+      for (var i = 0; i < els.length; i++) {
+        if (els[i].getClientRects().length) {
+          els[i].scrollIntoView();
+          return;
+        }
+      }
+    }
+    window.addEventListener("hashchange", jump);
+    if (location.hash) setTimeout(jump, 0);
+  })();
+
   // "Respond" affordance — wired before the fetch/URL guard so it still
   // works on browsers too old for the mentions fetch below. The <details>
   // toggle and the form both work with no JS; this only adds niceties.

@@ -176,6 +176,14 @@ rendered Markdown body + first image as `content type="html"`. Every page
 links it via `<link rel="alternate" type="application/atom+xml">`, and the
 footer / `/about/` link it visibly.
 
+**Feed autodiscovery** (`feedLinks(lang)`): every page's `<head>` also
+advertises both languages of the `www.rauljimenez.info` Docusaurus blog
+feeds (`/blog/atom.xml` + `/rss.xml`, and the `/es/` pair), each with
+`hreflang` and a language-tagged `title`. All are emitted statically — a
+feed reader / crawler reads raw HTML and runs no JS, so JS filtering would
+just hide them; instead the page's **content language only orders** its
+matching blog feeds first, so that's the "primary" one a reader offers.
+
 ### Titles, favicon & social sharing
 
 - **`<title>` / `og:title`** are always branded with the full name —
@@ -280,12 +288,21 @@ still get name/url/photo. The footer row under a post is therefore just the
 `/about/` (`renderAboutHtml()`) explains what this feed is: a
 platform-independent social timeline, the IndieWeb rationale
 (`indieweb.org/why` + `/principles`), POSSE, the GitHub repo as the
-canonical record, why not mainstream social media (*The Social Dilemma*),
-and the content license. **All content on the site is CC BY 4.0**; the
-`/about/` page is the canonical statement of that. It's **fully bilingual**
-— `renderAboutHtml()` emits a complete `.i18n-en` and `.i18n-es` `<article>`
-and `[data-lang]` shows one, so a visitor from `www.rauljimenez.info/es/`
-reads it in Spanish.
+canonical record, **why some posts aren't on social media**
+(`#why-not-shared` — not timely/useful enough for followers there, no clean
+syndication path for a review/RSVP/etc., kept as a personal record),
+**how reacting to a post works** (`#reacting` — the Respond button, that
+backfeed isn't instant and happens on the other site), why not mainstream
+social media (*The Social Dilemma*), and the content license. **All content
+on the site is CC BY 4.0**; the `/about/` page is the canonical statement
+of that. It's **fully bilingual** — `renderAboutHtml()` emits a complete
+`.i18n-en` and `.i18n-es` `<article>` and `[data-lang]` shows one.
+
+Because both language copies carry the same section `id`, a native anchor
+jump can land on the hidden one; `webmentions.js`' `initHashJump` re-jumps
+to the visible copy (on load + `hashchange`, and the nav language toggle
+fires a synthetic `hashchange`). `.prose h2[id]` gets `scroll-margin-top`
+to clear the fixed navbar.
 
 ### "Respond" block + syndication links (POSSE / `u-syndication`)
 
@@ -305,6 +322,10 @@ is full-width and the form controls stack. Inside the `<section class="respond">
   carries `class="u-syndication"`, so these *are* the IndieWeb POSSE links
   that point the canonical post at its copies and that Bridgy-style backfeed
   matches against — there is no longer a separate "Also posted on …" line.
+  A hint links "it flows back here" → `/about/#reacting`. When the post has
+  **no** `syndication:`, that block is instead an italic "not cross-posted
+  to social media — why?" linking `/about/#why-not-shared`. Both links are
+  root-relative so they resolve locally under preview too.
 - **Webmention form** — a plain `method="post"` form to the shared
   webmention.io endpoint (`WEBMENTION_ENDPOINT`), `target` = the canonical
   post URL, `source` = a URL the reader types. It posts to a hidden iframe
