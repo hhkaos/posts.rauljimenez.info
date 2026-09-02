@@ -2,7 +2,7 @@
 type: event
 name: Esri European Developer & Technology Summit 2026
 start: 2026-10-20
-end: 2026-10-23
+end: 2026-10-22
 location:
   type: card
   name: Congress Center
@@ -18,16 +18,18 @@ category:
 visibility: public
 post-status: published
 published: 2026-09-01T14:25:03.862Z
-updated: 2026-09-01T16:45:49.262Z
+updated: 2026-09-02T18:14:45.400Z
 syndication:
   - https://mastodon.social/@hhkaos/117196793167840948
   - https://bsky.app/profile/did:plc:gwbqjf3ciffqeedjrpmjinfo/post/3muhundzau72x
 ---
 
-At the upcoming edition of our developer conference in Frankfurt, I will be giving several talks:
+At the upcoming edition of our developer conference (Esri Developer and Technology Summit) in Frankfurt, I will be presenting several talks:
 - [AI-Infused Development: Lessons Learned and Patterns from Esri Engineers](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785481365243001f1yI)
 - [Authentication: A Practical Approach to Security in ArcGIS](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785493533691001yG2g)
 - [Security and Authentication for Custom Applications](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785487648507001JydR)
 - [Working with ArcGIS REST JS](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785496248538001cWVi)
+- [Building Beautiful Interactive Mapping Applications with ArcGIS Basemap Services](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785488466631001lUg0)
+- [Vector Tile Style Editor: Deep Customization of ArcGIS Basemaps](https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785488070964001MGwx)
 
 More info: [https://www.esri.com/en-us/about/events/euro-devtech/overview](https://www.esri.com/en-us/about/events/euro-devtech/overview)
