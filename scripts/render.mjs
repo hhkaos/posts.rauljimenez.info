@@ -126,6 +126,22 @@ const AUTHOR_NAME = "Raúl Jiménez Ortega";
 const AUTHOR_URL = MAIN_SITE; // https://www.rauljimenez.info/
 const AUTHOR_PHOTO = "https://www.rauljimenez.info/img/hhkaos-raul-jimenez-ortega.jpeg";
 
+// <title> / og:title — always branded with the full name, matching
+// www.rauljimenez.info ("Raúl Jiménez Ortega | …").
+function fullTitle(t) {
+  return t ? `${AUTHOR_NAME} | ${t}` : AUTHOR_NAME;
+}
+
+// Social sharing. Every page gets Open Graph + Twitter tags; pages that
+// don't set their own image fall back to SOCIAL_CARD — a 1200×630 shot of
+// the landing page written by screenshot.mjs (the size every network
+// recommends for og:image).
+const SOCIAL_CARD = `${BASE_URL}/social-card.png`;
+const SOCIAL_CARD_ALT = "The activity feed at posts.rauljimenez.info — Raúl Jiménez Ortega";
+const SITE_DESCRIPTION =
+  "Notes, links, photos, events, reviews and things I've read, watched and listened to — self-hosted on my own domain, following the IndieWeb approach, not on a social platform.";
+const OG_LOCALE = { en: "en_US", es: "es_ES" };
+
 // Hidden representative h-card — dropped on every *post* page (not the
 // index, see `page()`). Its `u-url` is also a `rel="me"` link, which makes
 // it the representative h-card per the IndieWeb rep-hcard algorithm.
@@ -398,25 +414,53 @@ if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"e
 // breaks Webmentions *sent from* the index. Post pages have an h-entry that
 // outranks the h-card, so it's safe (and useful) there.
 function page({ title, body, og, repCard = true, lang = SITE_DEFAULT_LANG }) {
-  const socialMeta = og
-    ? `
-<link rel="canonical" href="${escapeHtml(og.url)}">
-<meta property="og:site_name" content="Raul Jimenez — activity">
-<meta property="og:type" content="${escapeHtml(og.type || "article")}">
-<meta property="og:title" content="${escapeHtml(title)}">
-<meta property="og:url" content="${escapeHtml(og.url)}">
-${og.description ? `<meta property="og:description" content="${escapeHtml(og.description)}">` : ""}
-${og.image ? `<meta property="og:image" content="${escapeHtml(og.image)}">` : ""}
-<meta name="twitter:card" content="${og.image ? "summary_large_image" : "summary"}">`
-    : "";
+  const o = og || {};
+  const branded = fullTitle(title);
+  const url = o.url || `${BASE_URL}/`;
+  const type = o.type || "website";
+  const description = o.description || SITE_DESCRIPTION;
+  const image = o.image || SOCIAL_CARD;
+  const imageAlt = o.imageAlt || (o.image ? branded : SOCIAL_CARD_ALT);
+  // Only the site card's dimensions are known and fixed; per-post
+  // screenshots are cropped to the post so their size varies.
+  const cardDims = o.image
+    ? ""
+    : `
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">`;
+
+  const socialMeta = `
+<meta name="description" content="${escapeHtml(description)}">
+<meta name="author" content="${escapeHtml(AUTHOR_NAME)}">
+<link rel="canonical" href="${escapeHtml(url)}">
+<meta property="og:site_name" content="${escapeHtml(AUTHOR_NAME)}">
+<meta property="og:locale" content="${OG_LOCALE[lang] || OG_LOCALE.en}">
+<meta property="og:type" content="${escapeHtml(type)}">
+<meta property="og:title" content="${escapeHtml(branded)}">
+<meta property="og:description" content="${escapeHtml(description)}">
+<meta property="og:url" content="${escapeHtml(url)}">
+<meta property="og:image" content="${escapeHtml(image)}">
+<meta property="og:image:alt" content="${escapeHtml(imageAlt)}">${cardDims}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtml(branded)}">
+<meta name="twitter:description" content="${escapeHtml(description)}">
+<meta name="twitter:image" content="${escapeHtml(image)}">
+<meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}">${
+    type === "article" && o.published
+      ? `
+<meta property="article:published_time" content="${escapeHtml(o.published)}">
+<meta property="article:author" content="${escapeHtml(AUTHOR_URL)}">`
+      : ""
+  }`;
 
   return `<!doctype html>
 <html lang="${escapeHtml(lang)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)}</title>${socialMeta}
+<title>${escapeHtml(branded)}</title>${socialMeta}
 ${HEAD_INIT_SCRIPT}
+<link rel="icon" href="/favicon.ico">
 <link rel="stylesheet" href="/style.css">
 <link rel="alternate" type="application/atom+xml" title="Raúl Jiménez — Activity" href="/feed.xml">
 </head>
@@ -565,7 +609,7 @@ ${renderPermalink(url, properties, lang)}
     title: properties.name || `Photo — ${formatDate(published)}`,
     lang,
     body,
-    og: { url, type: "article", image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
+    og: { url, type: "article", published, image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
   });
 }
 
@@ -586,7 +630,7 @@ ${renderPermalink(url, properties, lang)}
     title: name,
     lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
   });
 }
 
@@ -625,7 +669,7 @@ ${renderPermalink(url, properties, lang)}
     title: `Check-in at ${name}`,
     lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
   });
 }
 
@@ -664,7 +708,7 @@ ${renderPermalink(url, properties, lang)}
     title: headline || `Review of ${itemName}`,
     lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
   });
 }
 
@@ -711,7 +755,7 @@ ${renderPermalink(url, properties, lang)}
     title: `${verb} ${workName}`,
     lang,
     body,
-    og: { url, type: "article", image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
+    og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
   });
 }
 
@@ -758,6 +802,7 @@ ${renderPermalink(url, properties, lang)}
     og: {
       url,
       type: "article",
+      published,
       image: screenshotUrl(url),
       description: ogDescription(content, fallbackDescription),
     },
@@ -1064,7 +1109,7 @@ separate matter.</p>
 · <a href="/feed.xml">RSS</a></p>
 </article>`;
   return page({
-    title: "About this feed — Raul Jimenez activity",
+    title: "About this feed",
     body,
     repCard: false,
     og: {
@@ -1080,6 +1125,8 @@ async function main() {
   await writeFile(path.join(SITE_DIR, ".nojekyll"), "");
   await writeFile(path.join(SITE_DIR, "CNAME"), "posts.rauljimenez.info\n");
   await copyFile("scripts/style.css", path.join(SITE_DIR, "style.css"));
+  // Same favicon as www.rauljimenez.info (a copy, so the site is self-contained).
+  await copyFile("scripts/favicon.ico", path.join(SITE_DIR, "favicon.ico"));
 
   // Media uploaded via Micropub (@indiekit/store-github writes it to `media/`).
   // Posts reference these by absolute URL under posts.rauljimenez.info, so the
@@ -1166,9 +1213,13 @@ async function main() {
       : `${intro}\n<p>Nothing public yet.</p>`;
 
     const html = page({
-      title: n === 1 ? "Raul Jimenez — activity" : `Activity — page ${n}`,
+      title: n === 1 ? "Activity" : `Activity — page ${n} of ${pageCount}`,
       body,
       repCard: false,
+      og: {
+        url: n === 1 ? `${BASE_URL}/` : `${BASE_URL}/page/${n}/`,
+        type: "website",
+      },
     });
 
     if (n === 1) {

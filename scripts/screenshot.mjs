@@ -4,6 +4,10 @@
 // as native media on Mastodon and Bluesky; the same file is referenced as
 // `og:image` by render.mjs.
 //
+// Also writes `_site/social-card.png` — a 1200×630 shot of the landing page
+// (the size every network recommends for og:image), used as the site-level
+// og:image on the timeline, /about/ and as the per-post fallback.
+//
 // The image is 1200 wide and cropped to the post card's real height rather
 // than a fixed 1200×630, so a short post (an RSVP, a like, a one-line note)
 // no longer sits in a sea of white space — which is what made the
@@ -27,6 +31,7 @@ const MIN_HEIGHT = Math.round(WIDTH / 2.2); // 545 — never wider than ~2.2:1
 const MAX_HEIGHT = WIDTH; //                    1200 — never taller than 1:1
 const PAD_BOTTOM = 12; // small safety margin below the card's own padding
 const PORT = 4173;
+const CARD = { width: 1200, height: 630 }; // og:image recommended size
 
 const CONTENT_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -73,15 +78,44 @@ function startServer() {
   return new Promise((resolve) => server.listen(PORT, () => resolve(server)));
 }
 
+// The site-level social card: the landing page as-is (navbar, intro, the
+// first cards), widened a little so the column fills the 1200×630 frame.
+async function shootSocialCard(browser) {
+  const card = await browser.newPage({
+    viewport: CARD, // deviceScaleFactor 1 → the file is exactly 1200×630
+    colorScheme: "light",
+  });
+  await card.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
+  await card.addStyleTag({
+    content: `
+      .wrap { max-width: 1000px; padding-top: 1.5rem; }
+      footer.site, #timeline-end, .pager { display: none !important; }
+    `,
+  });
+  await card.evaluate(() => document.fonts.ready.then(() => undefined));
+  await card.screenshot({
+    path: path.join(SITE_DIR, "social-card.png"),
+    clip: { x: 0, y: 0, ...CARD },
+  });
+  await card.close();
+  console.log("screenshot: wrote social-card.png");
+}
+
 async function main() {
   const pages = await findPostPages(SITE_DIR);
+
+  const server = await startServer();
+  const browser = await chromium.launch();
+
+  await shootSocialCard(browser);
+
   if (pages.length === 0) {
+    await browser.close();
+    server.close();
     console.log("screenshot: no post pages found");
     return;
   }
 
-  const server = await startServer();
-  const browser = await chromium.launch();
   const page = await browser.newPage({
     // Start tall so a long post lays out fully before we measure it; the
     // real crop height is set per page below.

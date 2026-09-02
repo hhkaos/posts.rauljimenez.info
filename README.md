@@ -171,6 +171,27 @@ rendered Markdown body + first image as `content type="html"`. Every page
 links it via `<link rel="alternate" type="application/atom+xml">`, and the
 footer / `/about/` link it visibly.
 
+### Titles, favicon & social sharing
+
+- **`<title>` / `og:title`** are always branded with the full name —
+  `fullTitle()` → `Raúl Jiménez Ortega | <page>` (`… | Activity`,
+  `… | About this feed`, `… | <post title>`), matching
+  `www.rauljimenez.info`.
+- **Favicon**: `scripts/favicon.ico` is a copy of
+  `www.rauljimenez.info/img/favicon.ico`, copied to `_site/favicon.ico` and
+  linked from every page (so the site is self-contained, not hotlinking).
+- **Open Graph + Twitter** tags are emitted on **every** page by `page()`
+  (previously only post pages had them): `description`, `author`,
+  `canonical`, `og:site_name/locale/type/title/description/url/image`,
+  `og:image:alt`, `twitter:card=summary_large_image` + title/description/
+  image/alt, and `article:published_time` / `article:author` on posts.
+- **`og:image`**: post pages use their own `screenshot.png`; the timeline,
+  `/about/` and any fallback use **`_site/social-card.png`** — a **1200×630**
+  (the size every network recommends) shot of the landing page written by
+  `scripts/screenshot.mjs` (`shootSocialCard()`), alongside the per-post
+  screenshots. `og:image:width/height` are emitted only for that card
+  (post screenshots are cropped to the post, so their size varies).
+
 ### Shared header + `/about/`
 
 Every page carries a fixed navbar that mirrors the Docusaurus navbar on
