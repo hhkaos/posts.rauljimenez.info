@@ -89,7 +89,10 @@ async function shootSocialCard(browser) {
   await card.addStyleTag({
     content: `
       .wrap { max-width: 1000px; padding-top: 1.5rem; }
-      footer.site, #timeline-end, .pager, .fc-reactions { display: none !important; }
+      footer.site, #timeline-end, .pager, .fc-reactions, .feed-filter { display: none !important; }
+      /* Show the intro text on the card even though it's collapsed on the page. */
+      .intro-toggle > .page-intro { display: block !important; }
+      .intro-toggle__btn, .intro-about { display: none !important; }
     `,
   });
   await card.evaluate(() => document.fonts.ready.then(() => undefined));

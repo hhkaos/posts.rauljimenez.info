@@ -313,14 +313,42 @@ header.site h1:not(.visually-hidden) {
   margin: 0 0 0.5rem;
 }
 
+/* "What is this?" — a collapsed <details> in the masthead. */
+.intro-toggle { margin: 0; }
+.intro-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+.intro-toggle__btn::-webkit-details-marker { display: none; }
+.intro-toggle__btn:hover { color: var(--accent); }
+.intro-toggle__chev { flex: 0 0 auto; transition: transform 0.15s ease; }
+.intro-toggle[open] .intro-toggle__btn { color: var(--accent); }
+.intro-toggle[open] .intro-toggle__chev { transform: rotate(180deg); }
+
 header.site .page-intro {
   font-size: 0.92rem;
   color: var(--text-muted);
-  margin: 0;
+  margin: 0.55rem 0 0;
   line-height: 1.55;
 }
-
+header.site .page-intro p { margin: 0.5rem 0 0; }
+header.site .page-intro p:first-child { margin-top: 0; }
 header.site .page-intro a { color: var(--accent); }
+
+header.site .intro-about {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+header.site .intro-about a { color: var(--accent); text-decoration: none; }
+header.site .intro-about a:hover { text-decoration: underline; }
 
 .badge {
   display: inline-block;
@@ -369,6 +397,41 @@ article.h-event img {
 }
 
 /* ---- Home timeline ------------------------------------------------------ */
+
+/* Language filter. Opt-in — "All" is the default and nothing is hidden
+   until a language is picked. */
+.feed-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1.25rem 0 1rem;
+  font-size: 0.85rem;
+}
+.feed-filter__label { color: var(--text-muted); margin-right: 0.15rem; }
+.feed-filter__btn {
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.feed-filter__btn:hover { border-color: var(--accent); color: var(--text); }
+.feed-filter__btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Hide non-matching cards, and day headings left with none. `:has()` is not
+   universal — where it's unsupported an empty heading just stays (cosmetic). */
+:root[data-feed-lang="en"] ul.feed li.fc:not([lang="en"]),
+:root[data-feed-lang="es"] ul.feed li.fc:not([lang="es"]) { display: none; }
+:root[data-feed-lang="en"] h2.feed-day:not(:has(+ ul.feed li.fc[lang="en"])),
+:root[data-feed-lang="es"] h2.feed-day:not(:has(+ ul.feed li.fc[lang="es"])) { display: none; }
 
 .feed-day {
   font-size: 0.78rem;
@@ -639,6 +702,12 @@ nav.pager {
 .prose p { margin: 0.8rem 0; }
 .prose ul { margin: 0.8rem 0; padding-left: 1.25rem; }
 .prose li { margin: 0.35rem 0; }
+.prose code {
+  background: color-mix(in srgb, var(--text) 8%, var(--bg));
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
 /* Anchor targets sit under the fixed navbar. */
 .prose h2[id] { scroll-margin-top: 4.5rem; }
 

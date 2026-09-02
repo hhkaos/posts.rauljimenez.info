@@ -420,7 +420,13 @@ var ls=navigator.languages||[navigator.language||"en"];
 for(var i=0;i<ls.length;i++){if(/^es/i.test(ls[i]))return "es"}
 return "en"}
 var lang=pickLang();d.dataset.lang=lang;
+try{var fl=localStorage.getItem("feedLang");if(fl==="en"||fl==="es")d.dataset.feedLang=fl}catch(e){}
 addEventListener("DOMContentLoaded",function(){
+var ff=document.querySelector(".feed-filter");
+if(ff){var fbtns=ff.querySelectorAll(".feed-filter__btn");
+function syncFF(){var c=d.dataset.feedLang||"";[].forEach.call(fbtns,function(b){b.setAttribute("aria-pressed",(b.dataset.feedLang||"")===c?"true":"false")})}
+syncFF();
+[].forEach.call(fbtns,function(b){b.addEventListener("click",function(){var v=b.dataset.feedLang||"";if(v)d.dataset.feedLang=v;else delete d.dataset.feedLang;try{v?localStorage.setItem("feedLang",v):localStorage.removeItem("feedLang")}catch(e){}syncFF()})});}
 var tb=document.querySelector(".site-nav__theme");
 if(tb)tb.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}});
 var lb=document.querySelector(".site-nav__lang");
@@ -1138,6 +1144,24 @@ ${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}
 </li>`;
 }
 
+// Language filter for the timeline. Every `.fc` card carries `lang="en|es"`;
+// picking a language sets `[data-feed-lang]` on <html> and CSS hides the
+// non-matching cards (and now-empty day headings, via `:has()`). Default is
+// "all" — an opt-in filter, never hides content by surprise. The choice is
+// remembered in localStorage and applied pre-paint by HEAD_INIT_SCRIPT.
+// Progressive enhancement: with no JS the buttons do nothing and every
+// post shows.
+function feedFilter() {
+  const btn = (lang, en, es) =>
+    `<button type="button" class="feed-filter__btn" data-feed-lang="${lang}"><span class="i18n-en">${en}</span><span class="i18n-es">${es}</span></button>`;
+  return `<div class="feed-filter" role="group" aria-label="Filter posts by language">
+<span class="feed-filter__label"><span class="i18n-en">Language</span><span class="i18n-es">Idioma</span></span>
+${btn("", "All", "Todos")}
+${btn("en", "English", "English")}
+${btn("es", "Español", "Español")}
+</div>`;
+}
+
 // Reverse-chronological cards for one page of the timeline, grouped under a
 // per-calendar-day heading. `timeline.js` relies on this exact shape (a
 // `.timeline` wrapper, `h2.feed-day` headings, sibling `ul.feed` lists) to
@@ -1161,6 +1185,8 @@ function renderTimeline(items) {
 // Bottom-of-page pager + the sentinel `timeline.js` observes. `next` is the
 // path of the older page (or "" on the last page).
 function pager(prev, next) {
+  // Single-page timeline: no empty bordered bar, just the scroll sentinel.
+  if (!prev && !next) return `<div id="timeline-end"></div>`;
   const links = [
     prev ? `<a class="pager__link" rel="prev" href="${escapeHtml(prev)}">← Newer</a>` : "<span></span>",
     next ? `<a class="pager__link" rel="next" href="${escapeHtml(next)}">Older →</a>` : "<span></span>",
@@ -1260,6 +1286,12 @@ wrote up how I put this together in
 check-ins, reviews, and separate types for things read, watched and listened
 to. Some of these have no real equivalent on a mainstream network.</p>
 
+<h2>What this makes possible</h2>
+<p>Because every post is structured data in a repository I own — not locked
+inside someone's app — I can build on top of it. For example, I'd like to put
+every geotagged post (photos, check-ins, reviews…) on a map of the places I've
+been. That's only possible because the data is mine and out in the open.</p>
+
 <h2>Where else it shows up</h2>
 <p>A lot of what's here is also cross-posted to my
 <a href="https://mastodon.social/@hhkaos">Mastodon</a> and
@@ -1292,6 +1324,21 @@ normal social app that's <em>not</em> instant (it can take a few minutes) and
 it happens on that other site, not here. If you have your own website you can
 also send a <a href="https://indieweb.org/Webmention">Webmention</a> straight
 from the form.</p>
+
+<h2 id="subscribe">How to subscribe</h2>
+<p>This feed has an <a href="/feed.xml">Atom feed</a>. Paste
+<code>posts.rauljimenez.info/feed.xml</code> — or just this site's address —
+into any feed reader (NetNewsWire, Feedly, Reeder, Thunderbird, your browser…)
+and new posts turn up there, no account or algorithm in between. Every page also
+advertises it for auto-discovery, so most readers find it from the URL alone.
+My <a href="https://www.rauljimenez.info/blog">blog</a> has its own feeds
+(English and Spanish), linked the same way.</p>
+
+<h2 id="languages">Languages</h2>
+<p>I write some posts in English and some in Spanish, depending on who they're
+for. I haven't found a good way to publish everything in both — hand-translating
+every note isn't realistic — so for now each post carries a 🌐 button that opens
+it in Google Translate, and you can filter the timeline to a single language.</p>
 
 <h2>Why not just use social media</h2>
 <p>Because the social platforms we know are not neutral tools. Their incentives
@@ -1337,6 +1384,13 @@ republicaciones, confirmaciones de asistencia (RSVP), eventos, check-ins,
 reseñas, y tipos aparte para lo leído, lo visto y lo escuchado. Algunos no
 tienen equivalente real en una red convencional.</p>
 
+<h2>Lo que esto hace posible</h2>
+<p>Como cada publicación es un dato estructurado en un repositorio que es mío
+—y no algo encerrado dentro de la app de otro— puedo construir cosas encima.
+Por ejemplo, me gustaría poner en un mapa todas las publicaciones
+geolocalizadas (fotos, check-ins, reseñas…) para ver los sitios en los que he
+estado. Eso solo es posible porque los datos son míos y están abiertos.</p>
+
 <h2>Dónde más aparece</h2>
 <p>Buena parte de lo que hay aquí se publica también en mis cuentas de
 <a href="https://mastodon.social/@hhkaos">Mastodon</a> y
@@ -1369,6 +1423,23 @@ saber: a diferencia de una red al uso, esto <em>no</em> es inmediato (puede
 tardar unos minutos) y ocurre en ese otro sitio, no aquí. Si tienes web propia,
 también puedes enviar un <a href="https://indieweb.org/Webmention">Webmention</a>
 directamente desde el formulario.</p>
+
+<h2 id="subscribe">Cómo suscribirse</h2>
+<p>Este feed tiene un <a href="/feed.xml">feed Atom</a>. Pega
+<code>posts.rauljimenez.info/feed.xml</code> —o simplemente la dirección de
+este sitio— en cualquier lector de feeds (NetNewsWire, Feedly, Reeder,
+Thunderbird, tu navegador…) y las publicaciones nuevas aparecerán ahí, sin
+cuenta ni algoritmo de por medio. Además, cada página lo anuncia para
+autodescubrimiento, así que la mayoría de lectores lo encuentran solo con la
+URL. Mi <a href="https://www.rauljimenez.info/es/blog">blog</a> tiene sus
+propios feeds (en inglés y español), enlazados igual.</p>
+
+<h2 id="languages">Idiomas</h2>
+<p>Escribo algunos posts en inglés y otros en español, según para quién sean.
+No he encontrado una buena forma de publicarlo todo en ambos idiomas —traducir
+a mano cada nota no es realista—, así que de momento cada post lleva un botón
+🌐 que lo abre en Google Translate, y puedes filtrar el timeline por un solo
+idioma.</p>
 
 <h2>Por qué no usar sin más las redes sociales</h2>
 <p>Porque las plataformas sociales que conocemos no son herramientas neutrales.
@@ -1481,8 +1552,14 @@ async function main() {
   // stitches them into infinite scroll when it can.
   const intro = `<header class="site">
 <h1 class="visually-hidden"><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>
-<p class="page-intro i18n-en">The kind of things I'd normally post on a social network — notes, links, photos, events, things I've read or watched — except this feed runs on <a href="${MAIN_SITE}">my own site</a> instead of a platform I don't control. <a href="${BASE_URL}/about/">About this feed &amp; why &rarr;</a> · <a href="/feed.xml">RSS</a></p>
-<p class="page-intro i18n-es">El tipo de cosas que normalmente publicaría en una red social —notas, enlaces, fotos, eventos, lo que he leído o visto—, solo que este feed vive en <a href="${MAIN_SITE_ES}">mi propia web</a> y no en una plataforma que no controlo. <a href="${BASE_URL}/about/">Sobre este feed y por qué &rarr;</a> · <a href="/feed.xml">RSS</a></p>
+<details class="intro-toggle">
+<summary class="intro-toggle__btn"><span class="i18n-en">What is this?</span><span class="i18n-es">¿Qué es esto?</span><svg class="intro-toggle__chev" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></summary>
+<div class="page-intro">
+<p class="i18n-en">The kind of thing people usually scatter across other companies' platforms — a note, a link, a photo, an Amazon or Google Maps review, a like on a YouTube video, an RSVP to an event, something I've read or watched — collected here on my own domain instead. Some of it is also posted to social media; some of it (a rating, a review) has nowhere else good to go; and some I don't share anywhere at all.</p>
+<p class="i18n-es">El tipo de cosas que solemos repartir por las plataformas de otras empresas —una nota, un enlace, una foto, una reseña en Amazon o Google Maps, un me gusta en un vídeo de YouTube, un RSVP a un evento, algo que he leído o visto— recogidas aquí, en mi propio dominio. Parte se publica también en redes sociales; parte (una valoración, una reseña) no tiene otro sitio al que ir; y parte no la comparto en ningún lado.</p>
+</div>
+</details>
+<p class="intro-about"><a href="/about/"><span class="i18n-en">About this feed, IndieWeb-style, and why &rarr;</span><span class="i18n-es">Sobre este feed, al estilo IndieWeb, y por qué &rarr;</span></a></p>
 </header>`;
 
   const pageCount = Math.max(1, Math.ceil(index.length / PAGE_SIZE));
@@ -1497,7 +1574,7 @@ async function main() {
       : `<header class="site"><h1 class="visually-hidden"><span class="i18n-en">Activity — page ${n} of ${pageCount}</span><span class="i18n-es">Actividad — página ${n} de ${pageCount}</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
 
     const body = index.length
-      ? `${header}\n${renderTimeline(slice)}\n${pager(prev, next)}`
+      ? `${header}\n${feedFilter()}\n${renderTimeline(slice)}\n${pager(prev, next)}`
       : `${intro}\n<p>Nothing public yet.</p>`;
 
     const html = page({

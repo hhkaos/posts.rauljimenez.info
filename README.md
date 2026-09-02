@@ -235,6 +235,22 @@ row exactly as before. Wiring is a few lines appended to the
 `HEAD_INIT_SCRIPT` `DOMContentLoaded` block (toggles `.site-nav.is-open` +
 `body.nav-open`).
 
+**Masthead (page 1).** Under the `.visually-hidden` `<h1>`: a collapsed
+`<details class="intro-toggle">` "What is this? / ¿Qué es esto?" that opens
+the descriptive intro (broader than "social network" — Amazon/Maps reviews,
+YouTube likes, RSVPs, and things shared nowhere at all; no "my own site"
+link), then an always-visible `.intro-about` line linking `/about/`. No RSS
+link here any more — `/about/#subscribe` covers that. The OG-card
+screenshot forces the intro open and hides the toggle + about line.
+
+**Language filter** (`feedFilter()`): a pill group ("All / English /
+Español") above the timeline. Picking one sets `[data-feed-lang]` on
+`<html>` (remembered in `localStorage`, applied pre-paint by
+`HEAD_INIT_SCRIPT`); CSS hides `li.fc:not([lang=…])` and — via `:has()` —
+day headings left empty. Opt-in: "All" is the default, nothing is hidden
+until chosen, and with no JS every post shows. Works with the infinite
+scroll for free (pure CSS on spliced-in cards).
+
 **Headings.** The navbar already marks the current section, so the
 timeline's `<h1>` ("Activity" / "Actividad") would just repeat it — it's
 kept in the DOM but `.visually-hidden` (off-screen, still read by screen
@@ -288,11 +304,15 @@ still get name/url/photo. The footer row under a post is therefore just the
 `/about/` (`renderAboutHtml()`) explains what this feed is: a
 platform-independent social timeline, the IndieWeb rationale
 (`indieweb.org/why` + `/principles`), POSSE, the GitHub repo as the
-canonical record, **why some posts aren't on social media**
+canonical record, **what owning structured data makes possible** (a future
+map of geotagged posts), **why some posts aren't on social media**
 (`#why-not-shared` — not timely/useful enough for followers there, no clean
 syndication path for a review/RSVP/etc., kept as a personal record),
 **how reacting to a post works** (`#reacting` — the Respond button, that
-backfeed isn't instant and happens on the other site), why not mainstream
+backfeed isn't instant and happens on the other site), **how to subscribe**
+(`#subscribe`), **languages** (`#languages` — posts are written in one
+language or the other, no full bilingual pipeline, hence the per-post
+Google-Translate button + the timeline language filter), why not mainstream
 social media (*The Social Dilemma*), and the content license. **All content
 on the site is CC BY 4.0**; the `/about/` page is the canonical statement
 of that. It's **fully bilingual** — `renderAboutHtml()` emits a complete
