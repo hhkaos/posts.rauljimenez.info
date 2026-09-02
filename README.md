@@ -177,6 +177,17 @@ the two sites read as one. The logo is **hotlinked** from
 into this repo if that dependency is unwanted. Nav config is the
 `NAV_LINKS` / `LOGO_URL` constants in `render.mjs`.
 
+The navbar has the same **light/dark toggle** and **language selector** as
+the main site. Both are driven by `HEAD_INIT_SCRIPT` (inline in `<head>`,
+runs before first paint so there's no flash) which sets `[data-theme]` and
+`[data-lang]` on `<html>`; `style.css` shows the right palette / language
+variant off those attributes. Language is picked from `?lang=es|en`
+(remembered in `localStorage`), else `localStorage`, else
+`navigator.languages` — so a visitor arriving from
+`www.rauljimenez.info/es/` keeps Spanish header, nav, intro and footer.
+Both language variants are emitted in the HTML (`.i18n-en` / `.i18n-es`);
+with no JS the English default shows. Post-card content is English only.
+
 `/about/` (`renderAboutHtml()`) explains what this feed is: a
 platform-independent social timeline, the IndieWeb rationale
 (`indieweb.org/why` + `/principles`), POSSE, the GitHub repo as the
