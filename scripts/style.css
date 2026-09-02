@@ -368,6 +368,7 @@ article.h-event img {
    toggle floated right so it adds no vertical space until opened. Where the
    old masthead used to be — carries the border under it. */
 .feed-bar {
+  position: relative;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -386,9 +387,21 @@ article.h-event img {
 .feed-filter__label { color: var(--text-muted); margin-right: 0.15rem; }
 
 /* "What is this?" — collapsed <details>, right of the language row; opens
-   to a full-width panel that wraps onto its own line below. */
+   to a full-width panel below *without* the summary changing place. From
+   30rem up the summary is pinned to the top-right of the bar (so it stays
+   put on open); narrower, it just flows and wraps under the pills. */
 .intro-toggle { margin-left: auto; }
 .intro-toggle[open] { margin-left: 0; flex-basis: 100%; }
+
+@media (min-width: 30rem) {
+  /* keep the pills clear of the pinned button (line 1 only) */
+  .feed-filter__langs { padding-right: 8rem; }
+  .intro-toggle { margin-left: 0; position: static; }
+  .intro-toggle[open] { flex-basis: 100%; }
+  .intro-toggle__btn { position: absolute; top: 0; right: 0; }
+  .intro-toggle[open] .page-intro { margin-top: 0.4rem; }
+}
+
 .intro-toggle__btn {
   display: inline-flex;
   align-items: center;

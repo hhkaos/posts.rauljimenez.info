@@ -251,15 +251,19 @@ border under it:
   Opt-in: "All" is the default, nothing hidden until chosen, no-JS shows
   everything. Works with the infinite scroll for free (pure CSS on
   spliced-in cards).
-- **"What is this? / ¿Qué es esto?"** (right, `margin-left:auto`): a
-  collapsed `<details class="intro-toggle">`. Closed it costs no vertical
-  space; open it becomes a full-width panel (`flex-basis:100%`) with the
-  descriptive intro (broader than "social network" — Amazon/Maps reviews,
-  YouTube likes, RSVPs, things shared nowhere) and the `/about/` link
-  (`.page-intro__about`). No inline RSS link — `/about/#subscribe` covers
-  that. A closed `<details>` hides its content via `content-visibility`
-  (not CSS), so the OG-card screenshot sets `details.open` in JS rather
-  than fighting it, then hides the summary + about link.
+- **"What is this? / ¿Qué es esto?"** (right): a collapsed
+  `<details class="intro-toggle">`. Closed it costs no vertical space; open,
+  the `<details>` goes `flex-basis:100%` so the panel — descriptive intro
+  (broader than "social network" — Amazon/Maps reviews, YouTube likes,
+  RSVPs, things shared nowhere) + the `/about/` link (`.page-intro__about`)
+  — fills the row below. From `30rem` up the `<summary>` is
+  `position:absolute` top-right of `.feed-bar` so it *doesn't move* when
+  the panel opens (`.feed-filter__langs` gets `padding-right` to stay
+  clear); narrower, it flows and wraps under the pills. No inline RSS link
+  — `/about/#subscribe` covers that. A closed `<details>` hides its content
+  via `content-visibility` (not CSS), so the OG-card screenshot sets
+  `details.open` in JS rather than fighting it, then hides the summary +
+  about link.
 
 **Headings.** The navbar already marks the current section, so the
 timeline's `<h1>` ("Activity" / "Actividad") would just repeat it — it's
