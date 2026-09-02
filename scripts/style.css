@@ -70,7 +70,7 @@ nav.site-nav {
   height: 3.75rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
   padding: 0 1rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -88,12 +88,12 @@ nav.site-nav {
   display: block;
 }
 
+/* Links sit next to the logo on the left, as on www.rauljimenez.info. */
 .site-nav__links {
   display: flex;
   align-items: center;
   gap: 0.25rem 1.5rem;
   flex-wrap: wrap;
-  margin-left: auto;
   font-size: 0.9rem;
 }
 
@@ -119,7 +119,7 @@ nav.site-nav {
     gap: 0.4rem 0.75rem;
     padding: 0.6rem 0.75rem;
   }
-  .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.82rem; margin-left: 0; }
+  .site-nav__links { gap: 0.15rem 0.9rem; font-size: 0.82rem; }
   body { padding-top: 0; }
 }
 
