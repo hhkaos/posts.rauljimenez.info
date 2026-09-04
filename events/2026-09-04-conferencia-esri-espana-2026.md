@@ -14,7 +14,7 @@ post-status: published
 published: 2026-09-04T08:14:41.230Z
 syndication:
   - https://bsky.app/profile/did:plc:gwbqjf3ciffqeedjrpmjinfo/post/3muojiscdo226
-updated: 2026-09-04T08:15:03.019Z
+updated: 2026-09-04T08:17:04.460Z
 visibility: public
 ---
 
