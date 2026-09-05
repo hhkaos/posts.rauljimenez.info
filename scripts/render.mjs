@@ -12,8 +12,25 @@ import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "node:fs/promi
 import path from "node:path";
 
 import { franc } from "franc-min";
+import { parseHTML } from "linkedom";
 import MarkdownIt from "markdown-it";
 import YAML from "yaml";
+
+// Received-Webmentions rendering is now the shared package, not a local
+// fork — see hhkaos/webmentions-widget#1. We hold the substance (target
+// expansion, dedup/grouping, mojibake stripping, excerpting) in the
+// package and paint it into the static HTML here at build time, from a
+// committed webmention.io snapshot (scripts/webmentions-snapshot.json,
+// refreshed by .github/workflows/webmentions-snapshot.yml). No per-visitor
+// fetch to webmention.io: their API returns intermittent CORS-less 502s
+// that would blank the section.
+import {
+  filterMentionsByTargets,
+  getCanonicalTargets,
+  getSnapshotMentions,
+  groupWebmentions,
+} from "@hhkaos/webmentions-widget/core";
+import { renderGroups } from "@hhkaos/webmentions-widget/render";
 
 // Post bodies are authored as Markdown (that's what Indiekit's postTemplate
 // writes). `linkify` turns bare URLs into links; `breaks` keeps single
@@ -473,8 +490,9 @@ function feedLinks(lang) {
 // breaks Webmentions *sent from* the index. Post pages have an h-entry that
 // outranks the h-card, so it's safe (and useful) there.
 // `webmentions` (defaults to the same value as `repCard`): render the
-// "Responses from around the web" section + load /webmentions.js. Same split
-// as repCard — individual post pages get it, the index/about pages don't.
+// "Responses from around the web" section (baked in from the snapshot at
+// build time). Same split as repCard — individual post pages get it, the
+// index/about pages don't.
 function page({ title, body, og, repCard = true, webmentions = repCard, lang = SITE_DEFAULT_LANG }) {
   const o = og || {};
   const branded = fullTitle(title);
@@ -532,7 +550,7 @@ ${siteNav()}
 <div class="wrap">
 ${repCard ? repHCard() : ""}
 ${body}
-${webmentions ? webmentionsSection(url) : ""}
+${webmentions ? webmentionsSection(url, lang) : ""}
 <footer class="site">
 <a class="i18n-en" href="${MAIN_SITE}">www.rauljimenez.info</a><a class="i18n-es" href="${MAIN_SITE_ES}">www.rauljimenez.info</a>
 <a href="${BASE_URL}/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
@@ -541,30 +559,136 @@ ${webmentions ? webmentionsSection(url) : ""}
 </footer>
 </div>
 <script src="/timeline.js" defer></script>
-<script src="/webmentions.js" defer></script>
+<script src="/respond.js" defer></script>
 </body>
 </html>
 `;
 }
 
-// The container that /webmentions.js fills in at page load with the likes,
-// reposts, replies and mentions webmention.io has collected for this URL
-// (including the ones Bridgy back-feeds from the Mastodon/Bluesky copies).
-// Starts `hidden`; the script reveals it only when there's something to show,
-// so a post with no responses renders nothing. Progressive enhancement —
-// same deal as timeline.js. The `<link rel="canonical">` in the head is the
-// target the script queries by — except under PREVIEW_BASE (`npm run dev`),
-// where the canonical would point at localhost and match nothing, so we pin
-// the real production URL with `data-wm-targets` to preview live responses.
-function webmentionsSection(pageUrl) {
-  const canonical = toCanonical(pageUrl);
-  const previewTarget =
-    canonical !== pageUrl ? ` data-wm-targets="${escapeHtml(canonical)}"` : "";
-  return `<section class="webmentions" id="webmentions" hidden aria-labelledby="webmentions-title" data-wm-api="https://webmention.io/api/mentions.jf2"${previewTarget}>
+// --- Received Webmentions --------------------------------------------------
+// The likes / reposts / replies / mentions webmention.io has collected for a
+// page (including the ones Bridgy back-feeds from the Mastodon/Bluesky
+// copies), baked into the HTML at build time from the committed snapshot.
+// Nothing here runs in the browser — see the import block at the top.
+
+// Loaded once by main(). `null` until then (and if the file is missing, so a
+// fresh checkout without a snapshot still builds — the section is just
+// omitted).
+let WM_MENTIONS = null;
+
+async function loadWebmentionSnapshot() {
+  try {
+    const raw = await readFile("scripts/webmentions-snapshot.json", "utf8");
+    const snap = JSON.parse(raw);
+    WM_MENTIONS = { generatedAt: snap.generatedAt, list: getSnapshotMentions(snap) };
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    console.warn("No scripts/webmentions-snapshot.json — skipping received-Webmention rendering");
+    WM_MENTIONS = { generatedAt: null, list: [] };
+  }
+}
+
+// Labels handed to the shared renderer. Thread verbs + "view source" +
+// "updated" are `{en, es}` maps — it emits one `.i18n-en` / `.i18n-es` span
+// per language and CSS toggles them, matching the rest of the page. The
+// facepile labels are plain strings: they only surface in the group's
+// `aria-label` / `title` (the visible part is just the glyph + count), and
+// an attribute can't hold both languages.
+const WM_LABELS = {
+  "like-of": "likes",
+  "repost-of": "reposts",
+  "bookmark-of": "bookmarks",
+  "in-reply-to": { en: "replied", es: "respondió" },
+  "mention-of": { en: "mentioned this", es: "lo mencionó" },
+  viewSource: { en: "View source", es: "Ver original" },
+  updated: { en: "Updated", es: "Actualizado" },
+};
+
+// Class overrides so the shared renderer emits the class names this repo's
+// CSS already targets (`webmentions__avatar` on each thread card, and
+// `webmentions__text` rather than `webmentions__content` for the body).
+const WM_CLASS_NAMES = {
+  threadPhoto: "webmentions__avatar",
+  threadContent: "webmentions__text p-content",
+};
+
+// webmention.io stores a target by its exact string; a page may have been
+// linked as www/no-www, with or without a trailing slash, or locale-prefixed.
+// `getCanonicalTargets` expands all of those; `filterMentionsByTargets`
+// matches ignoring the trailing slash / fragment. Always keyed on the real
+// production URL, even under PREVIEW_BASE. Memoised — every post is asked
+// about twice (its own page and its timeline card).
+const WM_GROUPS_CACHE = new Map();
+
+function webmentionGroupsFor(pageUrl) {
+  if (!WM_MENTIONS || !WM_MENTIONS.list.length) return null;
+  const { pathname } = new URL(toCanonical(pageUrl));
+  if (WM_GROUPS_CACHE.has(pathname)) return WM_GROUPS_CACHE.get(pathname);
+  const groups = computeWebmentionGroups(pathname);
+  WM_GROUPS_CACHE.set(pathname, groups);
+  return groups;
+}
+
+function computeWebmentionGroups(pathname) {
+  const targets = getCanonicalTargets({ siteUrl: CANONICAL_BASE, pathname });
+  const mine = filterMentionsByTargets(WM_MENTIONS.list, targets);
+  if (!mine.length) return null;
+  // A reply thread should read top-down oldest-first; the snapshot is stored
+  // newest-first (by wm-id).
+  mine.sort((a, b) =>
+    String(a.published || a["wm-received"] || "").localeCompare(
+      String(b.published || b["wm-received"] || ""),
+    ),
+  );
+  return groupWebmentions(mine);
+}
+
+// The full "Responses from around the web" section for a post page. Returns
+// "" when the page has no mentions, so a quiet post renders nothing.
+function webmentionsSection(pageUrl, lang = SITE_DEFAULT_LANG) {
+  const groups = webmentionGroupsFor(pageUrl);
+  if (!groups || !groups.total) return "";
+
+  const shell = `<section class="webmentions" id="webmentions" aria-labelledby="webmentions-title">
 <h2 class="webmentions__title" id="webmentions-title"><span class="i18n-en">Responses from around the web</span><span class="i18n-es">Respuestas de la web</span></h2>
+<p class="webmentions__updated" hidden></p>
 <div class="webmentions__facepile" id="webmentions-facepile" hidden></div>
 <ol class="webmentions__list" id="webmentions-list"></ol>
 </section>`;
+  const { document } = parseHTML(`<!doctype html><body>${shell}`);
+  renderGroups(groups, {
+    document,
+    container: "#webmentions",
+    facepile: "#webmentions-facepile",
+    list: "#webmentions-list",
+    updated: ".webmentions__updated",
+    facepileMode: "grouped",
+    labels: WM_LABELS,
+    classNames: WM_CLASS_NAMES,
+    locale: lang === "es" ? "es" : "en",
+    maxLength: 320,
+    updatedAt: WM_MENTIONS.generatedAt,
+  });
+  return document.querySelector("#webmentions").outerHTML;
+}
+
+// Compact per-card reaction line for the timeline. Same glyph vocabulary as
+// the old client script: replies + mentions fold into ↩, bookmarks into ⚑.
+const WM_COUNT_ORDER = [
+  { cls: "is-like", glyph: "♥", get: (g) => g.counts["like-of"] || 0 },
+  { cls: "is-repost", glyph: "↻", get: (g) => g.counts["repost-of"] || 0 },
+  { cls: "is-reply", glyph: "↩", get: (g) => g.threads.length },
+  { cls: "is-bookmark", glyph: "⚑", get: (g) => g.counts["bookmark-of"] || 0 },
+];
+
+function webmentionCountLine(pageUrl) {
+  const groups = webmentionGroupsFor(pageUrl);
+  if (!groups) return "";
+  const parts = WM_COUNT_ORDER.filter((t) => t.get(groups) > 0).map(
+    (t) =>
+      `<span class="fc-reactions__c ${t.cls}"><span class="fc-reactions__g" aria-hidden="true">${t.glyph}</span> ${t.get(groups)}</span>`,
+  );
+  return parts.length ? `<p class="fc-reactions">${parts.join("")}</p>` : "";
 }
 
 // The date at the top of a post *is* the permalink (standard h-entry
@@ -670,7 +794,7 @@ ${networks
 </div>`;
 
   // Collapsed behind a native <details> so it takes no space until opened
-  // (and still works with JS disabled — webmentions.js only adds the
+  // (and still works with JS disabled — respond.js only adds the
   // scroll-into-view nicety on small screens).
   return `
 <details class="respond-toggle">
@@ -1132,15 +1256,13 @@ function renderFeedCard(e, url, published) {
   const excerpt = e.excerpt ? `<p class="fc-excerpt">${escapeHtml(e.excerpt)}</p>` : "";
   const context = e.contextHost ? `<p class="fc-context">${escapeHtml(e.contextHost)}</p>` : "";
 
-  const canonical = toCanonical(url);
-  const canonAttr = canonical !== url ? ` data-canonical="${escapeHtml(canonical)}"` : "";
-  return `<li class="fc fc--${e.type}" lang="${escapeHtml(e.lang || SITE_DEFAULT_LANG)}"${canonAttr}>
+  return `<li class="fc fc--${e.type}" lang="${escapeHtml(e.lang || SITE_DEFAULT_LANG)}">
 <a class="fc-perma" href="${escapeHtml(url)}" aria-label="Open this post"></a>
 <div class="fc-head">
 <span class="badge ${e.type}">${escapeHtml(e.badge)}</span>
 <time datetime="${escapeHtml(published || "")}">${escapeHtml(feedTime(published))}</time>
 </div>
-${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}
+${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}${webmentionCountLine(url)}
 </li>`;
 }
 
@@ -1494,6 +1616,7 @@ de arriba, es un asunto aparte.</p>
 }
 
 async function main() {
+  await loadWebmentionSnapshot();
   await mkdir(SITE_DIR, { recursive: true });
   await writeFile(path.join(SITE_DIR, ".nojekyll"), "");
   await writeFile(path.join(SITE_DIR, "CNAME"), "posts.rauljimenez.info\n");
@@ -1556,7 +1679,7 @@ async function main() {
   index.sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
   await copyFile("scripts/timeline.js", path.join(SITE_DIR, "timeline.js"));
-  await copyFile("scripts/webmentions.js", path.join(SITE_DIR, "webmentions.js"));
+  await copyFile("scripts/respond.js", path.join(SITE_DIR, "respond.js"));
   await writeFile(path.join(SITE_DIR, "feed.xml"), buildFeed(index));
 
   await mkdir(path.join(SITE_DIR, "about"), { recursive: true });

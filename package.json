@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Renders public posts from this repo as static HTML for posts.rauljimenez.info, and sends outgoing Webmentions for public bookmark/like/reply/rsvp/repost posts.",
   "dependencies": {
+    "@hhkaos/webmentions-widget": "^0.3.0",
     "franc-min": "^6.2.0",
+    "linkedom": "^0.18.13",
     "markdown-it": "^14.1.0",
     "yaml": "^2.9.0"
   },

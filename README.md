@@ -10,7 +10,7 @@ Docusaurus, hosted separately).
 
 ## Running it locally
 
-You only need [Node](https://nodejs.org/) 18+ (CI uses 22). No database, no
+You only need [Node](https://nodejs.org/) 20+ (CI uses 22). No database, no
 Indiekit — the renderer just reads the Markdown files in this repo.
 
 ```bash
@@ -46,6 +46,7 @@ Other scripts:
 | `npm run serve` | Serve the current `_site/` without rebuilding. |
 | `npm run verify` | Parse the built HTML and check the author microformats2. |
 | `node scripts/screenshot.mjs` | Regenerate the per-post OG / syndication PNGs (needs `npx playwright install chromium`). |
+| `npx webmentions-snapshot --domain posts.rauljimenez.info --out scripts/webmentions-snapshot.json` | Refresh the committed webmention.io snapshot (needs `WEBMENTION_IO_TOKEN`; CI does this daily). |
 
 `_site/` is git-ignored and rebuilt from scratch each time; deleting it is
 always safe.
@@ -333,7 +334,7 @@ of that. It's **fully bilingual** — `renderAboutHtml()` emits a complete
 `.i18n-en` and `.i18n-es` `<article>` and `[data-lang]` shows one.
 
 Because both language copies carry the same section `id`, a native anchor
-jump can land on the hidden one; `webmentions.js`' `initHashJump` re-jumps
+jump can land on the hidden one; `respond.js`' `initHashJump` re-jumps
 to the visible copy (on load + `hashchange`, and the nav language toggle
 fires a synthetic `hashchange`). `.prose h2[id]` gets `scroll-margin-top`
 to clear the fixed navbar.
@@ -344,7 +345,7 @@ Every post page ends with a **`<details class="respond-toggle">`** (built by
 `respondSection()` in `render.mjs`, inside the `h-entry`, hidden from the OG
 screenshot). Collapsed by default — just a pill-shaped "Respond / Responder"
 `<summary>` button — so it costs no vertical space until opened. Native
-disclosure: works with no JS (`webmentions.js` only adds a
+disclosure: works with no JS (`respond.js` only adds a
 scroll-into-view when it opens on a phone, `≤34rem`). Open, it becomes a
 lightly tinted card (no horizontal separator rules); on mobile the button
 is full-width and the form controls stack. Inside the `<section class="respond">`:
@@ -363,50 +364,65 @@ is full-width and the form controls stack. Inside the `<section class="respond">
 - **Webmention form** — a plain `method="post"` form to the shared
   webmention.io endpoint (`WEBMENTION_ENDPOINT`), `target` = the canonical
   post URL, `source` = a URL the reader types. It posts to a hidden iframe
-  so it works with JS off; `webmentions.js` swaps in a thank-you line on
+  so it works with JS off; `respond.js` swaps in a thank-you line on
   submit. Verified mentions then show up in the "Responses from around the
   web" section above it (and fire the push+email pipeline).
 
-### Received Webmentions (`scripts/webmentions.js`)
+### Received Webmentions (shared `@hhkaos/webmentions-widget`, baked in at build time)
 
 Every page advertises a Webmention endpoint
 (`<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">`
-— the hosted webmention.io account shared with `www.`/`links.rauljimenez.info`)
-and loads `scripts/webmentions.js` (`defer`, copied to `_site/` next to
-`style.css` / `timeline.js`). The script is a dependency-free progressive
-enhancement with two modes:
+— the hosted webmention.io account shared with `www.`/`links.rauljimenez.info`).
 
-- **Post pages** carry a `<section id="webmentions" hidden>` (the `page()`
-  helper adds it on the same pages that get the representative h-card — its
-  `webmentions` option defaults to `repCard`, so the index and `/about/` don't).
-  The script reads the page's `<link rel="canonical">`, queries webmention.io's
-  public `api/mentions.jf2` for that target (both slash forms), and fills the
-  section in — likes / reposts / bookmarks as a tinted-glyph facepile
-  (`♥` / `↻` / `⚑` + count), replies + mentions as cards. If there's nothing
-  to show (or the fetch fails) the section stays `hidden`.
-- **Timeline pages** have no section but a list of `.fc` cards. The script
-  batches every visible permalink into **one** `api/mentions.jf2` call, groups
-  the results by `wm-target`, and appends a compact `♥ n · ↻ n · ↩ n` line to
-  each card that has any (a `MutationObserver` on `.timeline` catches the cards
-  the infinite scroll splices in). `screenshot.mjs` hides both `.webmentions`
-  and `.fc-reactions`.
+The likes / reposts / replies / mentions themselves are **rendered into the
+static HTML by `render.mjs` at build time** — there is *no* per-visitor fetch
+to webmention.io (their API returns intermittent 502s whose nginx error page
+carries no CORS header, so in a browser one blip blanks the section). The
+logic — target-URL expansion, dedup/grouping, mojibake stripping, excerpting,
+`textContent`-only rendering — is the shared package
+[`@hhkaos/webmentions-widget`](https://github.com/hhkaos/webmentions-widget)
+(`0.3.0`), one implementation for this site,
+`links.rauljimenez.info` and `hhkaos.github.io`. See
+[`hhkaos/webmentions-widget#1`](https://github.com/hhkaos/webmentions-widget/issues/1).
 
-Remote content is inserted with `textContent` only, and the emoji debris
-webmention.io leaves in extracted text (runs of `?`, U+FFFD) is stripped.
-Under `PREVIEW_BASE` (`npm run dev`) the canonical points at localhost and
-would match nothing, so `render.mjs` pins the real production URL on the
-section / cards (`data-wm-targets` / `data-canonical`) — preview only, the
-deployed HTML is unchanged.
+The data comes from **`scripts/webmentions-snapshot.json`** — a committed
+snapshot of every mention webmention.io holds for `posts.rauljimenez.info`,
+refreshed daily by `.github/workflows/webmentions-snapshot.yml`
+(`npx webmentions-snapshot`, authenticated with the `WEBMENTION_IO_TOKEN` repo
+secret; the same job also runs on `workflow_dispatch` — with a `full` input —
+and `repository_dispatch: webmention`). Committing a refreshed snapshot to
+`main` re-triggers `publish.yml`, so the site redeploys with the new mentions.
+
+- **Post pages** carry a `<section id="webmentions">` (the `page()` helper
+  adds it on the same pages that get the representative h-card — its
+  `webmentions` option defaults to `repCard`, so the index and `/about/`
+  don't). `render.mjs` fills it via the package's `renderGroups()` against a
+  `linkedom` document: likes / reposts / bookmarks as a per-property
+  tinted-glyph facepile (`♥` / `↻` / `⚑` + count), replies + mentions as
+  `h-cite` cards, bilingual `{en, es}` labels as CSS-toggled `.i18n-*` spans,
+  and a small "Updated *date*" line (the snapshot is always a little behind).
+  A page with no mentions renders no section at all.
+- **Timeline pages** get a compact `♥ n · ↻ n · ↩ n` line per `.fc` card
+  (`webmentionCountLine()`, built from the same `groupWebmentions()` output;
+  replies + mentions fold into `↩`). No `MutationObserver` is needed — the
+  cards the infinite scroll splices in already carry their own line.
+
+`screenshot.mjs` hides both `.webmentions` and `.fc-reactions`. Everything is
+keyed on the real production URL via `toCanonical()`, so `npm run dev`
+(`PREVIEW_BASE`) shows the real mentions baked in without any preview-only
+attributes.
+
+The only remaining client script for this area is **`scripts/respond.js`**
+(`defer`, copied to `_site/` next to `style.css` / `timeline.js`): the
+`#hash` deep-jump for `/about`'s bilingual sections and the two "Respond"
+niceties (scroll-into-view on a phone, swap the form for a thank-you). These
+are site-specific and stay local.
 
 Reactions on the Mastodon/Bluesky copies flow in via **Bridgy**
 (<https://brid.gy>, backfeed only, publishing disabled) — it watches the
 syndicated accounts and posts a Webmention to the original for every
 like/reply/repost there. `posts.rauljimenez.info` must be a registered site on
 the webmention.io account for those to be accepted.
-
-The same widget exists (less tidily) as a React component in
-`hhkaos/hhkaos.github.io` and inline in `hhkaos/littlelink`; unifying the
-three into one shared module is tracked in `hhkaos/littlelink`.
 
 This repo itself is not built or deployed to www.rauljimenez.info. It is
 read and written by the Indiekit server via the GitHub API

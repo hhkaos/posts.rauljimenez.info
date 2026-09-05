@@ -1,0 +1,65 @@
+name: Refresh webmentions snapshot
+
+# The "Responses from around the web" sections (and the timeline reaction
+# counts) are baked into the static HTML at build time from
+# scripts/webmentions-snapshot.json, so a page view costs webmention.io
+# nothing and the section survives their intermittent 502s. This job keeps
+# that file current: one authenticated domain-wide query a day instead of
+# one fetch per visitor per page.
+#
+# Committing the refreshed snapshot to main triggers publish.yml, which
+# re-renders and redeploys the site with the new mentions. repository_dispatch
+# is the escape hatch to force a refresh (e.g. from the webmention.io webhook)
+# without waiting for the daily schedule.
+
+on:
+  schedule:
+    - cron: '37 4 * * *'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Refetch everything instead of only what is new
+        type: boolean
+        default: false
+  repository_dispatch:
+    types: [webmention]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: webmentions-snapshot
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install
+
+      - name: Fetch mentions
+        env:
+          WEBMENTION_IO_TOKEN: ${{ secrets.WEBMENTION_IO_TOKEN }}
+        run: |
+          npx webmentions-snapshot \
+            --domain posts.rauljimenez.info \
+            --out scripts/webmentions-snapshot.json \
+            ${{ inputs.full && '--full' || '' }}
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- scripts/webmentions-snapshot.json; then
+            echo "No change."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/webmentions-snapshot.json
+          git commit -m "chore: refresh webmentions snapshot"
+          git push

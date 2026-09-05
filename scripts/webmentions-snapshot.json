@@ -1,0 +1,221 @@
+{
+  "generatedAt": "2026-09-05T14:12:16.691Z",
+  "lastId": 2028274,
+  "count": 10,
+  "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Hugo Campos",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:4wxnvzn7xrcg3ishncivongj/bafkreicthciek5ksga63lp4mjodo7jxmsmss4by7qfzlb4vc5fq6fqnj3a",
+        "url": "https://bsky.app/profile/hugocampos.bsky.social"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3muhundzau72x#liked_by_did:plc:4wxnvzn7xrcg3ishncivongj",
+      "published": null,
+      "wm-received": "2026-09-02T10:47:46Z",
+      "wm-id": 2028274,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3muhundzau72x/did%253Aplc%253A4wxnvzn7xrcg3ishncivongj",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Álvaro Montoro",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:xei4kpuuaogvgnvufre7wvjm/bafkreigphqyvgorv7zyiphugwgccquzbevo7hvxflrujfoy6qhee4o6goy",
+        "url": "https://bsky.app/profile/alvaromontoro.com"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3muhundzau72x#liked_by_did:plc:xei4kpuuaogvgnvufre7wvjm",
+      "published": null,
+      "wm-received": "2026-09-02T10:47:41Z",
+      "wm-id": 2028273,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3muhundzau72x/did%253Aplc%253Axei4kpuuaogvgnvufre7wvjm",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Álvaro Montoro",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:xei4kpuuaogvgnvufre7wvjm/bafkreigphqyvgorv7zyiphugwgccquzbevo7hvxflrujfoy6qhee4o6goy",
+        "url": "https://bsky.app/profile/alvaromontoro.com"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3muhundzau72x#reposted_by_did:plc:xei4kpuuaogvgnvufre7wvjm",
+      "published": null,
+      "wm-received": "2026-09-02T10:47:40Z",
+      "wm-id": 2028272,
+      "wm-source": "https://brid.gy/repost/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3muhundzau72x/did%253Aplc%253Axei4kpuuaogvgnvufre7wvjm",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "repost-of": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "repost-of",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/73f9816bf4d6b3d0736371c15a62dd838e855580d3931550bb28b5372eb4791d.jpg",
+        "url": "https://mastodon.social/@hhkaos"
+      },
+      "url": "https://mastodon.social/@hhkaos/117196911870701542",
+      "published": "2026-09-01T17:15:57+00:00",
+      "wm-received": "2026-09-02T10:37:04Z",
+      "wm-id": 2028271,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117196793167840948/117196911870701542",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p><span class=\"h-card\"><a href=\"https://mastodon.social/@IvanSanchez\" class=\"u-url\">@<span>IvanSanchez</span></a></span> jajajja, me lo apunto tb! ????</p>",
+        "text": "@IvanSanchez jajajja, me lo apunto tb! ????"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Iván Sánchez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/e63e2baf521b0b5afd07565dd05e6cc3fabeab8ba3780063c21e4bc69865b861.png",
+        "url": "https://mastodon.social/@IvanSanchez"
+      },
+      "url": "https://mastodon.social/@IvanSanchez/117196909402491829",
+      "published": "2026-09-01T17:15:19+00:00",
+      "wm-received": "2026-09-02T10:37:04Z",
+      "wm-id": 2028270,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117196793167840948/117196909402491829",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p><span class=\"h-card\"><a href=\"https://mastodon.social/@hhkaos\" class=\"u-url\">@<span>hhkaos</span></a></span> Pues si quieres saber cómo soy yo de escéptico vas a tener que apuntarte también para leer <a href=\"https://ivan.sanchezortega.es/politics/2026/06/09/whale-meat.html\"><span>https://</span><span>ivan.sanchezortega.es/politics</span><span>/2026/06/09/whale-meat.html</span></a></p>\n<a href=\"https://ivan.sanchezortega.es/politics/2026/06/09/whale-meat.html\">I once ate whale meat</a>",
+        "text": "@hhkaos Pues si quieres saber cómo soy yo de escéptico vas a tener que apuntarte también para leer https://ivan.sanchezortega.es/politics/2026/06/09/whale-meat.html\nI once ate whale meat"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Iván Sánchez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/e63e2baf521b0b5afd07565dd05e6cc3fabeab8ba3780063c21e4bc69865b861.png",
+        "url": "https://mastodon.social/@IvanSanchez"
+      },
+      "url": "https://mastodon.social/@IvanSanchez/117196883095711296",
+      "published": "2026-09-01T17:08:37+00:00",
+      "wm-received": "2026-09-02T10:37:02Z",
+      "wm-id": 2028269,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117196793167840948/117196883095711296",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p><span class=\"h-card\"><a href=\"https://mastodon.social/@hhkaos\" class=\"u-url\">@<span>hhkaos</span></a></span> Pues, como le dije a Adriana, mírate <a href=\"https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/\"><span>https://</span><span>metr.org/blog/2025-07-10-early</span><span>-2025-ai-experienced-os-dev-study/</span></a> porque es el único estudio medio serio que se ha hecho sobre el tema, y se resume en que *subjetivamente* aceleras un 20% pero *objetivamente* ralentizas un 20%.</p>\n<a href=\"https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/\">Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity</a>",
+        "text": "@hhkaos Pues, como le dije a Adriana, mírate https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/ porque es el único estudio medio serio que se ha hecho sobre el tema, y se resume en que *subjetivamente* aceleras un 20% pero *objetivamente* ralentizas un 20%.\nMeasuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/73f9816bf4d6b3d0736371c15a62dd838e855580d3931550bb28b5372eb4791d.jpg",
+        "url": "https://mastodon.social/@hhkaos"
+      },
+      "url": "https://mastodon.social/@hhkaos/117196893197664300",
+      "published": "2026-09-01T17:11:12+00:00",
+      "wm-received": "2026-09-02T10:37:01Z",
+      "wm-id": 2028268,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117196793167840948/117196893197664300",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p><span class=\"h-card\"><a href=\"https://mastodon.social/@IvanSanchez\" class=\"u-url\">@<span>IvanSanchez</span></a></span> gracias por compartir. Me lo miraré (I promise). </p><p>Aunque he de decir que soy bastante escéptico ante las generalizaciones (en general). Creo que cada persona y cada caso de uso son muy diferentes.</p><p>Pero lo dicho, me lo guardo para leer :)</p>",
+        "text": "@IvanSanchez gracias por compartir. Me lo miraré (I promise). \n\nAunque he de decir que soy bastante escéptico ante las generalizaciones (en general). Creo que cada persona y cada caso de uso son muy diferentes.\n\nPero lo dicho, me lo guardo para leer :)"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/73f9816bf4d6b3d0736371c15a62dd838e855580d3931550bb28b5372eb4791d.jpg",
+        "url": "https://mastodon.social/@hhkaos"
+      },
+      "url": "https://mastodon.social/@hhkaos/117196867454303772",
+      "published": "2026-09-01T17:04:39+00:00",
+      "wm-received": "2026-09-02T10:36:59Z",
+      "wm-id": 2028267,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117196793167840948/117196867454303772",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p>Buenas <span class=\"h-card\"><a href=\"https://mastodon.social/@IvanSanchez\" class=\"u-url\">@<span>IvanSanchez</span></a></span> ! Si lo dices por la descripción de la charla... no la escribí yo ???? .</p><p>La verdad es que no hay una única respuesta (depende de muchos factores), pero el feedback subjetivo que he recibido es mayormente que sí.</p><p>Mi objetivo no es tanto vender que hay que usar la IA, sino presentar una introducción a cómo podría usarse (basándome en lo que he visto y escuchado) y dejar a cada cual decidir si quiere usarla y cómo.</p><p>Aquí tienes lo que compartí en marzo: <a href=\"https://www.youtube.com/watch?v=QlsXxDXEXTY\"><span>https://www.</span><span>youtube.com/watch?v=QlsXxDXEXTY</span><span></span></a> ????</p>\n<a href=\"https://www.youtube.com/watch?v=QlsXxDXEXTY\">AI-Infused Development: Lessons Learned and Patterns from Esri Engineers</a>",
+        "text": "Buenas @IvanSanchez ! Si lo dices por la descripción de la charla... no la escribí yo ???? .\n\nLa verdad es que no hay una única respuesta (depende de muchos factores), pero el feedback subjetivo que he recibido es mayormente que sí.\n\nMi objetivo no es tanto vender que hay que usar la IA, sino presentar una introducción a cómo podría usarse (basándome en lo que he visto y escuchado) y dejar a cada cual decidir si quiere usarla y cómo.\n\nAquí tienes lo que compartí en marzo: https://www.youtube.com/watch?v=QlsXxDXEXTY ????\nAI-Infused Development: Lessons Learned and Patterns from Esri Engineers"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Iván Sánchez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/e63e2baf521b0b5afd07565dd05e6cc3fabeab8ba3780063c21e4bc69865b861.png",
+        "url": "https://mastodon.social/@IvanSanchez"
+      },
+      "url": "https://mastodon.social/@IvanSanchez/117196837165827891",
+      "published": "2026-09-01T16:56:57+00:00",
+      "wm-received": "2026-09-02T10:36:59Z",
+      "wm-id": 2028266,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117196793167840948/117196837165827891",
+      "wm-target": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p><span class=\"h-card\"><a href=\"https://mastodon.social/@hhkaos\" class=\"u-url\">@<span>hhkaos</span></a></span> Te voy a hacer la misma pregunta que le hice a Adriana (ventas) en las JIIDE del año pasado: ¿Esto de \"IA\" cuánto tiempo ahorra?</p><p>Es decir, si afirmas que \"acelera el desarrollo y el testeo\", quiero saber valores de KPIs antes y después, y si afirmas que \"simplifica la documentación\" quiero saber el volumen de la documentación antes y después.</p>",
+        "text": "@hhkaos Te voy a hacer la misma pregunta que le hice a Adriana (ventas) en las JIIDE del año pasado: ¿Esto de \"IA\" cuánto tiempo ahorra?\n\nEs decir, si afirmas que \"acelera el desarrollo y el testeo\", quiero saber valores de KPIs antes y después, y si afirmas que \"simplifica la documentación\" quiero saber el volumen de la documentación antes y después."
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Wojtek Powiertowski",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/fb63563a65c386b51276519fc2a055e13c4da43b57bd1afcb882e4dc840a14eb.png",
+        "url": "https://mastodon.social/@wojtekpow"
+      },
+      "url": "https://mastodon.social/@hhkaos/117198456449142509#favorited-by-109742414877250719",
+      "published": null,
+      "wm-received": "2026-09-02T10:35:47Z",
+      "wm-id": 2028265,
+      "wm-source": "https://brid.gy/like/mastodon/@hhkaos@mastodon.social/117198456449142509/109742414877250719",
+      "wm-target": "https://posts.rauljimenez.info/photos/2026/09/01/e4bdf/",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/photos/2026/09/01/e4bdf/",
+      "wm-property": "like-of",
+      "wm-private": false
+    }
+  ]
+}

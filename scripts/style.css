@@ -930,6 +930,13 @@ nav.pager {
   margin: 0 0 1rem;
 }
 
+/* "Updated <date>" — the section is baked from a snapshot, so say how fresh. */
+.webmentions__updated {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 /* Facepile: likes / reposts / bookmarks as rows of avatars. */
 .webmentions__facepile {
   display: flex;
@@ -947,18 +954,24 @@ nav.pager {
 
 .webmentions__faces {
   display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.webmentions__faces a {
-  display: block;
+.webmentions__facepile-item {
   margin-left: -8px;
-  border-radius: 50%;
   transition: transform 0.1s ease;
 }
-.webmentions__faces a:first-child { margin-left: 0; }
-.webmentions__faces a:hover { transform: translateY(-2px); z-index: 2; }
+.webmentions__facepile-item:first-child { margin-left: 0; }
+.webmentions__facepile-item:hover { transform: translateY(-2px); z-index: 2; }
 
-.webmentions__face,
+.webmentions__facepile-link {
+  display: block;
+  border-radius: 50%;
+}
+
+.webmentions__facepile-photo,
 .webmentions__avatar {
   display: grid;
   place-items: center;
