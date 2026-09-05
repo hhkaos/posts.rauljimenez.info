@@ -619,10 +619,13 @@ function webmentionsUpdatedLine(iso) {
 }
 
 // Class overrides so the shared renderer emits the class names this repo's
-// CSS already targets (`webmentions__avatar` on each thread card, and
-// `webmentions__text` rather than `webmentions__content` for the body).
+// CSS already targets: `webmentions__avatar` on each thread card (photo or
+// initial-fallback — `threadInitial` defaults to the package's own photo
+// class, which we don't use), and `webmentions__text` rather than
+// `webmentions__content` for the body.
 const WM_CLASS_NAMES = {
   threadPhoto: "webmentions__avatar",
+  threadInitial: "webmentions__avatar is-initial",
   threadContent: "webmentions__text p-content",
 };
 

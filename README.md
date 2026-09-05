@@ -381,7 +381,7 @@ carries no CORS header, so in a browser one blip blanks the section). The
 logic — target-URL expansion, dedup/grouping, mojibake stripping, excerpting,
 `textContent`-only rendering — is the shared package
 [`@hhkaos/webmentions-widget`](https://github.com/hhkaos/webmentions-widget)
-(`0.5.1`), one implementation for this site,
+(`0.6.0`), one implementation for this site,
 `links.rauljimenez.info` and `hhkaos.github.io`. See
 [`hhkaos/webmentions-widget#1`](https://github.com/hhkaos/webmentions-widget/issues/1).
 
