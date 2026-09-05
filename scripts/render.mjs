@@ -26,6 +26,7 @@ import YAML from "yaml";
 // that would blank the section.
 import {
   filterMentionsByTargets,
+  formatMentionDate,
   getCanonicalTargets,
   getSnapshotMentions,
   groupWebmentions,
@@ -588,12 +589,18 @@ async function loadWebmentionSnapshot() {
   }
 }
 
-// Labels handed to the shared renderer. Thread verbs + "view source" +
-// "updated" are `{en, es}` maps — it emits one `.i18n-en` / `.i18n-es` span
-// per language and CSS toggles them, matching the rest of the page. The
-// facepile labels are plain strings: they only surface in the group's
-// `aria-label` / `title` (the visible part is just the glyph + count), and
-// an attribute can't hold both languages.
+// Labels handed to the shared renderer. Thread verbs + "view source" are
+// `{en, es}` maps — it emits one `.i18n-en` / `.i18n-es` span per language
+// and CSS toggles them, matching the rest of the page. The facepile labels
+// are plain strings: they only surface in the group's `aria-label` / `title`
+// (the visible part is just the glyph + count), and an attribute can't hold
+// both languages.
+//
+// The freshness line is rendered here, not by `renderGroups`: since 0.5.0 the
+// widget renders it as relative time ("3 hours ago") with a click-to-expand
+// affordance — right for a live page, wrong for a build-time render where the
+// string would freeze and the click handler is never serialised. We emit a
+// plain absolute bilingual date instead.
 const WM_LABELS = {
   "like-of": "likes",
   "repost-of": "reposts",
@@ -601,8 +608,15 @@ const WM_LABELS = {
   "in-reply-to": { en: "replied", es: "respondió" },
   "mention-of": { en: "mentioned this", es: "lo mencionó" },
   viewSource: { en: "View source", es: "Ver original" },
-  updated: { en: "Updated", es: "Actualizado" },
 };
+
+function webmentionsUpdatedLine(iso) {
+  if (!iso) return "";
+  const en = formatMentionDate(iso, "en");
+  const es = formatMentionDate(iso, "es");
+  if (!en) return "";
+  return `<p class="webmentions__updated"><span class="i18n-en">Updated </span><span class="i18n-es">Actualizado </span><time datetime="${escapeHtml(iso)}"><span class="i18n-en">${escapeHtml(en)}</span><span class="i18n-es">${escapeHtml(es || en)}</span></time></p>`;
+}
 
 // Class overrides so the shared renderer emits the class names this repo's
 // CSS already targets (`webmentions__avatar` on each thread card, and
@@ -651,7 +665,6 @@ function webmentionsSection(pageUrl, lang = SITE_DEFAULT_LANG) {
 
   const shell = `<section class="webmentions" id="webmentions" aria-labelledby="webmentions-title">
 <h2 class="webmentions__title" id="webmentions-title"><span class="i18n-en">Responses from around the web</span><span class="i18n-es">Respuestas de la web</span></h2>
-<p class="webmentions__updated" hidden></p>
 <div class="webmentions__facepile" id="webmentions-facepile" hidden></div>
 <ol class="webmentions__list" id="webmentions-list"></ol>
 </section>`;
@@ -661,14 +674,20 @@ function webmentionsSection(pageUrl, lang = SITE_DEFAULT_LANG) {
     container: "#webmentions",
     facepile: "#webmentions-facepile",
     list: "#webmentions-list",
-    updated: ".webmentions__updated",
     facepileMode: "grouped",
     labels: WM_LABELS,
     classNames: WM_CLASS_NAMES,
     locale: lang === "es" ? "es" : "en",
     maxLength: 320,
-    updatedAt: WM_MENTIONS.generatedAt,
   });
+  // Freshness line goes in after renderGroups — it looks for a
+  // `.webmentions__updated` and would clear ours (see WM_LABELS comment).
+  const updatedLine = webmentionsUpdatedLine(WM_MENTIONS.generatedAt);
+  if (updatedLine) {
+    document
+      .querySelector("#webmentions-title")
+      .insertAdjacentHTML("afterend", `\n${updatedLine}`);
+  }
   return document.querySelector("#webmentions").outerHTML;
 }
 

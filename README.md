@@ -381,7 +381,7 @@ carries no CORS header, so in a browser one blip blanks the section). The
 logic — target-URL expansion, dedup/grouping, mojibake stripping, excerpting,
 `textContent`-only rendering — is the shared package
 [`@hhkaos/webmentions-widget`](https://github.com/hhkaos/webmentions-widget)
-(`0.3.0`), one implementation for this site,
+(`0.5.1`), one implementation for this site,
 `links.rauljimenez.info` and `hhkaos.github.io`. See
 [`hhkaos/webmentions-widget#1`](https://github.com/hhkaos/webmentions-widget/issues/1).
 
@@ -400,7 +400,9 @@ and `repository_dispatch: webmention`). Committing a refreshed snapshot to
   `linkedom` document: likes / reposts / bookmarks as a per-property
   tinted-glyph facepile (`♥` / `↻` / `⚑` + count), replies + mentions as
   `h-cite` cards, bilingual `{en, es}` labels as CSS-toggled `.i18n-*` spans,
-  and a small "Updated *date*" line (the snapshot is always a little behind).
+  and a small bilingual "Updated *date*" line (the snapshot is always a
+  little behind; rendered locally as an absolute date, not the widget's
+  since-0.5.0 relative "3 hours ago" which would freeze in a static build).
   A page with no mentions renders no section at all.
 - **Timeline pages** get a compact `♥ n · ↻ n · ↩ n` line per `.fc` card
   (`webmentionCountLine()`, built from the same `groupWebmentions()` output;
