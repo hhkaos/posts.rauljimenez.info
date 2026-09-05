@@ -50,7 +50,10 @@ jobs:
           npx webmentions-snapshot \
             --domain posts.rauljimenez.info \
             --out scripts/webmentions-snapshot.json \
-            ${{ inputs.full && '--full' || '' }}
+            ${{ inputs.full && '--full=1' || '' }}
+          # `--full=1`, not a bare `--full`: the package's arg parser reads a
+          # trailing valueless flag as `undefined` (falsy), so `--full` alone
+          # is a no-op. `--full=1` takes its inline-value path.
 
       - name: Commit if changed
         run: |
