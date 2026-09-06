@@ -445,6 +445,35 @@ article.h-event img {
   font-weight: 600;
 }
 
+/* View switcher (Timeline / Map / …) at the top of every feed page —
+   underline tabs, distinct from the pill filter that may sit below. */
+.view-tabs {
+  display: flex;
+  gap: 0.3rem;
+  margin: 0 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.view-tab {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.view-tab:hover { color: var(--text); }
+.view-tab.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.map-intro {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.map-intro a { color: var(--accent); }
+
 /* Hide non-matching cards, and day headings left with none. `:has()` is not
    universal — where it's unsupported an empty heading just stays (cosmetic). */
 :root[data-feed-lang="en"] ul.feed li.fc:not([lang="en"]),
@@ -1054,3 +1083,104 @@ nav.pager {
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
+/* --- Maps (Leaflet) -------------------------------------------------------
+   The /map/ overview (#map.map-full) and the per-post mini-map (.post-map).
+   `isolation: isolate` caps Leaflet's internal z-indexes (controls go up to
+   1000) inside the map box so the fixed navbar (z-index 10) still wins.
+   Dark mode: a filter on the OSM tile layer only — markers/popups are in
+   separate panes and stay untouched. */
+#map,
+.post-map__canvas {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.leaflet-container {
+  font: inherit;
+  background: var(--surface);
+}
+:root[data-theme="dark"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+  }
+}
+
+.map-full {
+  height: 68vh;
+  min-height: 380px;
+}
+.map-full .leaflet-container {
+  height: 100%;
+  border-radius: 10px;
+}
+
+/* Overview popup */
+.map-pop .leaflet-popup-content { margin: 0.7rem 0.85rem; }
+.map-pop__badge { display: inline-block; margin-bottom: 0.35rem; }
+.map-pop__thumb {
+  display: block;
+  width: 100%;
+  max-height: 130px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 0.35rem;
+}
+.map-pop__title {
+  display: block;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.map-pop__place {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Fallback list under the map */
+.map-list-wrap { margin-top: 1.5rem; }
+.map-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+.map-list__item {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+.map-list__item:last-child { border-bottom: 0; }
+.map-list__place { color: var(--text-muted); }
+
+/* Per-post mini-map */
+.post-map {
+  margin: 1.4rem 0 0;
+}
+.post-map__canvas {
+  height: 260px;
+}
+.post-map__canvas .leaflet-container {
+  height: 100%;
+  border-radius: 10px;
+}
+.post-map__fallback {
+  display: inline-block;
+  font-size: 0.85rem;
+}
+.post-map.is-ready .post-map__fallback {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+}
+.post-map figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.post-map.is-ready figcaption { margin-top: 0.5rem; }

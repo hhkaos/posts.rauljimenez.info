@@ -95,7 +95,7 @@ async function shootSocialCard(browser) {
   await card.addStyleTag({
     content: `
       .wrap { max-width: 1000px; padding-top: 1.5rem; }
-      footer.site, #timeline-end, .pager, .fc-reactions, .feed-filter__langs { display: none !important; }
+      footer.site, #timeline-end, .pager, .fc-reactions, .feed-filter__langs, .view-tabs { display: none !important; }
       .feed-bar { border: 0 !important; padding: 0 !important; margin: 0 0 1rem !important; }
       .intro-toggle, .intro-toggle[open] { flex-basis: 100% !important; margin: 0 !important; }
       .intro-toggle__btn, .page-intro__about { display: none !important; }
@@ -134,9 +134,13 @@ async function main() {
     colorScheme: "light",
   });
 
+  // The geotagged-post mini-map is hidden in the card anyway (cardCss) —
+  // don't let its Leaflet CDN load hold up `networkidle`.
+  await page.route("**://cdnjs.cloudflare.com/**", (route) => route.abort());
+
   // Trim the site chrome so the post itself fills the card.
   const cardCss = `
-    nav.site-nav, header.site, a.back, footer.site, .webmentions, .respond-toggle { display: none !important; }
+    nav.site-nav, header.site, a.back, footer.site, .webmentions, .respond-toggle, .post-map { display: none !important; }
     body { padding-top: 0 !important; }
     .wrap { padding: 2rem 2.5rem; max-width: none; }
     article .content { overflow: hidden; }

@@ -51,6 +51,11 @@ Other scripts:
 `_site/` is git-ignored and rebuilt from scratch each time; deleting it is
 always safe.
 
+`render.mjs` reads an optional git-ignored **`.env`** (`KEY=VALUE` lines) —
+currently just `ARCGIS_CLIENT_ID` / `ARCGIS_CLIENT_SECRET`, used to geocode
+address-only post locations for the map (see *Map* below). Without it those
+posts just aren't mapped; everything else builds normally.
+
 ## Structure
 
 | Folder       | Post type | Notes                                        |
@@ -367,6 +372,43 @@ is full-width and the form controls stack. Inside the `<section class="respond">
   so it works with JS off; `respond.js` swaps in a thank-you line on
   submit. Verified mentions then show up in the "Responses from around the
   web" section above it (and fire the push+email pipeline).
+
+### Map (`/map/` + per-post mini-maps)
+
+Every geotagged post is shown on an [OpenStreetMap](https://www.openstreetmap.org)
+map — an overview at **`/map/`** and a small single-marker map at the bottom
+of each geotagged post page. Maps use [Leaflet](https://leafletjs.com) `1.9.4`
+from cdnjs, loaded (via `page()`'s `head` slot) **only** on pages that have a
+map; `scripts/map.js` drives both. Dark mode is a CSS filter on the tile
+layer (markers/popups stay untinted). Progressive enhancement: no JS → the
+mini-map is a link to openstreetmap.org and `/map/` shows a plain list of the
+places (also always in the HTML). `screenshot.mjs` hides `.post-map` and
+aborts the Leaflet CDN request.
+
+`/map/` and the timeline are two views of the same posts, reached through a
+small **`viewTabs()`** switcher (Timeline / Map) at the top of each — not
+the site navbar (that mirrors www.rauljimenez.info). A calendar view (for
+upcoming events/RSVPs) is the planned third tab.
+
+`render.mjs`'s `postGeo()` pulls coordinates from a post in whatever shape
+they arrive: `checkin: { latitude, longitude }`, `location: { type: geo,
+… }`, `item: { latitude, longitude }` (a reviewed place), or — for `event`
+posts, whose `location` is a street address — by **geocoding** it. Geocoding is `scripts/geocode.mjs` (ArcGIS World
+Geocoding Service, OAuth2 client-credentials). Results are cached in
+**`.geocode-cache.json`** for the duration of a build; that file is
+**git-ignored** (`forStorage=false` — ArcGIS's storage licensing doesn't
+cover persisting the coordinates), so every build re-geocodes its handful
+of addresses. It needs two secrets:
+
+| Secret | Where |
+| ------ | ----- |
+| `ARCGIS_CLIENT_ID` | GitHub → Settings → Secrets and variables → Actions (and/or a git-ignored `.env` for local builds) |
+| `ARCGIS_CLIENT_SECRET` | same |
+
+Absent → address-only posts simply aren't mapped (no error). To commit the
+cache instead (fewer API calls, but flip `forStorage` to `"true"` and it
+consumes credits): drop `.geocode-cache.json` from `.gitignore` and add a
+commit-back step to the `build` job.
 
 ### Received Webmentions (shared `@hhkaos/webmentions-widget`, baked in at build time)
 

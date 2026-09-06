@@ -102,7 +102,14 @@ server.on("error", (error) => {
 server.on("listening", async () => {
   const { port } = server.address();
   if (PREVIEW_HOST === "localhost") {
-    console.log(`\n  Preview:  http://localhost:${port}/\n`);
+    console.log(`\n  Preview:  http://localhost:${port}/   (loopback only)`);
+    // Headless box? You still need to know where to point a browser. Show
+    // the LAN IP as a hint plus the one-liner that actually binds it.
+    const lan = lanIP();
+    if (lan !== "localhost") {
+      console.log(`  LAN:      HOST=0.0.0.0 npm run serve  →  http://${lan}:${port}/`);
+    }
+    console.log("");
   } else {
     console.log(`\n  Preview:  http://${PREVIEW_HOST}:${port}/   (LAN)`);
     console.log(`            http://localhost:${port}/\n`);

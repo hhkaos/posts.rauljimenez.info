@@ -8,6 +8,7 @@
 // on their own; `scripts/timeline.js` is one small progressive-enhancement
 // script that turns them into infinite scroll when JS is available. An Atom
 // feed is written to `/feed.xml`, and `/about/` explains what this is.
+import { readFileSync } from "node:fs";
 import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -15,6 +16,19 @@ import { franc } from "franc-min";
 import { parseHTML } from "linkedom";
 import MarkdownIt from "markdown-it";
 import YAML from "yaml";
+
+import { geocode, saveGeocodeCache } from "./geocode.mjs";
+
+// Minimal .env loader (no dependency): `KEY=VALUE` lines, never overrides a
+// variable already in the environment. Local convenience only — CI passes
+// secrets straight through as env vars, a missing file is fine. Feeds
+// ARCGIS_CLIENT_ID / ARCGIS_CLIENT_SECRET to geocode.mjs.
+try {
+  for (const line of readFileSync(".env", "utf8").split("\n")) {
+    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+} catch { /* no .env — fine */ }
 
 // Received-Webmentions rendering is now the shared package, not a local
 // fork — see hhkaos/webmentions-widget#1. We hold the substance (target
@@ -368,6 +382,85 @@ function isCoordinateName(name) {
   return /\d\s*°/.test(String(name || ""));
 }
 
+// --- geolocation -------------------------------------------------------
+// Coordinates for a post, if it has any — used both for the `/map/`
+// overview and the per-post mini-map. Geo data turns up in a few shapes:
+//   checkin:  { latitude, longitude, name }              (photo / check-in)
+//   location: { type: "geo", latitude, longitude, name } (photo with a raw geotag)
+//   location: { street-address, locality, … }            (event — geocoded here)
+//   location: "Some place"                               (string — geocoded here)
+// `item` (reviews) is checked too, in case a reviewed place carries coords.
+// Async because address-only locations are geocoded (ArcGIS, cached).
+// Returns { lat, lon, label } or null.
+const firstOf = (v) => (Array.isArray(v) ? v[0] : v);
+function numOf(v) {
+  const n = Number(firstOf(v));
+  return Number.isFinite(n) ? n : null;
+}
+function strProp(v) {
+  const x = firstOf(v);
+  return typeof x === "string" ? x.trim() : x == null ? "" : String(x);
+}
+function inRange(lat, lon) {
+  return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 && !(lat === 0 && lon === 0);
+}
+function coordsFrom(value) {
+  if (!value || typeof value !== "object") return null;
+  const p = value.properties || value;
+  const lat = numOf(p.latitude);
+  const lon = numOf(p.longitude);
+  if (lat === null || lon === null || !inRange(lat, lon)) return null;
+  return { lat, lon, label: strProp(p.name) };
+}
+async function postGeo(properties) {
+  for (const key of ["checkin", "location", "item"]) {
+    const hit = coordsFrom(properties[key]);
+    if (hit) return hit;
+  }
+  const loc = properties.location;
+  if (typeof loc === "string" && loc.trim()) {
+    const g = await geocode([loc.trim()]);
+    return g ? { ...g, label: loc.trim() } : null;
+  }
+  if (loc && typeof loc === "object") {
+    const p = loc.properties || loc;
+    const parts = [
+      strProp(p["street-address"]),
+      strProp(p.locality),
+      strProp(p.region),
+      strProp(p["postal-code"]),
+      strProp(p["country-name"]),
+    ];
+    if (parts.some(Boolean)) {
+      const g = await geocode(parts);
+      return g ? { ...g, label: strProp(p.name) || strProp(p.locality) } : null;
+    }
+  }
+  return null;
+}
+
+// Leaflet from cdnjs, pinned. Injected into <head> (via page()'s `head`
+// slot) only on pages that actually show a map — the `/map/` overview and
+// geotagged post pages. `defer` keeps execution order: leaflet, then map.js.
+const LEAFLET_VERSION = "1.9.4";
+const LEAFLET_HEAD = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/${LEAFLET_VERSION}/leaflet.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/${LEAFLET_VERSION}/leaflet.min.js"></script>
+<script defer src="/map.js"></script>`;
+
+// A small OpenStreetMap map with a single marker, shown under any post that
+// has coordinates. Progressive enhancement: with no JS it's a labelled
+// link to openstreetmap.org; map.js upgrades it to a Leaflet map in place.
+function postMapBlock(geo, type) {
+  if (!geo) return "";
+  const { lat, lon, label } = geo;
+  const osm = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
+  const place = label && !isCoordinateName(label) ? escapeHtml(label) : "";
+  return `<figure class="post-map" data-lat="${lat}" data-lon="${lon}" data-type="${escapeHtml(type)}">
+<a class="post-map__fallback" href="${escapeHtml(osm)}" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
+${place ? `<figcaption>📍 ${place}</figcaption>` : ""}
+</figure>`;
+}
+
 // "Back to the timeline" link at the top of every post page (both languages
 // emitted; CSS shows one per `:root[data-lang]`).
 const BACK_LINK = `<a class="back" href="${BASE_URL}/"><span class="i18n-en">&larr; All activity</span><span class="i18n-es">&larr; Toda la actividad</span></a>`;
@@ -494,7 +587,7 @@ function feedLinks(lang) {
 // "Responses from around the web" section (baked in from the snapshot at
 // build time). Same split as repCard — individual post pages get it, the
 // index/about pages don't.
-function page({ title, body, og, repCard = true, webmentions = repCard, lang = SITE_DEFAULT_LANG }) {
+function page({ title, body, og, head = "", repCard = true, webmentions = repCard, lang = SITE_DEFAULT_LANG }) {
   const o = og || {};
   const branded = fullTitle(title);
   const url = o.url || `${BASE_URL}/`;
@@ -544,7 +637,7 @@ ${HEAD_INIT_SCRIPT}
 <link rel="icon" href="/favicon.ico">
 <link rel="webmention" href="${WEBMENTION_ENDPOINT}">
 <link rel="stylesheet" href="/style.css">
-${feedLinks(lang)}
+${feedLinks(lang)}${head ? `\n${head}` : ""}
 </head>
 <body>
 ${siteNav()}
@@ -862,7 +955,7 @@ function screenshotUrl(url) {
 }
 
 // h-event: name/start/end/location live in the front matter, not the body.
-function renderEventHtml({ url, properties, content }) {
+function renderEventHtml({ url, properties, content, geo }) {
   const published = properties.published || "";
   const name = properties.name || "Event";
   const start = properties.start || "";
@@ -883,6 +976,7 @@ ${end ? ` – <time class="dt-end" datetime="${escapeHtml(end)}">${escapeHtml(fo
 ${location ? `<p class="event-where">📍 <span class="p-location">${escapeHtml(location)}</span></p>` : ""}
 ${eventUrl ? `<p class="target"><a class="u-url" href="${escapeHtml(eventUrl)}">${escapeHtml(eventUrl)}</a></p>` : ""}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
+${postMapBlock(geo, "event")}
 ${renderPermalink(url, properties, lang)}
 </article>`;
 
@@ -891,6 +985,7 @@ ${renderPermalink(url, properties, lang)}
     title: name,
     lang,
     body,
+    head: geo ? LEAFLET_HEAD : "",
     og: {
       url,
       type: "event",
@@ -915,7 +1010,7 @@ function photoImgs(photos) {
   return photos.map((p) => `<img class="u-photo" src="${escapeHtml(p.url)}" alt="${escapeHtml(p.alt || "")}" loading="lazy">`).join("\n");
 }
 
-function renderPhotoHtml({ url, properties, content }) {
+function renderPhotoHtml({ url, properties, content, geo }) {
   const published = properties.published || "";
   const photos = photoList(properties.photo);
   const lang = postLang(properties, content);
@@ -929,6 +1024,7 @@ ${properties.name
   : `<h1 class="visually-hidden">${escapeHtml(`Photo — ${formatDate(published)}`)}</h1>`}
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
+${postMapBlock(geo, "photo")}
 ${renderPermalink(url, properties, lang)}
 </article>`;
 
@@ -936,12 +1032,13 @@ ${renderPermalink(url, properties, lang)}
     title: properties.name || `Photo — ${formatDate(published)}`,
     lang,
     body,
+    head: geo ? LEAFLET_HEAD : "",
     og: { url, type: "article", published, image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
   });
 }
 
 // Articles: title in the front matter, long-form body.
-function renderArticleHtml({ url, properties, content }) {
+function renderArticleHtml({ url, properties, content, geo }) {
   const published = properties.published || "";
   const name = properties.name || "Article";
   const lang = postLang(properties, content);
@@ -951,19 +1048,21 @@ ${BACK_LINK}
 ${renderMetaRow("article", published, url)}
 <h1 class="p-name">${escapeHtml(name)}</h1>
 <div class="content e-content">${renderMarkdown(content)}</div>
+${postMapBlock(geo, "article")}
 ${renderPermalink(url, properties, lang)}
 </article>`;
   return page({
     title: name,
     lang,
     body,
+    head: geo ? LEAFLET_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
   });
 }
 
 // h-entry with a nested h-card for the venue (`checkin`). No Webmention is
 // sent for these (a check-in isn't a response to another page).
-function renderCheckinHtml({ url, properties, content }) {
+function renderCheckinHtml({ url, properties, content, geo }) {
   const published = properties.published || "";
   const c = cite(properties.checkin);
   const name = c.name || "a place";
@@ -989,6 +1088,7 @@ ${renderMetaRow("checkin", published, url)}
 <p class="target">📍 Checked in at ${venue}</p>
 ${photoImgs(photos)}
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
+${postMapBlock(geo, "checkin")}
 ${renderPermalink(url, properties, lang)}
 </article>`;
 
@@ -996,13 +1096,14 @@ ${renderPermalink(url, properties, lang)}
     title: `Check-in at ${name}`,
     lang,
     body,
+    head: geo ? LEAFLET_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
   });
 }
 
 // h-review: the reviewed thing is `item` (rendered as p-item h-item), the
 // score is `rating` on a 1–5 scale, the body is the p-description.
-function renderReviewHtml({ url, properties, content }) {
+function renderReviewHtml({ url, properties, content, geo }) {
   const published = properties.published || "";
   const it = cite(properties.item);
   const itemName = it.name || "something";
@@ -1012,11 +1113,20 @@ function renderReviewHtml({ url, properties, content }) {
   const headline = properties.name || "";
   const lang = postLang(properties, content);
 
+  // A reviewed *place* can carry coordinates (item[latitude]/[longitude] in
+  // the admin form) — exposed as p-latitude/p-longitude on the h-item, and
+  // picked up by postGeo() for the map + the mini-map below.
+  const itemLat = it.latitude;
+  const itemLon = it.longitude;
   const item = `<span class="p-item h-item">${
     itemUrl
       ? `<a class="p-name u-url" href="${escapeHtml(itemUrl)}">${escapeHtml(itemName)}</a>`
       : `<span class="p-name">${escapeHtml(itemName)}</span>`
-  }${it.author ? ` by <span class="p-author">${escapeHtml(it.author)}</span>` : ""}</span>`;
+  }${it.author ? ` by <span class="p-author">${escapeHtml(it.author)}</span>` : ""}${
+    itemLat && itemLon
+      ? `<data class="p-latitude" value="${escapeHtml(itemLat)}"></data><data class="p-longitude" value="${escapeHtml(itemLon)}"></data>`
+      : ""
+  }</span>`;
 
   const body = `
 ${BACK_LINK}
@@ -1028,6 +1138,7 @@ ${headline
   : `<h1 class="visually-hidden">${escapeHtml(`Review of ${itemName}`)}</h1>`}
 ${hasRating ? `<p class="review-rating">Rating: <data class="p-rating" value="${rating}">${rating}</data><data class="p-best" value="5"></data><data class="p-worst" value="1"></data> / 5</p>` : ""}
 <div class="content e-content p-description">${renderMarkdown(content)}</div>
+${postMapBlock(geo, "review")}
 ${renderPermalink(url, properties, lang)}
 </article>`;
 
@@ -1035,6 +1146,7 @@ ${renderPermalink(url, properties, lang)}
     title: headline || `Review of ${itemName}`,
     lang,
     body,
+    head: geo ? LEAFLET_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
   });
 }
@@ -1049,7 +1161,7 @@ const READ_STATUS_LABEL = {
   "to-read": "Want to read", "want-to-read": "Want to read",
   reading: "Reading", finished: "Finished reading", read: "Finished reading",
 };
-function renderConsumedHtml(type, { url, properties, content }) {
+function renderConsumedHtml(type, { url, properties, content, geo }) {
   const spec = CONSUMED[type];
   const published = properties.published || "";
   const w = cite(properties[spec.prop]);
@@ -1075,6 +1187,7 @@ ${renderMetaRow(type, published, url)}
 ${status ? `<data class="p-read-status" value="${escapeHtml(status)}"></data>` : ""}
 <p class="target">${spec.icon} ${escapeHtml(verb)} ${work}${hasRating ? ` — <data class="p-rating" value="${rating}">${rating}/5</data>` : ""}</p>
 ${content ? `<div class="content e-content">${renderMarkdown(content)}</div>` : ""}
+${postMapBlock(geo, type)}
 ${renderPermalink(url, properties, lang)}
 </article>`;
 
@@ -1082,22 +1195,23 @@ ${renderPermalink(url, properties, lang)}
     title: `${verb} ${workName}`,
     lang,
     body,
+    head: geo ? LEAFLET_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
   });
 }
 
-function renderPostHtml({ type, url, properties, content }) {
+function renderPostHtml({ type, url, properties, content, geo }) {
   // A check-in that also carries a photo is stored as `post-type: photo`
   // (Indiekit's discovery can't be reordered) — treat any post with a
   // `checkin` property as a check-in.
-  if (properties.checkin) return renderCheckinHtml({ url, properties, content });
-  if (type === "event") return renderEventHtml({ url, properties, content });
-  if (type === "review") return renderReviewHtml({ url, properties, content });
+  if (properties.checkin) return renderCheckinHtml({ url, properties, content, geo });
+  if (type === "event") return renderEventHtml({ url, properties, content, geo });
+  if (type === "review") return renderReviewHtml({ url, properties, content, geo });
   if (type === "read" || type === "watch" || type === "listen") {
-    return renderConsumedHtml(type, { url, properties, content });
+    return renderConsumedHtml(type, { url, properties, content, geo });
   }
-  if (type === "article") return renderArticleHtml({ url, properties, content });
-  if (type === "photo") return renderPhotoHtml({ url, properties, content });
+  if (type === "article") return renderArticleHtml({ url, properties, content, geo });
+  if (type === "photo") return renderPhotoHtml({ url, properties, content, geo });
 
   const target = targetOf(properties);
   const published = properties.published || "";
@@ -1117,6 +1231,7 @@ ${renderMetaRow(type, published, url)}
 ${rsvp ? `<p class="rsvp-answer">RSVP: <data class="p-rsvp" value="${escapeHtml(rsvp)}">${escapeHtml(rsvp)}</data></p>` : ""}
 ${target ? `<p class="target">${escapeHtml(TYPE_VERB[type] || "")} <a class="${targetClassOf(type)}" href="${escapeHtml(target)}">${escapeHtml(target)}</a></p>` : ""}
 <div class="content e-content">${renderMarkdown(content)}</div>
+${postMapBlock(geo, type)}
 ${renderPermalink(url, properties, lang)}
 </article>`;
 
@@ -1126,6 +1241,7 @@ ${renderPermalink(url, properties, lang)}
     title: properties.name || `${TYPE_LABEL[type]} — ${formatDate(published)}`,
     lang,
     body,
+    head: geo ? LEAFLET_HEAD : "",
     og: {
       url,
       type: "article",
@@ -1295,6 +1411,25 @@ ${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}${webmenti
 // remembered in localStorage and applied pre-paint by HEAD_INIT_SCRIPT.
 // Progressive enhancement: with no JS the buttons do nothing and every
 // post shows.
+// The activity feed has more than one view of the same posts — the
+// reverse-chronological timeline and the map (a calendar view is planned,
+// mainly for upcoming events/RSVPs). They're separate pages; this little
+// tab bar sits at the top of each so you can switch between them. It's
+// deliberately NOT in the site navbar (that mirrors www.rauljimenez.info) —
+// this is local to the feed. `active` is "timeline" | "map" (| "calendar").
+// Root-relative hrefs (like pager()) — the site is always at the domain
+// root and they resolve the same on the preview server.
+function viewTabs(active) {
+  const tab = (id, href, en, es) =>
+    `<a class="view-tab${id === active ? " is-active" : ""}"${
+      id === active ? ' aria-current="page"' : ""
+    } href="${href}"><span class="i18n-en">${en}</span><span class="i18n-es">${es}</span></a>`;
+  return `<nav class="view-tabs" aria-label="Activity views">
+${tab("timeline", "/", "Timeline", "Cronología")}
+${tab("map", "/map/", "Map", "Mapa")}
+</nav>`;
+}
+
 function feedFilter(includeIntro) {
   const btn = (lang, en, es) =>
     `<button type="button" class="feed-filter__btn" data-feed-lang="${lang}"><span class="i18n-en">${en}</span><span class="i18n-es">${es}</span></button>`;
@@ -1418,6 +1553,53 @@ ${entries}
 `;
 }
 
+// `/map/` — every geotagged post on one OpenStreetMap map. The points are
+// handed to map.js as a JSON payload; a plain list of the same places is
+// always in the HTML as the no-JS fallback (and it's useful anyway).
+function renderMapHtml(points) {
+  const data = points.map((p) => ({
+    lat: p.lat, lon: p.lon, type: p.type, badge: TYPE_LABEL[p.type] || p.type,
+    title: p.title, url: p.url, place: p.place || "", thumb: p.thumb || "",
+  }));
+  const n = points.length;
+  const list = points
+    .map(
+      (p) =>
+        `<li class="map-list__item"><span class="badge ${p.type}">${escapeHtml(TYPE_LABEL[p.type] || p.type)}</span> <a href="${escapeHtml(p.url)}">${escapeHtml(p.title)}</a>${p.place ? ` <span class="map-list__place">— ${escapeHtml(p.place)}</span>` : ""}</li>`,
+    )
+    .join("\n");
+
+  const body = `
+${viewTabs("map")}
+<h1 class="visually-hidden"><span class="i18n-en">Map</span><span class="i18n-es">Mapa</span></h1>
+<p class="page-intro map-intro">
+<span class="i18n-en">Every geotagged post — photos, check-ins, events, reviews with a location — on one map. ${n} place${n === 1 ? "" : "s"} so far. <a href="/about/">About this feed &rarr;</a></span>
+<span class="i18n-es">Todas las publicaciones geolocalizadas —fotos, check-ins, eventos, reseñas con ubicación— en un mapa. ${n} sitio${n === 1 ? "" : "s"} por ahora. <a href="/about/">Sobre este feed &rarr;</a></span>
+</p>
+<div id="map" class="map-full">
+<noscript><p class="i18n-en">The interactive map needs JavaScript — the places are listed below.</p><p class="i18n-es">El mapa interactivo necesita JavaScript; los lugares están listados abajo.</p></noscript>
+</div>
+<script type="application/json" id="map-points">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>
+<section class="map-list-wrap">
+<h2><span class="i18n-en">All places</span><span class="i18n-es">Todos los sitios</span></h2>
+${n ? `<ul class="map-list">\n${list}\n</ul>` : `<p><span class="i18n-en">Nothing geotagged yet.</span><span class="i18n-es">Todavía no hay nada geolocalizado.</span></p>`}
+</section>`;
+
+  return page({
+    title: "Map",
+    body,
+    head: LEAFLET_HEAD,
+    repCard: false,
+    webmentions: false,
+    og: {
+      url: `${BASE_URL}/map/`,
+      type: "website",
+      description:
+        "Every geotagged post — photos, check-ins, events and reviews with a location — on one map.",
+    },
+  });
+}
+
 const ABOUT_POST_ES =
   "https://www.rauljimenez.info/es/blog/first-steps-into-the-indieweb";
 
@@ -1447,9 +1629,10 @@ to. Some of these have no real equivalent on a mainstream network.</p>
 
 <h2>What this makes possible</h2>
 <p>Because every post is structured data in a repository I own — not locked
-inside someone's app — I can build on top of it. For example, I'd like to put
-every geotagged post (photos, check-ins, reviews…) on a map of the places I've
-been. That's only possible because the data is mine and out in the open.</p>
+inside someone's app — I can build on top of it. For example, every geotagged
+post (photos, check-ins, events, reviews…) is plotted on
+<a href="/map/">a map of the places I've been</a>. That's only
+possible because the data is mine and out in the open.</p>
 
 <h2>Where else it shows up</h2>
 <p>A lot of what's here is also cross-posted to my
@@ -1546,9 +1729,10 @@ tienen equivalente real en una red convencional.</p>
 <h2>Lo que esto hace posible</h2>
 <p>Como cada publicación es un dato estructurado en un repositorio que es mío
 —y no algo encerrado dentro de la app de otro— puedo construir cosas encima.
-Por ejemplo, me gustaría poner en un mapa todas las publicaciones
-geolocalizadas (fotos, check-ins, reseñas…) para ver los sitios en los que he
-estado. Eso solo es posible porque los datos son míos y están abiertos.</p>
+Por ejemplo, cada publicación geolocalizada (fotos, check-ins, eventos,
+reseñas…) aparece en <a href="/map/">un mapa de los sitios en los
+que he estado</a>. Eso solo es posible porque los datos son míos y están
+abiertos.</p>
 
 <h2>Dónde más aparece</h2>
 <p>Buena parte de lo que hay aquí se publica también en mis cuentas de
@@ -1656,6 +1840,7 @@ async function main() {
   }
 
   const index = [];
+  const geoPoints = []; // { lat, lon, type, title, url, date, place, thumb }
 
   for (const type of TYPES) {
     const folder = TYPE_FOLDER[type];
@@ -1680,21 +1865,37 @@ async function main() {
       const { yyyy, MM, dd, slug } = parsedName;
       const url = `${BASE_URL}/${folder}/${yyyy}/${MM}/${dd}/${slug}`;
       const outDir = path.join(SITE_DIR, folder, yyyy, MM, dd, slug);
+      const props = post.properties;
+      const effectiveType = props.checkin ? "checkin" : type;
+      const entry = feedEntry(effectiveType, props, post.content, url);
+      const geo = await postGeo(props);
+
       await mkdir(outDir, { recursive: true });
       await writeFile(
         path.join(outDir, "index.html"),
-        renderPostHtml({ type, url, properties: post.properties, content: post.content }),
+        renderPostHtml({ type, url, properties: props, content: post.content, geo }),
       );
 
-      const props = post.properties;
-      const effectiveType = props.checkin ? "checkin" : type;
       index.push({
         type: effectiveType,
         url,
         published: props.published,
-        entry: feedEntry(effectiveType, props, post.content, url),
+        entry,
         contentHtml: post.content ? renderMarkdown(post.content) : "",
       });
+
+      if (geo) {
+        geoPoints.push({
+          lat: geo.lat,
+          lon: geo.lon,
+          type: effectiveType,
+          title: feedEntryTitle({ entry, type: effectiveType, published: props.published }),
+          url,
+          date: props.published || "",
+          place: geo.label && !isCoordinateName(geo.label) ? geo.label : "",
+          thumb: photoList(props.photo)[0]?.url || "",
+        });
+      }
     }
   }
 
@@ -1702,10 +1903,19 @@ async function main() {
 
   await copyFile("scripts/timeline.js", path.join(SITE_DIR, "timeline.js"));
   await copyFile("scripts/respond.js", path.join(SITE_DIR, "respond.js"));
+  await copyFile("scripts/map.js", path.join(SITE_DIR, "map.js"));
   await writeFile(path.join(SITE_DIR, "feed.xml"), buildFeed(index));
 
   await mkdir(path.join(SITE_DIR, "about"), { recursive: true });
   await writeFile(path.join(SITE_DIR, "about", "index.html"), renderAboutHtml());
+
+  // The map of every geotagged post. Always emitted (it's in the nav), with
+  // an empty state when nothing is geotagged yet.
+  geoPoints.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  await mkdir(path.join(SITE_DIR, "map"), { recursive: true });
+  await writeFile(path.join(SITE_DIR, "map", "index.html"), renderMapHtml(geoPoints));
+  await saveGeocodeCache();
+  console.log(`Mapped ${geoPoints.length} geotagged post(s)`);
 
   // Split the timeline into numbered pages. `/` is page 1; `/page/2/`, … hold
   // the rest. Each page stands alone (working prev/next links); timeline.js
@@ -1724,8 +1934,8 @@ async function main() {
       : `<header class="site"><h1 class="visually-hidden"><span class="i18n-en">Activity — page ${n} of ${pageCount}</span><span class="i18n-es">Actividad — página ${n} de ${pageCount}</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
 
     const body = index.length
-      ? `${header}\n${feedFilter(n === 1)}\n${renderTimeline(slice)}\n${pager(prev, next)}`
-      : `${intro}\n<p>Nothing public yet.</p>`;
+      ? `${viewTabs("timeline")}\n${header}\n${feedFilter(n === 1)}\n${renderTimeline(slice)}\n${pager(prev, next)}`
+      : `${viewTabs("timeline")}\n${intro}\n<p>Nothing public yet.</p>`;
 
     const html = page({
       title: n === 1 ? "Activity" : `Activity — page ${n} of ${pageCount}`,
