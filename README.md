@@ -387,8 +387,8 @@ and `/map/` shows a plain list of the places (also always in the HTML).
 
 `render.mjs`'s `postGeo()` pulls coordinates from a post in whatever shape
 they arrive: `checkin: { latitude, longitude }`, `location: { type: geo,
-… }`, or — for `event` posts, whose `location` is a street address —
-by **geocoding** it. Geocoding is `scripts/geocode.mjs` (ArcGIS World
+… }`, `item: { latitude, longitude }` (a reviewed place), or — for `event`
+posts, whose `location` is a street address — by **geocoding** it. Geocoding is `scripts/geocode.mjs` (ArcGIS World
 Geocoding Service, OAuth2 client-credentials). Results are cached in
 **`.geocode-cache.json`** for the duration of a build; that file is
 **git-ignored** (`forStorage=false` — ArcGIS's storage licensing doesn't

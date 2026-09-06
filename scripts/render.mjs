@@ -1119,11 +1119,20 @@ function renderReviewHtml({ url, properties, content, geo }) {
   const headline = properties.name || "";
   const lang = postLang(properties, content);
 
+  // A reviewed *place* can carry coordinates (item[latitude]/[longitude] in
+  // the admin form) — exposed as p-latitude/p-longitude on the h-item, and
+  // picked up by postGeo() for the map + the mini-map below.
+  const itemLat = it.latitude;
+  const itemLon = it.longitude;
   const item = `<span class="p-item h-item">${
     itemUrl
       ? `<a class="p-name u-url" href="${escapeHtml(itemUrl)}">${escapeHtml(itemName)}</a>`
       : `<span class="p-name">${escapeHtml(itemName)}</span>`
-  }${it.author ? ` by <span class="p-author">${escapeHtml(it.author)}</span>` : ""}</span>`;
+  }${it.author ? ` by <span class="p-author">${escapeHtml(it.author)}</span>` : ""}${
+    itemLat && itemLon
+      ? `<data class="p-latitude" value="${escapeHtml(itemLat)}"></data><data class="p-longitude" value="${escapeHtml(itemLon)}"></data>`
+      : ""
+  }</span>`;
 
   const body = `
 ${BACK_LINK}
