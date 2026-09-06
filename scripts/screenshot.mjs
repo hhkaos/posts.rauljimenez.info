@@ -134,9 +134,13 @@ async function main() {
     colorScheme: "light",
   });
 
+  // The geotagged-post mini-map is hidden in the card anyway (cardCss) —
+  // don't let its Leaflet CDN load hold up `networkidle`.
+  await page.route("**://cdnjs.cloudflare.com/**", (route) => route.abort());
+
   // Trim the site chrome so the post itself fills the card.
   const cardCss = `
-    nav.site-nav, header.site, a.back, footer.site, .webmentions, .respond-toggle { display: none !important; }
+    nav.site-nav, header.site, a.back, footer.site, .webmentions, .respond-toggle, .post-map { display: none !important; }
     body { padding-top: 0 !important; }
     .wrap { padding: 2rem 2.5rem; max-width: none; }
     article .content { overflow: hidden; }

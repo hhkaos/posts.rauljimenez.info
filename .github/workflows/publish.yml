@@ -24,6 +24,13 @@ jobs:
           node-version: 22
       - run: npm install
       - run: node scripts/render.mjs
+        env:
+          # Geocodes address-only locations (events) for the map. Absent →
+          # those posts just aren't mapped. `.geocode-cache.json` is
+          # git-ignored (forStorage=false — results aren't persisted across
+          # builds), so each build re-geocodes the handful of addresses.
+          ARCGIS_CLIENT_ID: ${{ secrets.ARCGIS_CLIENT_ID }}
+          ARCGIS_CLIENT_SECRET: ${{ secrets.ARCGIS_CLIENT_SECRET }}
       - name: Verify author microformats2 (representative + nested h-card)
         run: node scripts/verify-mf2.mjs
       - name: Screenshot post pages for social cards / syndication media
