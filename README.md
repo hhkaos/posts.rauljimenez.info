@@ -376,14 +376,19 @@ is full-width and the form controls stack. Inside the `<section class="respond">
 ### Map (`/map/` + per-post mini-maps)
 
 Every geotagged post is shown on an [OpenStreetMap](https://www.openstreetmap.org)
-map — an overview at **`/map/`** ("🗺️ Map" in the nav) and a small
-single-marker map at the bottom of each geotagged post page. Maps use
-[Leaflet](https://leafletjs.com) `1.9.4` from cdnjs, loaded (via `page()`'s
-`head` slot) **only** on pages that have a map; `scripts/map.js` drives both.
-Dark mode is a CSS filter on the tile layer (markers/popups stay untinted).
-Progressive enhancement: no JS → the mini-map is a link to openstreetmap.org
-and `/map/` shows a plain list of the places (also always in the HTML).
-`screenshot.mjs` hides `.post-map` and aborts the Leaflet CDN request.
+map — an overview at **`/map/`** and a small single-marker map at the bottom
+of each geotagged post page. Maps use [Leaflet](https://leafletjs.com) `1.9.4`
+from cdnjs, loaded (via `page()`'s `head` slot) **only** on pages that have a
+map; `scripts/map.js` drives both. Dark mode is a CSS filter on the tile
+layer (markers/popups stay untinted). Progressive enhancement: no JS → the
+mini-map is a link to openstreetmap.org and `/map/` shows a plain list of the
+places (also always in the HTML). `screenshot.mjs` hides `.post-map` and
+aborts the Leaflet CDN request.
+
+`/map/` and the timeline are two views of the same posts, reached through a
+small **`viewTabs()`** switcher (Timeline / Map) at the top of each — not
+the site navbar (that mirrors www.rauljimenez.info). A calendar view (for
+upcoming events/RSVPs) is the planned third tab.
 
 `render.mjs`'s `postGeo()` pulls coordinates from a post in whatever shape
 they arrive: `checkin: { latitude, longitude }`, `location: { type: geo,

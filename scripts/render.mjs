@@ -155,12 +155,6 @@ const NAV_LINKS = [
     label: "📡 Activity", href: `${BASE_URL}/`, current: true,
     es: { label: "📡 Actividad", href: `${BASE_URL}/` },
   },
-  // Not on the Docusaurus navbar — a view that only exists here: every
-  // geotagged post on one map (see renderMapHtml / `/map/`).
-  {
-    label: "🗺️ Map", href: `${BASE_URL}/map/`,
-    es: { label: "🗺️ Mapa", href: `${BASE_URL}/map/` },
-  },
   {
     label: "🤓 About me", href: "https://www.rauljimenez.info/docs/category/-about-me",
     es: { label: "🤓 Sobre mí", href: "https://www.rauljimenez.info/es/docs/category/-about-me" },
@@ -1417,6 +1411,25 @@ ${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}${webmenti
 // remembered in localStorage and applied pre-paint by HEAD_INIT_SCRIPT.
 // Progressive enhancement: with no JS the buttons do nothing and every
 // post shows.
+// The activity feed has more than one view of the same posts — the
+// reverse-chronological timeline and the map (a calendar view is planned,
+// mainly for upcoming events/RSVPs). They're separate pages; this little
+// tab bar sits at the top of each so you can switch between them. It's
+// deliberately NOT in the site navbar (that mirrors www.rauljimenez.info) —
+// this is local to the feed. `active` is "timeline" | "map" (| "calendar").
+// Root-relative hrefs (like pager()) — the site is always at the domain
+// root and they resolve the same on the preview server.
+function viewTabs(active) {
+  const tab = (id, href, en, es) =>
+    `<a class="view-tab${id === active ? " is-active" : ""}"${
+      id === active ? ' aria-current="page"' : ""
+    } href="${href}"><span class="i18n-en">${en}</span><span class="i18n-es">${es}</span></a>`;
+  return `<nav class="view-tabs" aria-label="Activity views">
+${tab("timeline", "/", "Timeline", "Cronología")}
+${tab("map", "/map/", "Map", "Mapa")}
+</nav>`;
+}
+
 function feedFilter(includeIntro) {
   const btn = (lang, en, es) =>
     `<button type="button" class="feed-filter__btn" data-feed-lang="${lang}"><span class="i18n-en">${en}</span><span class="i18n-es">${es}</span></button>`;
@@ -1557,13 +1570,12 @@ function renderMapHtml(points) {
     .join("\n");
 
   const body = `
-<header class="site">
-<h1><span class="i18n-en">Map</span><span class="i18n-es">Mapa</span></h1>
-<p class="page-intro">
-<span class="i18n-en">Every geotagged post — photos, check-ins, events, reviews with a location — on one map. ${n} place${n === 1 ? "" : "s"} so far. <a href="${BASE_URL}/about/">About this feed &rarr;</a></span>
-<span class="i18n-es">Todas las publicaciones geolocalizadas —fotos, check-ins, eventos, reseñas con ubicación— en un mapa. ${n} sitio${n === 1 ? "" : "s"} por ahora. <a href="${BASE_URL}/about/">Sobre este feed &rarr;</a></span>
+${viewTabs("map")}
+<h1 class="visually-hidden"><span class="i18n-en">Map</span><span class="i18n-es">Mapa</span></h1>
+<p class="page-intro map-intro">
+<span class="i18n-en">Every geotagged post — photos, check-ins, events, reviews with a location — on one map. ${n} place${n === 1 ? "" : "s"} so far. <a href="/about/">About this feed &rarr;</a></span>
+<span class="i18n-es">Todas las publicaciones geolocalizadas —fotos, check-ins, eventos, reseñas con ubicación— en un mapa. ${n} sitio${n === 1 ? "" : "s"} por ahora. <a href="/about/">Sobre este feed &rarr;</a></span>
 </p>
-</header>
 <div id="map" class="map-full">
 <noscript><p class="i18n-en">The interactive map needs JavaScript — the places are listed below.</p><p class="i18n-es">El mapa interactivo necesita JavaScript; los lugares están listados abajo.</p></noscript>
 </div>
@@ -1619,7 +1631,7 @@ to. Some of these have no real equivalent on a mainstream network.</p>
 <p>Because every post is structured data in a repository I own — not locked
 inside someone's app — I can build on top of it. For example, every geotagged
 post (photos, check-ins, events, reviews…) is plotted on
-<a href="${BASE_URL}/map/">a map of the places I've been</a>. That's only
+<a href="/map/">a map of the places I've been</a>. That's only
 possible because the data is mine and out in the open.</p>
 
 <h2>Where else it shows up</h2>
@@ -1718,7 +1730,7 @@ tienen equivalente real en una red convencional.</p>
 <p>Como cada publicación es un dato estructurado en un repositorio que es mío
 —y no algo encerrado dentro de la app de otro— puedo construir cosas encima.
 Por ejemplo, cada publicación geolocalizada (fotos, check-ins, eventos,
-reseñas…) aparece en <a href="${BASE_URL}/map/">un mapa de los sitios en los
+reseñas…) aparece en <a href="/map/">un mapa de los sitios en los
 que he estado</a>. Eso solo es posible porque los datos son míos y están
 abiertos.</p>
 
@@ -1922,8 +1934,8 @@ async function main() {
       : `<header class="site"><h1 class="visually-hidden"><span class="i18n-en">Activity — page ${n} of ${pageCount}</span><span class="i18n-es">Actividad — página ${n} de ${pageCount}</span></h1><p class="page-intro"><span class="i18n-en">Page ${n} of ${pageCount} · <a href="${BASE_URL}/">newest &rarr;</a></span><span class="i18n-es">Página ${n} de ${pageCount} · <a href="${BASE_URL}/">más recientes &rarr;</a></span></p></header>`;
 
     const body = index.length
-      ? `${header}\n${feedFilter(n === 1)}\n${renderTimeline(slice)}\n${pager(prev, next)}`
-      : `${intro}\n<p>Nothing public yet.</p>`;
+      ? `${viewTabs("timeline")}\n${header}\n${feedFilter(n === 1)}\n${renderTimeline(slice)}\n${pager(prev, next)}`
+      : `${viewTabs("timeline")}\n${intro}\n<p>Nothing public yet.</p>`;
 
     const html = page({
       title: n === 1 ? "Activity" : `Activity — page ${n} of ${pageCount}`,

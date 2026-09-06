@@ -445,6 +445,35 @@ article.h-event img {
   font-weight: 600;
 }
 
+/* View switcher (Timeline / Map / …) at the top of every feed page —
+   underline tabs, distinct from the pill filter that may sit below. */
+.view-tabs {
+  display: flex;
+  gap: 0.3rem;
+  margin: 0 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.view-tab {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.view-tab:hover { color: var(--text); }
+.view-tab.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.map-intro {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.map-intro a { color: var(--accent); }
+
 /* Hide non-matching cards, and day headings left with none. `:has()` is not
    universal — where it's unsupported an empty heading just stays (cosmetic). */
 :root[data-feed-lang="en"] ul.feed li.fc:not([lang="en"]),
