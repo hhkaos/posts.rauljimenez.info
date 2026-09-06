@@ -385,10 +385,27 @@ mini-map is a link to openstreetmap.org and `/map/` shows a plain list of the
 places (also always in the HTML). `screenshot.mjs` hides `.post-map` and
 aborts the Leaflet CDN request.
 
-`/map/` and the timeline are two views of the same posts, reached through a
-small **`viewTabs()`** switcher (Timeline / Map) at the top of each — not
-the site navbar (that mirrors www.rauljimenez.info). A calendar view (for
-upcoming events/RSVPs) is the planned third tab.
+The timeline, `/map/` and `/calendar/` are three views of the same posts,
+reached through a small **`viewTabs()`** switcher (Timeline / Map / Calendar)
+at the top of each — not the site navbar (that mirrors www.rauljimenez.info).
+
+### Calendar (`/calendar/`)
+
+**`renderCalendarHtml()`** builds a month grid — one `<table>` per month,
+from the current month through the month of the furthest-out upcoming post
+(capped at 18) — of the **dated** posts: every `event` (which carries
+`start`/`end`) and any `rsvp` that has a `start`. Each post is a coloured
+chip on every day it spans (label on the first day, a plain bar after).
+Below the grid: an **Upcoming** agenda list, a collapsed **Earlier** one,
+and any dateless RSVPs listed on their own (they can't be placed on a day —
+the link goes to the post, which links to the event). Entirely
+server-rendered — no JavaScript, no map library — so it works like the
+map's fallback list does. `civilParts()` maps a date-only (`2026-10-20`,
+all-day) or full-timestamp `start`/`end` to a `{y,m,d}` in `Europe/Madrid`;
+day maths then runs on integer epoch-day numbers. Styles are `.cal-*` in
+`style.css` (grid + agenda, dark-mode aware, chips collapse to bars under
+480px). `screenshot.mjs` already hides `.view-tabs` in the social card and
+doesn't shoot this page.
 
 `render.mjs`'s `postGeo()` pulls coordinates from a post in whatever shape
 they arrive: `checkin: { latitude, longitude }`, `location: { type: geo,

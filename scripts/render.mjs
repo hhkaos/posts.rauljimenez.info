@@ -1412,11 +1412,11 @@ ${action}${headline}${when}${excerpt}${feedImages(e.images)}${context}${webmenti
 // Progressive enhancement: with no JS the buttons do nothing and every
 // post shows.
 // The activity feed has more than one view of the same posts — the
-// reverse-chronological timeline and the map (a calendar view is planned,
-// mainly for upcoming events/RSVPs). They're separate pages; this little
-// tab bar sits at the top of each so you can switch between them. It's
+// reverse-chronological timeline, the map of geotagged posts, and the
+// calendar of dated events / RSVPs. They're separate pages; this little tab
+// bar sits at the top of each so you can switch between them. It's
 // deliberately NOT in the site navbar (that mirrors www.rauljimenez.info) —
-// this is local to the feed. `active` is "timeline" | "map" (| "calendar").
+// this is local to the feed. `active` is "timeline" | "map" | "calendar".
 // Root-relative hrefs (like pager()) — the site is always at the domain
 // root and they resolve the same on the preview server.
 function viewTabs(active) {
@@ -1427,6 +1427,7 @@ function viewTabs(active) {
   return `<nav class="view-tabs" aria-label="Activity views">
 ${tab("timeline", "/", "Timeline", "Cronología")}
 ${tab("map", "/map/", "Map", "Mapa")}
+${tab("calendar", "/calendar/", "Calendar", "Calendario")}
 </nav>`;
 }
 
@@ -1600,6 +1601,260 @@ ${n ? `<ul class="map-list">\n${list}\n</ul>` : `<p><span class="i18n-en">Nothin
   });
 }
 
+// --- Calendar view ------------------------------------------------------
+// `/calendar/` — a month grid of the dated posts: `event`s (which carry
+// `start`/`end`) and any `rsvp` that has a `start`. Everything is rendered
+// server-side, so the grid works with no JavaScript (same principle as the
+// map's fallback list). RSVPs with no date can't be placed on a day; they're
+// listed separately underneath so they aren't lost.
+//
+// Dates come in two shapes: date-only (`2026-10-20`, an all-day event) and
+// full timestamps (`2026-10-20T18:00:00Z`, a timed one). `civilParts` maps
+// either to a { y, m, d } in the author's timezone; day arithmetic then runs
+// on an integer day number (UTC epoch days — used only for comparison and
+// iteration, never for display).
+
+function civilParts(value) {
+  const s = String(value || "").trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split("-").map(Number);
+    return { y, m, d };
+  }
+  const dt = new Date(s);
+  if (Number.isNaN(dt.getTime())) return null;
+  // en-CA renders as YYYY-MM-DD; force the author's timezone so a late-night
+  // timed event lands on the right local day.
+  const [y, m, d] = dt
+    .toLocaleDateString("en-CA", { timeZone: TZ })
+    .split("-")
+    .map(Number);
+  return { y, m, d };
+}
+
+const dayNum = ({ y, m, d }) => Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+const partsFromDayNum = (n) => {
+  const dt = new Date(n * 86400000);
+  return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
+};
+const monthIndex = (y, m) => y * 12 + (m - 1);
+
+// One calendar row per dated post. `end` defaults to `start`; an all-day
+// range is inclusive (20→22 Oct covers three days). Returns null when the
+// post has no usable start date.
+function calendarEntry(type, properties, url) {
+  if (type !== "event" && type !== "rsvp") return null;
+  const startParts = civilParts(properties.start);
+  if (!startParts) return null;
+  const endParts = civilParts(properties.end) || startParts;
+  const startNum = dayNum(startParts);
+  let endNum = dayNum(endParts);
+  if (endNum < startNum) endNum = startNum;
+  const speaking = [].concat(properties.category || []).includes("speaking");
+  const name =
+    properties.name ||
+    (type === "rsvp"
+      ? hostOf(properties["in-reply-to"]) || "RSVP"
+      : "Event");
+  return {
+    type,
+    url,
+    title: `${type === "rsvp" ? "✅ " : speaking ? "🎤 " : ""}${name}`,
+    plainTitle: name,
+    speaking,
+    startParts,
+    endParts,
+    startNum,
+    endNum,
+    rangeLabel: formatDateRange(properties.start, properties.end),
+    location: locationText(properties.location),
+    lang: postLang(properties, ""),
+  };
+}
+
+const CAL_WEEKDAYS = {
+  en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  es: ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"],
+};
+
+function monthTitle(y, m, lang) {
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(
+    lang === "es" ? "es-ES" : "en-GB",
+    { timeZone: "UTC", month: "long", year: "numeric" },
+  );
+}
+
+// One month's <table>. `entries` is every dated post; `todayNum` highlights
+// the current day when it falls in this month.
+function calendarMonth(y, m, entries, todayNum) {
+  const firstWeekday = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // 0 = Mon
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const weeks = Math.ceil((firstWeekday + daysInMonth) / 7);
+  const monthStart = dayNum({ y, m, d: 1 });
+
+  const head = ["en", "es"]
+    .map(
+      (l) =>
+        `<tr class="i18n-${l}">${CAL_WEEKDAYS[l]
+          .map((w) => `<th scope="col">${w}</th>`)
+          .join("")}</tr>`,
+    )
+    .join("\n");
+
+  let cells = "";
+  for (let w = 0; w < weeks; w++) {
+    cells += "<tr>";
+    for (let wd = 0; wd < 7; wd++) {
+      const cellNum = monthStart + w * 7 + wd - firstWeekday;
+      const { y: cy, m: cm, d: cd } = partsFromDayNum(cellNum);
+      const inMonth = cy === y && cm === m;
+      const classes = ["cal-day"];
+      if (!inMonth) classes.push("cal-day--adj");
+      if (cellNum === todayNum) classes.push("cal-day--today");
+      const hits = entries.filter(
+        (e) => cellNum >= e.startNum && cellNum <= e.endNum,
+      );
+      const chips = hits
+        .map((e) => {
+          const isStart = cellNum === e.startNum;
+          const pos =
+            e.startNum === e.endNum
+              ? " is-single"
+              : isStart
+                ? " is-start"
+                : cellNum === e.endNum
+                  ? " is-end"
+                  : " is-mid";
+          // The label rides on the first day only; a continuation day is just
+          // a coloured bar (still a link, still labelled for screen readers).
+          const label = isStart || e.startNum === e.endNum
+            ? `<span>${escapeHtml(e.title)}</span>`
+            : `<span aria-hidden="true"></span>`;
+          return `<a class="cal-ev cal-ev--${e.type}${pos}" href="${escapeHtml(
+            e.url,
+          )}" title="${escapeHtml(e.plainTitle)}" aria-label="${escapeHtml(
+            e.plainTitle,
+          )}">${label}</a>`;
+        })
+        .join("");
+      cells += `<td class="${classes.join(" ")}"${
+        cellNum === todayNum ? ' aria-current="date"' : ""
+      }><span class="cal-day__n">${cd}</span>${
+        chips ? `<div class="cal-day__evs">${chips}</div>` : ""
+      }</td>`;
+    }
+    cells += "</tr>";
+  }
+
+  return `<figure class="cal-month">
+<figcaption class="cal-month__title"><span class="i18n-en">${escapeHtml(
+    monthTitle(y, m, "en"),
+  )}</span><span class="i18n-es">${escapeHtml(monthTitle(y, m, "es"))}</span></figcaption>
+<table class="cal-grid">
+<thead>${head}</thead>
+<tbody>
+${cells}
+</tbody>
+</table>
+</figure>`;
+}
+
+// Agenda <li> — the readable form of the same data (and the whole story on a
+// narrow screen, where the grid chips are just coloured bars).
+function calendarAgendaItem(e) {
+  const place = e.location ? ` <span class="cal-agenda__place">— ${escapeHtml(e.location)}</span>` : "";
+  return `<li class="cal-agenda__item" lang="${escapeHtml(e.lang)}">
+<span class="badge ${e.type}">${escapeHtml(TYPE_LABEL[e.type])}</span>
+<a href="${escapeHtml(e.url)}">${escapeHtml(e.title)}</a>
+<span class="cal-agenda__when">${escapeHtml(e.rangeLabel)}</span>${place}
+</li>`;
+}
+
+// `/calendar/` — month grids from the current month forward, an "Upcoming"
+// agenda, a collapsed "Earlier" agenda, and any dateless RSVPs listed on
+// their own. All static HTML: no JS, no map library.
+function renderCalendarHtml(entries, undatedRsvps) {
+  const today = civilParts(new Date().toISOString());
+  const todayNum = dayNum(today);
+
+  const upcoming = entries
+    .filter((e) => e.endNum >= todayNum)
+    .sort((a, b) => a.startNum - b.startNum);
+  const past = entries
+    .filter((e) => e.endNum < todayNum)
+    .sort((a, b) => b.startNum - a.startNum);
+
+  // Grid range: this month through the month of the furthest-out upcoming
+  // post (capped so a stray far-future date can't emit dozens of months).
+  const loIdx = monthIndex(today.y, today.m);
+  let hiIdx = loIdx;
+  for (const e of upcoming) hiIdx = Math.max(hiIdx, monthIndex(e.endParts.y, e.endParts.m));
+  hiIdx = Math.min(hiIdx, loIdx + 17);
+
+  let months = "";
+  for (let idx = loIdx; idx <= hiIdx; idx++) {
+    months += calendarMonth(Math.floor(idx / 12), (idx % 12) + 1, entries, todayNum) + "\n";
+  }
+
+  const n = upcoming.length;
+  const upcomingList = n
+    ? `<ul class="cal-agenda">\n${upcoming.map(calendarAgendaItem).join("\n")}\n</ul>`
+    : `<p class="cal-empty"><span class="i18n-en">Nothing on the calendar right now.</span><span class="i18n-es">Nada en el calendario ahora mismo.</span></p>`;
+
+  const pastBlock = past.length
+    ? `<details class="cal-earlier">
+<summary><span class="i18n-en">Earlier (${past.length})</span><span class="i18n-es">Anteriores (${past.length})</span></summary>
+<ul class="cal-agenda">\n${past.map(calendarAgendaItem).join("\n")}\n</ul>
+</details>`
+    : "";
+
+  const undatedBlock = undatedRsvps.length
+    ? `<section class="cal-undated">
+<h2><span class="i18n-en">RSVPs without a date here</span><span class="i18n-es">RSVP sin fecha aquí</span></h2>
+<p class="cal-undated__hint"><span class="i18n-en">These don't carry a date of their own — open the event to see when it is.</span><span class="i18n-es">No llevan fecha propia; abre el evento para ver cuándo es.</span></p>
+<ul class="cal-agenda">
+${undatedRsvps
+  .map(
+    (r) =>
+      `<li class="cal-agenda__item" lang="${escapeHtml(r.lang)}"><span class="badge rsvp">${escapeHtml(
+        TYPE_LABEL.rsvp,
+      )}</span> <a href="${escapeHtml(r.url)}">${escapeHtml(r.title)}</a></li>`,
+  )
+  .join("\n")}
+</ul>
+</section>`
+    : "";
+
+  const body = `
+${viewTabs("calendar")}
+<h1 class="visually-hidden"><span class="i18n-en">Calendar</span><span class="i18n-es">Calendario</span></h1>
+<p class="page-intro map-intro">
+<span class="i18n-en">Events I'm going to or speaking at, and dated RSVPs, on a month grid. <a href="/about/">About this feed &rarr;</a></span>
+<span class="i18n-es">Eventos a los que voy o en los que hablo, y los RSVP con fecha, en una rejilla mensual. <a href="/about/">Sobre este feed &rarr;</a></span>
+</p>
+<div class="cal-months">
+${months}</div>
+<section class="cal-agenda-wrap">
+<h2><span class="i18n-en">Upcoming</span><span class="i18n-es">Próximos</span></h2>
+${upcomingList}
+${pastBlock}
+</section>
+${undatedBlock}`;
+
+  return page({
+    title: "Calendar",
+    body,
+    repCard: false,
+    webmentions: false,
+    og: {
+      url: `${BASE_URL}/calendar/`,
+      type: "website",
+      description:
+        "Events I'm going to or speaking at, and dated RSVPs, on a month grid.",
+    },
+  });
+}
+
 const ABOUT_POST_ES =
   "https://www.rauljimenez.info/es/blog/first-steps-into-the-indieweb";
 
@@ -1631,7 +1886,8 @@ to. Some of these have no real equivalent on a mainstream network.</p>
 <p>Because every post is structured data in a repository I own — not locked
 inside someone's app — I can build on top of it. For example, every geotagged
 post (photos, check-ins, events, reviews…) is plotted on
-<a href="/map/">a map of the places I've been</a>. That's only
+<a href="/map/">a map of the places I've been</a>, and every dated event or
+RSVP shows up on <a href="/calendar/">a calendar</a>. That's only
 possible because the data is mine and out in the open.</p>
 
 <h2>Where else it shows up</h2>
@@ -1731,8 +1987,9 @@ tienen equivalente real en una red convencional.</p>
 —y no algo encerrado dentro de la app de otro— puedo construir cosas encima.
 Por ejemplo, cada publicación geolocalizada (fotos, check-ins, eventos,
 reseñas…) aparece en <a href="/map/">un mapa de los sitios en los
-que he estado</a>. Eso solo es posible porque los datos son míos y están
-abiertos.</p>
+que he estado</a>, y cada evento o RSVP con fecha aparece en
+<a href="/calendar/">un calendario</a>. Eso solo es posible porque los datos
+son míos y están abiertos.</p>
 
 <h2>Dónde más aparece</h2>
 <p>Buena parte de lo que hay aquí se publica también en mis cuentas de
@@ -1841,6 +2098,8 @@ async function main() {
 
   const index = [];
   const geoPoints = []; // { lat, lon, type, title, url, date, place, thumb }
+  const calEntries = []; // dated event / rsvp posts, for /calendar/
+  const undatedRsvps = []; // rsvp posts with no start date
 
   for (const type of TYPES) {
     const folder = TYPE_FOLDER[type];
@@ -1884,6 +2143,18 @@ async function main() {
         contentHtml: post.content ? renderMarkdown(post.content) : "",
       });
 
+      if (effectiveType === "event" || effectiveType === "rsvp") {
+        const cal = calendarEntry(effectiveType, props, url);
+        if (cal) calEntries.push(cal);
+        else if (effectiveType === "rsvp") {
+          undatedRsvps.push({
+            url,
+            title: `✅ ${props.name || hostOf(props["in-reply-to"]) || "RSVP"}`,
+            lang: postLang(props, post.content),
+          });
+        }
+      }
+
       if (geo) {
         geoPoints.push({
           lat: geo.lat,
@@ -1916,6 +2187,16 @@ async function main() {
   await writeFile(path.join(SITE_DIR, "map", "index.html"), renderMapHtml(geoPoints));
   await saveGeocodeCache();
   console.log(`Mapped ${geoPoints.length} geotagged post(s)`);
+
+  // The calendar of dated events / RSVPs. Always emitted (it's a view tab),
+  // with an empty state when nothing is scheduled.
+  calEntries.sort((a, b) => a.startNum - b.startNum);
+  await mkdir(path.join(SITE_DIR, "calendar"), { recursive: true });
+  await writeFile(
+    path.join(SITE_DIR, "calendar", "index.html"),
+    renderCalendarHtml(calEntries, undatedRsvps),
+  );
+  console.log(`Calendar: ${calEntries.length} dated post(s), ${undatedRsvps.length} undated RSVP(s)`);
 
   // Split the timeline into numbered pages. `/` is page 1; `/page/2/`, … hold
   // the rest. Each page stands alone (working prev/next links); timeline.js
