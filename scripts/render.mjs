@@ -1638,6 +1638,16 @@ const partsFromDayNum = (n) => {
   return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
 };
 const monthIndex = (y, m) => y * 12 + (m - 1);
+const ymd = ({ y, m, d }) =>
+  `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+// calendar.js — the month-by-month navigator. Progressive enhancement: with
+// no JS the page shows every event's month stacked (see renderCalendarHtml);
+// with JS, calendar.js hides those and renders one month at a time with
+// ‹ prev / next › / today controls, building any month grid on demand from
+// the JSON payload. Dependency-free, same pattern as map.js. `defer` so it
+// runs after the DOM is parsed.
+const CALENDAR_HEAD = `<script defer src="/calendar.js"></script>`;
 
 // One calendar row per dated post. `end` defaults to `start`; an all-day
 // range is inclusive (20→22 Oct covers three days). Returns null when the
@@ -1746,7 +1756,7 @@ function calendarMonth(y, m, entries, todayNum) {
     cells += "</tr>";
   }
 
-  return `<figure class="cal-month">
+  return `<figure class="cal-month" data-month="${y}-${String(m).padStart(2, "0")}">
 <figcaption class="cal-month__title"><span class="i18n-en">${escapeHtml(
     monthTitle(y, m, "en"),
   )}</span><span class="i18n-es">${escapeHtml(monthTitle(y, m, "es"))}</span></figcaption>
@@ -1770,9 +1780,10 @@ function calendarAgendaItem(e) {
 </li>`;
 }
 
-// `/calendar/` — month grids from the current month forward, an "Upcoming"
-// agenda, a collapsed "Earlier" agenda, and any dateless RSVPs listed on
-// their own. All static HTML: no JS, no map library.
+// `/calendar/` — a month-by-month view of the dated posts. With JS,
+// calendar.js shows one month with prev/next/today; with no JS, every month
+// that has an event is rendered stacked (plus the current one). Below:
+// "Upcoming" / "Earlier" agendas and any dateless RSVPs.
 function renderCalendarHtml(entries, undatedRsvps) {
   const today = civilParts(new Date().toISOString());
   const todayNum = dayNum(today);
@@ -1784,17 +1795,35 @@ function renderCalendarHtml(entries, undatedRsvps) {
     .filter((e) => e.endNum < todayNum)
     .sort((a, b) => b.startNum - a.startNum);
 
-  // Grid range: this month through the month of the furthest-out upcoming
-  // post (capped so a stray far-future date can't emit dozens of months).
-  const loIdx = monthIndex(today.y, today.m);
-  let hiIdx = loIdx;
-  for (const e of upcoming) hiIdx = Math.max(hiIdx, monthIndex(e.endParts.y, e.endParts.m));
-  hiIdx = Math.min(hiIdx, loIdx + 17);
+  // No-JS fallback grids: the current month plus every month an entry
+  // touches (past or future), de-duped and in order — never the empty months
+  // in between. Capped at 24 as a sanity limit.
+  const monthSet = new Set([monthIndex(today.y, today.m)]);
+  for (const e of entries) {
+    for (
+      let idx = monthIndex(e.startParts.y, e.startParts.m);
+      idx <= monthIndex(e.endParts.y, e.endParts.m);
+      idx++
+    ) {
+      monthSet.add(idx);
+    }
+  }
+  const monthIdxs = [...monthSet].sort((a, b) => a - b).slice(0, 24);
 
   let months = "";
-  for (let idx = loIdx; idx <= hiIdx; idx++) {
+  for (const idx of monthIdxs) {
     months += calendarMonth(Math.floor(idx / 12), (idx % 12) + 1, entries, todayNum) + "\n";
   }
+
+  // Payload for calendar.js — the same entries, as plain date strings.
+  const calData = entries.map((e) => ({
+    s: ymd(e.startParts),
+    e: ymd(e.endParts),
+    type: e.type,
+    title: e.title,
+    plainTitle: e.plainTitle,
+    url: e.url,
+  }));
 
   const n = upcoming.length;
   const upcomingList = n
@@ -1832,8 +1861,9 @@ ${viewTabs("calendar")}
 <span class="i18n-en">Events I'm going to or speaking at, and dated RSVPs, on a month grid. <a href="/about/">About this feed &rarr;</a></span>
 <span class="i18n-es">Eventos a los que voy o en los que hablo, y los RSVP con fecha, en una rejilla mensual. <a href="/about/">Sobre este feed &rarr;</a></span>
 </p>
-<div class="cal-months">
+<div class="cal-months" data-today="${ymd(today)}">
 ${months}</div>
+<script type="application/json" id="calendar-events">${JSON.stringify(calData).replace(/</g, "\\u003c")}</script>
 <section class="cal-agenda-wrap">
 <h2><span class="i18n-en">Upcoming</span><span class="i18n-es">Próximos</span></h2>
 ${upcomingList}
@@ -1844,6 +1874,7 @@ ${undatedBlock}`;
   return page({
     title: "Calendar",
     body,
+    head: CALENDAR_HEAD,
     repCard: false,
     webmentions: false,
     og: {
@@ -2175,6 +2206,7 @@ async function main() {
   await copyFile("scripts/timeline.js", path.join(SITE_DIR, "timeline.js"));
   await copyFile("scripts/respond.js", path.join(SITE_DIR, "respond.js"));
   await copyFile("scripts/map.js", path.join(SITE_DIR, "map.js"));
+  await copyFile("scripts/calendar.js", path.join(SITE_DIR, "calendar.js"));
   await writeFile(path.join(SITE_DIR, "feed.xml"), buildFeed(index));
 
   await mkdir(path.join(SITE_DIR, "about"), { recursive: true });

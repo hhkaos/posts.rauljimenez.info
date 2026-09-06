@@ -1200,6 +1200,45 @@ nav.pager {
   text-transform: capitalize;
   margin-bottom: 0.4rem;
 }
+/* Interactive mode (calendar.js): one month + a nav bar, not the stack. */
+.cal-months.is-interactive { display: block; }
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.cal-nav__label {
+  min-width: 9.5rem;
+  text-align: center;
+  text-transform: capitalize;
+  font-size: 1rem;
+}
+.cal-nav__btn {
+  font: inherit;
+  line-height: 1;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.cal-nav__today {
+  font: inherit;
+  margin-left: auto;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.cal-nav__btn:hover:not(:disabled),
+.cal-nav__today:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.cal-nav__btn:disabled,
+.cal-nav__today:disabled { opacity: 0.4; cursor: default; }
+.cal-month--live { margin: 0; }
 .cal-grid {
   width: 100%;
   border-collapse: collapse;
