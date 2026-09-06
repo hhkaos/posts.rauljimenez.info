@@ -4,6 +4,8 @@ item:
   type: cite
   name: Livraria Lello
   url: https://en.wikipedia.org/wiki/Livraria_Lello
+  latitude: "41.146944"
+  longitude: "-8.614722"
 rating: "4"
 name: It is beautiful, but very expensive for what it is
 category:
@@ -11,6 +13,7 @@ category:
   - library
 post-status: published
 published: 2026-09-01T22:10:46.806Z
+updated: 2026-09-06T22:10:04.864Z
 visibility: public
 ---
 
