@@ -1,8 +1,65 @@
 {
-  "generatedAt": "2026-09-05T14:12:16.691Z",
-  "lastId": 2028274,
-  "count": 10,
+  "generatedAt": "2026-09-07T09:38:03.818Z",
+  "lastId": 2029978,
+  "count": 13,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Álvaro Montoro",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:xei4kpuuaogvgnvufre7wvjm/bafkreigphqyvgorv7zyiphugwgccquzbevo7hvxflrujfoy6qhee4o6goy",
+        "url": "https://bsky.app/profile/alvaromontoro.com"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3muimbqf3ik2i#liked_by_did:plc:xei4kpuuaogvgnvufre7wvjm",
+      "published": null,
+      "wm-received": "2026-09-06T20:44:59Z",
+      "wm-id": 2029978,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3muimbqf3ik2i/did%253Aplc%253Axei4kpuuaogvgnvufre7wvjm",
+      "wm-target": "https://posts.rauljimenez.info/photos/2026/09/01/e4bdf/",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/photos/2026/09/01/e4bdf/",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Scott Kuperus",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:mahwp52sdhlobhjowrybybcl/bafkreidkzbhgdjteymi3najs65rttninulqjev7puavs77tf3bnhh3ffna",
+        "url": "https://bsky.app/profile/scottkuperus.com"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3mutr5fypl42f#liked_by_did:plc:mahwp52sdhlobhjowrybybcl",
+      "published": null,
+      "wm-received": "2026-09-06T17:52:06Z",
+      "wm-id": 2029932,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mutr5fypl42f/did%253Aplc%253Amahwp52sdhlobhjowrybybcl",
+      "wm-target": "https://posts.rauljimenez.info/photos/2026/09/06/72d0a/",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/photos/2026/09/06/72d0a/",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Álvaro Montoro",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:xei4kpuuaogvgnvufre7wvjm/bafkreigphqyvgorv7zyiphugwgccquzbevo7hvxflrujfoy6qhee4o6goy",
+        "url": "https://bsky.app/profile/alvaromontoro.com"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3mutr5fypl42f#liked_by_did:plc:xei4kpuuaogvgnvufre7wvjm",
+      "published": null,
+      "wm-received": "2026-09-06T11:37:52Z",
+      "wm-id": 2029832,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mutr5fypl42f/did%253Aplc%253Axei4kpuuaogvgnvufre7wvjm",
+      "wm-target": "https://posts.rauljimenez.info/photos/2026/09/06/72d0a/",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/photos/2026/09/06/72d0a/",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
