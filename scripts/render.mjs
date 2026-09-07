@@ -411,8 +411,17 @@ function coordsFrom(value) {
   const p = value.properties || value;
   const lat = numOf(p.latitude);
   const lon = numOf(p.longitude);
-  if (lat === null || lon === null || !inRange(lat, lon)) return null;
-  return { lat, lon, label: strProp(p.name) };
+  if (lat !== null && lon !== null && inRange(lat, lon)) {
+    return { lat, lon, label: strProp(p.name) };
+  }
+  // An h-adr / h-card can carry a nested h-geo — Indiekit's admin form
+  // stores `location` this way when a post has both a place name/address
+  // and coordinates (e.g. an RSVP with `geo` filled in).
+  if (p.geo && typeof p.geo === "object") {
+    const nested = coordsFrom(p.geo);
+    if (nested) return { ...nested, label: strProp(p.name) || nested.label };
+  }
+  return null;
 }
 async function postGeo(properties) {
   for (const key of ["checkin", "location", "item"]) {
