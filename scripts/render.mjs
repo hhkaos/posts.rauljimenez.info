@@ -674,6 +674,7 @@ ${webmentions ? webmentionsSection(url, lang) : ""}
 <a href="${BASE_URL}/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
 <a href="/feed.xml">RSS</a>
 <a href="${SOURCE_REPO}"><span class="i18n-en">Source on GitHub</span><span class="i18n-es">Código en GitHub</span></a>
+${footerFreshnessLine()}
 </footer>
 </div>
 <script src="/timeline.js" defer></script>
@@ -733,6 +734,32 @@ function webmentionsUpdatedLine(iso) {
   const es = formatMentionDate(iso, "es");
   if (!en) return "";
   return `<p class="webmentions__updated"><span class="i18n-en">Updated </span><span class="i18n-es">Actualizado </span><time datetime="${escapeHtml(iso)}"><span class="i18n-en">${escapeHtml(en)}</span><span class="i18n-es">${escapeHtml(es || en)}</span></time></p>`;
+}
+
+// Site-wide freshness note for the received-Webmentions pipeline, shown in
+// the footer of every page. `webmentionsUpdatedLine` above only appears once
+// a *specific* post already has at least one mention — so a post that just
+// got a reaction has nothing on the page saying reactions are checked
+// periodically rather than live, which is exactly the confusing state a
+// reader can land in right after a like/repost happens but before the next
+// daily snapshot run. This line is domain-wide (the snapshot has one
+// `generatedAt` for the whole site) and always present once a snapshot
+// exists, quiet post or not.
+const WM_FRESHNESS_HINT = {
+  en: "Likes, reposts and replies from Mastodon/Bluesky are collected from webmention.io about once a day, so a new reaction can take a day or so to show up here.",
+  es: "Los likes, reposts y respuestas de Mastodon/Bluesky se recogen de webmention.io aproximadamente una vez al día, así que una reacción nueva puede tardar un día o más en aparecer aquí.",
+};
+
+function footerFreshnessLine() {
+  const iso = WM_MENTIONS?.generatedAt;
+  if (!iso) return "";
+  const en = formatMentionDate(iso, "en");
+  const es = formatMentionDate(iso, "es");
+  if (!en) return "";
+  return `<p class="footer-meta">
+<span class="i18n-en">Reactions checked <time datetime="${escapeHtml(iso)}">${escapeHtml(en)}</time></span><span class="i18n-es">Reacciones revisadas el <time datetime="${escapeHtml(iso)}">${escapeHtml(es || en)}</time></span>
+<span class="footer-meta__icon i18n-en" tabindex="0" title="${escapeHtml(WM_FRESHNESS_HINT.en)}">ⓘ</span><span class="footer-meta__icon i18n-es" tabindex="0" title="${escapeHtml(WM_FRESHNESS_HINT.es)}">ⓘ</span>
+</p>`;
 }
 
 // Class overrides so the shared renderer emits the class names this repo's

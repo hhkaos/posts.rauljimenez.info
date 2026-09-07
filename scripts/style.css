@@ -722,6 +722,20 @@ footer.site {
 
 footer.site a { color: var(--text-muted); }
 
+/* Freshness note ("Reactions checked <date>") — full width so it always
+   drops to its own line under the link row above, however many of those
+   wrap. */
+.footer-meta {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.footer-meta__icon {
+  cursor: help;
+  border-bottom: 1px dotted var(--text-muted);
+}
+
 a { color: var(--accent); }
 
 .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.9rem; }
