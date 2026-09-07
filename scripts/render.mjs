@@ -353,9 +353,11 @@ function firstContentImage(text) {
 }
 
 // "20–23 Oct 2026" when start/end share a month, else "20 Oct – 23 Oct 2026".
+// A start/end that land on the same day (e.g. a timed one-evening event)
+// collapse to a single date.
 function formatDateRange(start, end) {
   if (!start) return "";
-  if (!end || end === start) return formatDate(start);
+  if (!end || end === start || formatDate(start) === formatDate(end)) return formatDate(start);
   try {
     const s = new Date(start);
     const eD = new Date(end);
