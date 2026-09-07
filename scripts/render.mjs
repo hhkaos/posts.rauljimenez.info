@@ -289,10 +289,23 @@ function locationText(location) {
 // Times are shown in the author's timezone (posts carry a UTC `published`).
 const TZ = "Europe/Madrid";
 
+// Indiekit stores an event/rsvp `start`/`end` as a *naive* local datetime
+// ("2026-10-02T23:30" — no `Z`, no offset): wall-clock time in the author's
+// timezone. `new Date()` reads that as the runtime's zone (UTC in CI), so a
+// late-evening value rolls past midnight once localised to Madrid and the
+// event looks like it spans two days. Only the calendar date matters here,
+// so reduce a no-offset datetime to its literal date part; leave date-only
+// strings and properly-zoned timestamps (`published`, …) untouched.
+function localDatePart(value) {
+  const s = String(value || "").trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})[T ]\d[\d:.]*$/);
+  return m ? m[1] : s;
+}
+
 function formatDate(iso) {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleDateString("en-GB", { timeZone: TZ, year: "numeric", month: "short", day: "numeric" });
+    return new Date(localDatePart(iso)).toLocaleDateString("en-GB", { timeZone: TZ, year: "numeric", month: "short", day: "numeric" });
   } catch {
     return iso;
   }
@@ -359,8 +372,8 @@ function formatDateRange(start, end) {
   if (!start) return "";
   if (!end || end === start || formatDate(start) === formatDate(end)) return formatDate(start);
   try {
-    const s = new Date(start);
-    const eD = new Date(end);
+    const s = new Date(localDatePart(start));
+    const eD = new Date(localDatePart(end));
     const sameMonth = s.getUTCFullYear() === eD.getUTCFullYear() && s.getUTCMonth() === eD.getUTCMonth();
     if (sameMonth) {
       return `${s.getUTCDate()}–${formatDate(end)}`;
@@ -1626,7 +1639,7 @@ ${n ? `<ul class="map-list">\n${list}\n</ul>` : `<p><span class="i18n-en">Nothin
 // iteration, never for display).
 
 function civilParts(value) {
-  const s = String(value || "").trim();
+  const s = localDatePart(String(value || "").trim());
   if (!s) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     const [y, m, d] = s.split("-").map(Number);
