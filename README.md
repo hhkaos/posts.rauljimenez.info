@@ -382,8 +382,15 @@ from cdnjs, loaded (via `page()`'s `head` slot) **only** on pages that have a
 map; `scripts/map.js` drives both. Dark mode is a CSS filter on the tile
 layer (markers/popups stay untinted). Progressive enhancement: no JS → the
 mini-map is a link to openstreetmap.org and `/map/` shows a plain list of the
-places (also always in the HTML). `screenshot.mjs` hides `.post-map` and
-aborts the Leaflet CDN request.
+places (also always in the HTML).
+
+`screenshot.mjs` **keeps** the per-post mini-map in the OG / syndication
+card (for a check-in or located event it's the most useful thing in it): it
+lets Leaflet + the OSM tiles load, nudges the map with a `resize` event
+after the card CSS widens the column, then waits (bounded, 6 s) for every
+`img.leaflet-tile` to finish before measuring and shooting. Adds no
+meaningful build time — a handful of geotagged posts, tiles fetched once
+per build.
 
 The timeline, `/map/` and `/calendar/` are three views of the same posts,
 reached through a small **`viewTabs()`** switcher (Timeline / Map / Calendar)

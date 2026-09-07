@@ -134,19 +134,19 @@ async function main() {
     colorScheme: "light",
   });
 
-  // The geotagged-post mini-map is hidden in the card anyway (cardCss) —
-  // don't let its Leaflet CDN load hold up `networkidle`.
-  await page.route("**://cdnjs.cloudflare.com/**", (route) => route.abort());
-
-  // Trim the site chrome so the post itself fills the card.
+  // Trim the site chrome so the post itself fills the card. The geotagged
+  // mini-map (`.post-map`) is kept — for a check-in / located event it's
+  // the most useful thing in the OG image — so Leaflet (cdnjs) and the OSM
+  // tiles are allowed to load; the per-page wait below bounds that.
   const cardCss = `
-    nav.site-nav, header.site, a.back, footer.site, .webmentions, .respond-toggle, .post-map { display: none !important; }
+    nav.site-nav, header.site, a.back, footer.site, .webmentions, .respond-toggle { display: none !important; }
     body { padding-top: 0 !important; }
     .wrap { padding: 2rem 2.5rem; max-width: none; }
     article .content { overflow: hidden; }
-    /* Keep a big image from turning the card into a skyscraper — photo
-       posts syndicate the real photo, this is just the OG fallback. */
-    article img { max-height: 520px; width: auto; object-fit: contain; }
+    /* Keep a big inline image from turning the card into a skyscraper —
+       photo posts syndicate the real photo, this is just the OG fallback.
+       Leaflet tiles are exempt (they're a fixed 256px grid). */
+    article img:not(.leaflet-tile) { max-height: 520px; width: auto; object-fit: contain; }
   `;
 
   let count = 0;
@@ -155,6 +155,31 @@ async function main() {
     await page.goto(`http://localhost:${PORT}${urlPath}`, { waitUntil: "networkidle" });
     await page.addStyleTag({ content: cardCss });
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
+
+    // If the post has a mini-map, let Leaflet catch up. `map.js` builds the
+    // map at the column's original width (before cardCss widens `.wrap`), so
+    // nudge it with a resize event, then wait for the OSM tiles to finish.
+    // `map.js` adds `.is-ready` synchronously; tiles arrive over the
+    // network. Bounded (6 s) so a slow / rate-limited tile server can't
+    // stall the build — a partly-drawn map still beats a blank strip.
+    if (await page.$(".post-map")) {
+      await page.evaluate(() => window.dispatchEvent(new Event("resize")));
+      await page
+        .waitForFunction(
+          () => {
+            const map = document.querySelector(".post-map");
+            if (!map || !map.classList.contains("is-ready")) return false;
+            const tiles = map.querySelectorAll("img.leaflet-tile");
+            return (
+              tiles.length > 0 &&
+              [...tiles].every((t) => t.complete && t.naturalWidth > 0)
+            );
+          },
+          { timeout: 6000 },
+        )
+        .catch(() => {});
+      await page.waitForTimeout(400);
+    }
 
     // Measure the card's real height (`.wrap` carries the visible chrome +
     // the post), then crop to it, clamped to the landscape floor / square
