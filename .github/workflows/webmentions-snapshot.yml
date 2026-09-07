@@ -7,10 +7,14 @@ name: Refresh webmentions snapshot
 # that file current: one authenticated domain-wide query a day instead of
 # one fetch per visitor per page.
 #
-# Committing the refreshed snapshot to main triggers publish.yml, which
-# re-renders and redeploys the site with the new mentions. repository_dispatch
-# is the escape hatch to force a refresh (e.g. from the webmention.io webhook)
-# without waiting for the daily schedule.
+# Committing the refreshed snapshot to main is meant to trigger publish.yml,
+# which re-renders and redeploys the site with the new mentions — but a push
+# made with the default GITHUB_TOKEN does NOT fire other workflows' `on:
+# push` (GitHub's anti-recursion guard), so that commit alone goes nowhere.
+# The "Trigger a rebuild" step below dispatches publish.yml explicitly to
+# compensate. repository_dispatch is the escape hatch to force a refresh
+# (e.g. from the webmention.io webhook) without waiting for the daily
+# schedule.
 
 on:
   schedule:
@@ -26,6 +30,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: webmentions-snapshot
@@ -53,9 +58,11 @@ jobs:
             ${{ inputs.full && '--full' || '' }}
 
       - name: Commit if changed
+        id: commit
         run: |
           if git diff --quiet -- scripts/webmentions-snapshot.json; then
             echo "No change."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name  "github-actions[bot]"
@@ -63,3 +70,12 @@ jobs:
           git add scripts/webmentions-snapshot.json
           git commit -m "chore: refresh webmentions snapshot"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger a rebuild
+        # See the top-of-file note: the push above used GITHUB_TOKEN, so it
+        # did not fire publish.yml's `on: push` on its own.
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish.yml --repo ${{ github.repository }} --ref main
