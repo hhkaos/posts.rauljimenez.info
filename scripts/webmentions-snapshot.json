@@ -1,8 +1,31 @@
 {
-  "generatedAt": "2026-09-08T09:01:42.617Z",
-  "lastId": 2030263,
-  "count": 17,
+  "generatedAt": "2026-09-08T09:25:07.615Z",
+  "lastId": 2030317,
+  "count": 18,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:gwbqjf3ciffqeedjrpmjinfo/bafkreifsbg2cnlnktjx2id2y3acrrzoh4pdvdvcpmphes3puyyfzt3l3oi",
+        "url": "https://bsky.app/profile/rauljimenez.info"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3muynv4m6u32e",
+      "published": "2026-09-08T09:00:08+00:00",
+      "wm-received": "2026-09-08T09:20:51Z",
+      "wm-id": 2030317,
+      "wm-source": "https://brid.gy/comment/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3muynv3xffb2y/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3muynv4m6u32e",
+      "wm-target": "https://posts.rauljimenez.info/notes/2026/09/08/5f83e/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "I share many of those concerns, but I also see some reasons for hope.\n\nWhat do you think? ???????? (2/2)\n<a class=\"u-mention\" href=\"https://dev.to/\"></a>\n<a class=\"u-mention\" href=\"https://dev.to/jf990/considering-our-collective-ai-future-54ch\"></a>",
+        "text": "I share many of those concerns, but I also see some reasons for hope.\n\nWhat do you think? ???????? (2/2)"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/notes/2026/09/08/5f83e/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
