@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raúl Jiménez Ortega | About this feed</title>
+<meta name="description" content="What this activity feed is, why it&#39;s self-hosted and not on a social platform, and how the content is licensed.">
+<meta name="author" content="Raúl Jiménez Ortega">
+<link rel="canonical" href="https://posts.rauljimenez.info/about/">
+<meta property="og:site_name" content="Raúl Jiménez Ortega">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Raúl Jiménez Ortega | About this feed">
+<meta property="og:description" content="What this activity feed is, why it&#39;s self-hosted and not on a social platform, and how the content is licensed.">
+<meta property="og:url" content="https://posts.rauljimenez.info/about/">
+<meta property="og:image" content="https://posts.rauljimenez.info/social-card.png">
+<meta property="og:image:alt" content="The activity feed at posts.rauljimenez.info — Raúl Jiménez Ortega">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Raúl Jiménez Ortega | About this feed">
+<meta name="twitter:description" content="What this activity feed is, why it&#39;s self-hosted and not on a social platform, and how the content is licensed.">
+<meta name="twitter:image" content="https://posts.rauljimenez.info/social-card.png">
+<meta name="twitter:image:alt" content="The activity feed at posts.rauljimenez.info — Raúl Jiménez Ortega">
+<script>
+(function(){var d=document.documentElement;
+function mq(q){return window.matchMedia&&matchMedia(q).matches}
+var t=null;try{t=localStorage.getItem("theme")}catch(e){}
+d.dataset.theme=t==="dark"||t==="light"?t:(mq("(prefers-color-scheme: dark)")?"dark":"light");
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(e){try{if(!localStorage.getItem("theme"))d.dataset.theme=e.matches?"dark":"light"}catch(_){}})}catch(e){}
+function pickLang(){
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="es"||q==="en"){localStorage.setItem("lang",q);return q}}catch(e){}
+try{var s=localStorage.getItem("lang");if(s==="es"||s==="en")return s}catch(e){}
+var ls=navigator.languages||[navigator.language||"en"];
+for(var i=0;i<ls.length;i++){if(/^es/i.test(ls[i]))return "es"}
+return "en"}
+var lang=pickLang();d.dataset.lang=lang;
+try{var fl=localStorage.getItem("feedLang");if(fl==="en"||fl==="es")d.dataset.feedLang=fl}catch(e){}
+addEventListener("DOMContentLoaded",function(){
+var ff=document.querySelector(".feed-bar");
+if(ff){var fbtns=ff.querySelectorAll(".feed-filter__btn");
+function syncFF(){var c=d.dataset.feedLang||"";[].forEach.call(fbtns,function(b){b.setAttribute("aria-pressed",(b.dataset.feedLang||"")===c?"true":"false")})}
+syncFF();
+[].forEach.call(fbtns,function(b){b.addEventListener("click",function(){var v=b.dataset.feedLang||"";if(v)d.dataset.feedLang=v;else delete d.dataset.feedLang;try{v?localStorage.setItem("feedLang",v):localStorage.removeItem("feedLang")}catch(e){}syncFF()})});}
+var tb=document.querySelector(".site-nav__theme");
+if(tb)tb.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}});
+var lb=document.querySelector(".site-nav__lang");
+if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"es";d.dataset.lang=n;try{localStorage.setItem("lang",n)}catch(e){}if(location.hash)try{dispatchEvent(new Event("hashchange"))}catch(e){}});
+var nav=document.querySelector(".site-nav");
+if(nav){var tg=nav.querySelector(".site-nav__toggle"),cl=nav.querySelector(".site-nav__close"),bd=nav.querySelector(".site-nav__backdrop");
+function setMenu(o){nav.classList.toggle("is-open",o);document.body.classList.toggle("nav-open",o);if(bd)bd.hidden=!o;if(tg)tg.setAttribute("aria-expanded",o?"true":"false");}
+if(tg)tg.addEventListener("click",function(){setMenu(!nav.classList.contains("is-open"))});
+if(cl)cl.addEventListener("click",function(){setMenu(false)});
+if(bd)bd.addEventListener("click",function(){setMenu(false)});
+document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(false)});
+[].forEach.call(nav.querySelectorAll(".site-nav__link"),function(a){a.addEventListener("click",function(){setMenu(false)})});}
+});})();
+</script>
+<link rel="icon" href="/favicon.ico">
+<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">
+<link rel="stylesheet" href="/style.css">
+<link rel="alternate" type="application/atom+xml" title="Raúl Jiménez — Activity" href="/feed.xml">
+<link rel="alternate" type="application/atom+xml" hreflang="en" title="Raúl Jiménez — Blog (English)" href="https://www.rauljimenez.info/blog/atom.xml">
+<link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
+<link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
+<link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
+</head>
+<body>
+<nav class="site-nav">
+<a class="site-nav__brand" href="https://www.rauljimenez.info/"><img src="https://www.rauljimenez.info/img/rauljimenez.info.png" alt="Raúl Jiménez Ortega"></a>
+<button class="site-nav__toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="site-nav-menu">
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+</button>
+<div class="site-nav__menu" id="site-nav-menu">
+<div class="site-nav__drawer-head">
+<span class="i18n-en">Menu</span><span class="i18n-es">Menú</span>
+<button class="site-nav__close" type="button" aria-label="Close menu">
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41L10.59 13.4l-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.29z"/></svg>
+</button>
+</div>
+<div class="site-nav__links i18n-en">
+<a class="site-nav__link" href="https://www.rauljimenez.info/docs/digital-brain">🧠 Digital Brain</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/blog">📝 Blog</a>
+<a class="site-nav__link" aria-current="page" href="https://posts.rauljimenez.info/">📡 Activity</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/docs/category/-about-me">🤓 About me</a>
+</div>
+<div class="site-nav__links i18n-es">
+<a class="site-nav__link" href="https://www.rauljimenez.info/es/docs/digital-brain">🧠 Mi cerebro digital</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/es/blog">📝 Blog</a>
+<a class="site-nav__link" aria-current="page" href="https://posts.rauljimenez.info/">📡 Actividad</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/es/docs/category/-about-me">🤓 Sobre mí</a>
+</div>
+<div class="site-nav__tools">
+<button class="site-nav__lang" type="button" aria-label="Change language — cambiar idioma" title="English · Español">
+<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.82 7.82 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26zm.81 2h2.95c.32 1.25.78 2.45 1.38 3.56A8.03 8.03 0 0 1 5.07 16zm2.95-8H5.07a8.03 8.03 0 0 1 4.33-3.56C8.8 5.55 8.34 6.75 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82A13.9 13.9 0 0 1 12 19.96zM14.34 14H9.66a14.9 14.9 0 0 1 0-4h4.68a14.9 14.9 0 0 1 0 4zm.26 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14a16.5 16.5 0 0 0 0-4h3.38a7.82 7.82 0 0 1 0 4h-3.38z"/></svg>
+<span class="i18n-en">ES</span><span class="i18n-es">EN</span>
+</button>
+<button class="site-nav__theme" type="button" aria-label="Switch between dark and light mode" title="Switch between dark and light mode">
+<svg class="icon-sun" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1zM4.22 4.22a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42L4.22 5.64a1 1 0 0 1 0-1.42zm12.02 12.02a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42l-1.06-1.06a1 1 0 0 1 0-1.42zM2 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1zm17 0a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1zM4.22 19.78a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0zM16.24 7.76a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 1 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0z"/></svg>
+<svg class="icon-moon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27A7.014 7.014 0 0 1 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49z"/></svg>
+</button>
+</div>
+</div>
+<div class="site-nav__backdrop" hidden></div>
+</nav>
+<div class="wrap">
+
+<a class="back" href="https://posts.rauljimenez.info/"><span class="i18n-en">&larr; All activity</span><span class="i18n-es">&larr; Toda la actividad</span></a>
+<div class="i18n-en"><article class="content e-content prose">
+<h1>About this feed</h1>
+
+<p><strong>This is my activity feed.</strong> It's the kind of thing you'd
+normally post on a social network — short notes, links I found worth keeping,
+photos, events I'm going to, things I've read, watched or listened to — except
+it doesn't live on a platform. It lives on my own domain, and every post is a
+plain file in a public Git repository I control:
+<a href="https://github.com/hhkaos/posts.rauljimenez.info">github.com/hhkaos/posts.rauljimenez.info</a>.</p>
+
+<p>It's built following the <a href="https://indieweb.org/">IndieWeb</a>
+approach: <em>your content, on your site, first</em>. If you're curious why I
+bothered, the <a href="https://indieweb.org/why">reasons</a> and
+<a href="https://indieweb.org/principles">principles</a> are worth a read, and I
+wrote up how I put this together in
+<a href="https://www.rauljimenez.info/blog/first-steps-into-the-indieweb">First steps into the IndieWeb</a>.</p>
+
+<h2>Not just the usual "post" types</h2>
+<p>A social network gives you a status box and maybe a photo upload. Here the
+"posts" are typed: notes, bookmarks, likes, replies, reposts, RSVPs, events,
+check-ins, reviews, and separate types for things read, watched and listened
+to. Some of these have no real equivalent on a mainstream network.</p>
+
+<h2>What this makes possible</h2>
+<p>Because every post is structured data in a repository I own — not locked
+inside someone's app — I can build on top of it. For example, every geotagged
+post (photos, check-ins, events, reviews…) is plotted on
+<a href="/map/">a map of the places I've been</a>, and every dated event or
+RSVP shows up on <a href="/calendar/">a calendar</a>. That's only
+possible because the data is mine and out in the open.</p>
+
+<h2>Where else it shows up</h2>
+<p>A lot of what's here is also cross-posted to my
+<a href="https://mastodon.social/@hhkaos">Mastodon</a> and
+<a href="https://bsky.app/profile/rauljimenez.info">Bluesky</a> accounts. When
+it is, this copy is the canonical one and the social post links back to it —
+the IndieWeb calls this <a href="https://indieweb.org/POSSE">POSSE</a> (Publish
+on your Own Site, Syndicate Elsewhere). Either way the complete and permanent
+record is the <a href="https://github.com/hhkaos/posts.rauljimenez.info">GitHub repo</a>.</p>
+
+<h2 id="why-not-shared">Why some posts aren't on social media</h2>
+<p>Plenty of what's here never reaches Mastodon or Bluesky, and that's on
+purpose:</p>
+<ul>
+<li>It's something I want on the record and don't mind being public, but that
+isn't timely, newsworthy or useful enough to drop into the feed of people who
+follow me there — I'd rather not clutter their timeline with it.</li>
+<li>Some of these post types (a review, an RSVP, a "watched", a check-in) have
+no clean way to syndicate to a given platform anyway — the tools just aren't
+there, and often it isn't worth the bother.</li>
+<li>It's here for later: for someone who wants to get to know me a bit better,
+for pulling up a recommendation I once made, or simply because I wanted to keep
+it.</li>
+</ul>
+
+<h2 id="reacting">Reacting to a post</h2>
+<p>Every post page has a <strong>Respond</strong> button. If the post was
+cross-posted, it links to the copy on Mastodon or Bluesky — reply, like or
+boost it there and it shows up back here. Two things worth knowing: unlike a
+normal social app that's <em>not</em> instant (it can take a few minutes) and
+it happens on that other site, not here. If you have your own website you can
+also send a <a href="https://indieweb.org/Webmention">Webmention</a> straight
+from the form.</p>
+
+<h2 id="subscribe">How to subscribe</h2>
+<p>This feed has an <a href="/feed.xml">Atom feed</a>. Paste
+<code>posts.rauljimenez.info/feed.xml</code> — or just this site's address —
+into any feed reader (NetNewsWire, Feedly, Reeder, Thunderbird, your browser…)
+and new posts turn up there, no account or algorithm in between. Every page also
+advertises it for auto-discovery, so most readers find it from the URL alone.
+My <a href="https://www.rauljimenez.info/blog">blog</a> has its own feeds
+(English and Spanish), linked the same way.</p>
+
+<h2 id="languages">Languages</h2>
+<p>I write some posts in English and some in Spanish, depending on who they're
+for. I haven't found a good way to publish everything in both — hand-translating
+every note isn't realistic — so for now each post carries a 🌐 button that opens
+it in Google Translate, and you can filter the timeline to a single language.</p>
+
+<h2>Why not just use social media</h2>
+<p>Because the social platforms we know are not neutral tools. Their incentives
+are not my incentives, they can disappear my content or my account, and the way
+they're designed to hold attention has real costs. If that sounds abstract, the
+documentary <a href="https://www.imdb.com/title/tt11464826/"><em>The Social
+Dilemma</em></a> lays it out well. Owning this myself is a small way of opting
+out.</p>
+
+<h2>License</h2>
+<p>All <strong>content</strong> published on this site — text, photos — is
+licensed <a href="https://creativecommons.org/licenses/by/4.0/" rel="license"><strong>Creative Commons
+Attribution 4.0 International (CC&nbsp;BY&nbsp;4.0)</strong></a>. You're free to
+share and adapt it, including commercially, as long as you credit me
+(name + a link back). The site's source code, in the repository above, is a
+separate matter.</p>
+
+<p style="margin-top:2rem"><a href="https://posts.rauljimenez.info/">&larr; Back to the timeline</a>
+· <a href="/feed.xml">RSS</a></p>
+</article></div>
+<div class="i18n-es"><article class="content prose">
+<h1>Sobre este feed</h1>
+
+<p><strong>Este es mi feed de actividad.</strong> Es el tipo de cosas que
+normalmente publicarías en una red social —notas breves, enlaces que me ha
+parecido que merecía la pena guardar, fotos, eventos a los que voy, cosas que
+he leído, visto o escuchado— salvo que no vive en una plataforma. Vive en mi
+propio dominio, y cada publicación es un simple archivo en un repositorio Git
+público que yo controlo:
+<a href="https://github.com/hhkaos/posts.rauljimenez.info">github.com/hhkaos/posts.rauljimenez.info</a>.</p>
+
+<p>Está construido siguiendo el enfoque <a href="https://indieweb.org/">IndieWeb</a>:
+<em>tu contenido, en tu sitio, primero</em>. Si tienes curiosidad por saber por
+qué me molesté, merece la pena leer las <a href="https://indieweb.org/why">razones</a>
+y los <a href="https://indieweb.org/principles">principios</a>, y conté cómo lo
+monté en <a href="https://www.rauljimenez.info/es/blog/first-steps-into-the-indieweb">Primeros pasos en la IndieWeb</a>.</p>
+
+<h2>No solo los tipos de publicación de siempre</h2>
+<p>Una red social te da una caja de estado y quizá una subida de foto. Aquí las
+publicaciones están tipadas: notas, enlaces, me gusta, respuestas,
+republicaciones, confirmaciones de asistencia (RSVP), eventos, check-ins,
+reseñas, y tipos aparte para lo leído, lo visto y lo escuchado. Algunos no
+tienen equivalente real en una red convencional.</p>
+
+<h2>Lo que esto hace posible</h2>
+<p>Como cada publicación es un dato estructurado en un repositorio que es mío
+—y no algo encerrado dentro de la app de otro— puedo construir cosas encima.
+Por ejemplo, cada publicación geolocalizada (fotos, check-ins, eventos,
+reseñas…) aparece en <a href="/map/">un mapa de los sitios en los
+que he estado</a>, y cada evento o RSVP con fecha aparece en
+<a href="/calendar/">un calendario</a>. Eso solo es posible porque los datos
+son míos y están abiertos.</p>
+
+<h2>Dónde más aparece</h2>
+<p>Buena parte de lo que hay aquí se publica también en mis cuentas de
+<a href="https://mastodon.social/@hhkaos">Mastodon</a> y
+<a href="https://bsky.app/profile/rauljimenez.info">Bluesky</a>. Cuando es así,
+esta copia es la canónica y la publicación en la red enlaza de vuelta a ella
+—la IndieWeb lo llama <a href="https://indieweb.org/POSSE">POSSE</a> (publica en
+tu propio sitio, sindica en otros). En cualquier caso, el registro completo y
+permanente es el <a href="https://github.com/hhkaos/posts.rauljimenez.info">repositorio de GitHub</a>.</p>
+
+<h2 id="why-not-shared">Por qué algunos posts no están en redes sociales</h2>
+<p>Mucho de lo que hay aquí nunca llega a Mastodon ni a Bluesky, y es a
+propósito:</p>
+<ul>
+<li>Es algo que quiero dejar registrado y no me importa que sea público, pero
+que no es lo bastante actual, noticiable o útil como para meterlo en el
+timeline de quien me sigue allí — prefiero no llenárselo con esto.</li>
+<li>Además, algunos de estos tipos de post (una reseña, un RSVP, un «visto», un
+check-in) no tienen forma sencilla de sindicarse a según qué plataforma: las
+herramientas simplemente no existen, y muchas veces no compensa el esfuerzo.</li>
+<li>Está aquí para después: para quien quiera conocerme un poco mejor, para
+recuperar una recomendación que di en su momento, o simplemente porque quería
+guardarlo.</li>
+</ul>
+
+<h2 id="reacting">Reaccionar a un post</h2>
+<p>Cada página de post tiene un botón <strong>Responder</strong>. Si el post se
+compartió en redes, enlaza a la copia en Mastodon o Bluesky —responde, dale me
+gusta o compártelo allí y aparecerá aquí de vuelta. Dos cosas que conviene
+saber: a diferencia de una red al uso, esto <em>no</em> es inmediato (puede
+tardar unos minutos) y ocurre en ese otro sitio, no aquí. Si tienes web propia,
+también puedes enviar un <a href="https://indieweb.org/Webmention">Webmention</a>
+directamente desde el formulario.</p>
+
+<h2 id="subscribe">Cómo suscribirse</h2>
+<p>Este feed tiene un <a href="/feed.xml">feed Atom</a>. Pega
+<code>posts.rauljimenez.info/feed.xml</code> —o simplemente la dirección de
+este sitio— en cualquier lector de feeds (NetNewsWire, Feedly, Reeder,
+Thunderbird, tu navegador…) y las publicaciones nuevas aparecerán ahí, sin
+cuenta ni algoritmo de por medio. Además, cada página lo anuncia para
+autodescubrimiento, así que la mayoría de lectores lo encuentran solo con la
+URL. Mi <a href="https://www.rauljimenez.info/es/blog">blog</a> tiene sus
+propios feeds (en inglés y español), enlazados igual.</p>
+
+<h2 id="languages">Idiomas</h2>
+<p>Escribo algunos posts en inglés y otros en español, según para quién sean.
+No he encontrado una buena forma de publicarlo todo en ambos idiomas —traducir
+a mano cada nota no es realista—, así que de momento cada post lleva un botón
+🌐 que lo abre en Google Translate, y puedes filtrar el timeline por un solo
+idioma.</p>
+
+<h2>Por qué no usar sin más las redes sociales</h2>
+<p>Porque las plataformas sociales que conocemos no son herramientas neutrales.
+Sus incentivos no son los míos, pueden hacer desaparecer mi contenido o mi
+cuenta, y la forma en que están diseñadas para retener la atención tiene costes
+reales. Si suena abstracto, el documental
+<a href="https://www.imdb.com/title/tt11464826/"><em>El dilema de las redes
+sociales</em></a> lo explica bien. Tener esto bajo mi control es una pequeña
+forma de no entrar en ese juego.</p>
+
+<h2>Licencia</h2>
+<p>Todo el <strong>contenido</strong> publicado en este sitio —texto, fotos— se
+distribuye bajo licencia <a href="https://creativecommons.org/licenses/by/4.0/" rel="license"><strong>Creative
+Commons Atribución 4.0 Internacional (CC&nbsp;BY&nbsp;4.0)</strong></a>. Eres
+libre de compartirlo y adaptarlo, incluso comercialmente, siempre que me cites
+(nombre + un enlace de vuelta). El código fuente del sitio, en el repositorio
+de arriba, es un asunto aparte.</p>
+
+<p style="margin-top:2rem"><a href="https://posts.rauljimenez.info/">&larr; Volver al timeline</a>
+· <a href="/feed.xml">RSS</a></p>
+</article></div>
+
+<footer class="site">
+<a class="i18n-en" href="https://www.rauljimenez.info/">www.rauljimenez.info</a><a class="i18n-es" href="https://www.rauljimenez.info/es/">www.rauljimenez.info</a>
+<a href="https://posts.rauljimenez.info/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
+<a href="/feed.xml">RSS</a>
+<a href="https://github.com/hhkaos/posts.rauljimenez.info"><span class="i18n-en">Source on GitHub</span><span class="i18n-es">Código en GitHub</span></a>
+<p class="footer-meta">
+<span class="i18n-en">Reactions checked <time datetime="2026-09-08T09:01:42.617Z">Sep 8, 2026</time></span><span class="i18n-es">Reacciones revisadas el <time datetime="2026-09-08T09:01:42.617Z">8 sept 2026</time></span>
+<span class="footer-meta__icon i18n-en" tabindex="0" title="Likes, reposts and replies from Mastodon/Bluesky are collected from webmention.io about once a day, so a new reaction can take a day or so to show up here.">ⓘ</span><span class="footer-meta__icon i18n-es" tabindex="0" title="Los likes, reposts y respuestas de Mastodon/Bluesky se recogen de webmention.io aproximadamente una vez al día, así que una reacción nueva puede tardar un día o más en aparecer aquí.">ⓘ</span>
+</p>
+</footer>
+</div>
+<script src="/timeline.js" defer></script>
+<script src="/respond.js" defer></script>
+</body>
+</html>

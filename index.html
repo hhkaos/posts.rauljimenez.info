@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raúl Jiménez Ortega | Activity</title>
+<meta name="description" content="Notes, links, photos, events, reviews and things I&#39;ve read, watched and listened to — self-hosted on my own domain, following the IndieWeb approach, not on a social platform.">
+<meta name="author" content="Raúl Jiménez Ortega">
+<link rel="canonical" href="https://posts.rauljimenez.info/">
+<meta property="og:site_name" content="Raúl Jiménez Ortega">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Raúl Jiménez Ortega | Activity">
+<meta property="og:description" content="Notes, links, photos, events, reviews and things I&#39;ve read, watched and listened to — self-hosted on my own domain, following the IndieWeb approach, not on a social platform.">
+<meta property="og:url" content="https://posts.rauljimenez.info/">
+<meta property="og:image" content="https://posts.rauljimenez.info/social-card.png">
+<meta property="og:image:alt" content="The activity feed at posts.rauljimenez.info — Raúl Jiménez Ortega">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Raúl Jiménez Ortega | Activity">
+<meta name="twitter:description" content="Notes, links, photos, events, reviews and things I&#39;ve read, watched and listened to — self-hosted on my own domain, following the IndieWeb approach, not on a social platform.">
+<meta name="twitter:image" content="https://posts.rauljimenez.info/social-card.png">
+<meta name="twitter:image:alt" content="The activity feed at posts.rauljimenez.info — Raúl Jiménez Ortega">
+<script>
+(function(){var d=document.documentElement;
+function mq(q){return window.matchMedia&&matchMedia(q).matches}
+var t=null;try{t=localStorage.getItem("theme")}catch(e){}
+d.dataset.theme=t==="dark"||t==="light"?t:(mq("(prefers-color-scheme: dark)")?"dark":"light");
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(e){try{if(!localStorage.getItem("theme"))d.dataset.theme=e.matches?"dark":"light"}catch(_){}})}catch(e){}
+function pickLang(){
+try{var q=new URLSearchParams(location.search).get("lang");if(q==="es"||q==="en"){localStorage.setItem("lang",q);return q}}catch(e){}
+try{var s=localStorage.getItem("lang");if(s==="es"||s==="en")return s}catch(e){}
+var ls=navigator.languages||[navigator.language||"en"];
+for(var i=0;i<ls.length;i++){if(/^es/i.test(ls[i]))return "es"}
+return "en"}
+var lang=pickLang();d.dataset.lang=lang;
+try{var fl=localStorage.getItem("feedLang");if(fl==="en"||fl==="es")d.dataset.feedLang=fl}catch(e){}
+addEventListener("DOMContentLoaded",function(){
+var ff=document.querySelector(".feed-bar");
+if(ff){var fbtns=ff.querySelectorAll(".feed-filter__btn");
+function syncFF(){var c=d.dataset.feedLang||"";[].forEach.call(fbtns,function(b){b.setAttribute("aria-pressed",(b.dataset.feedLang||"")===c?"true":"false")})}
+syncFF();
+[].forEach.call(fbtns,function(b){b.addEventListener("click",function(){var v=b.dataset.feedLang||"";if(v)d.dataset.feedLang=v;else delete d.dataset.feedLang;try{v?localStorage.setItem("feedLang",v):localStorage.removeItem("feedLang")}catch(e){}syncFF()})});}
+var tb=document.querySelector(".site-nav__theme");
+if(tb)tb.addEventListener("click",function(){var n=d.dataset.theme==="dark"?"light":"dark";d.dataset.theme=n;try{localStorage.setItem("theme",n)}catch(e){}});
+var lb=document.querySelector(".site-nav__lang");
+if(lb)lb.addEventListener("click",function(){var n=d.dataset.lang==="es"?"en":"es";d.dataset.lang=n;try{localStorage.setItem("lang",n)}catch(e){}if(location.hash)try{dispatchEvent(new Event("hashchange"))}catch(e){}});
+var nav=document.querySelector(".site-nav");
+if(nav){var tg=nav.querySelector(".site-nav__toggle"),cl=nav.querySelector(".site-nav__close"),bd=nav.querySelector(".site-nav__backdrop");
+function setMenu(o){nav.classList.toggle("is-open",o);document.body.classList.toggle("nav-open",o);if(bd)bd.hidden=!o;if(tg)tg.setAttribute("aria-expanded",o?"true":"false");}
+if(tg)tg.addEventListener("click",function(){setMenu(!nav.classList.contains("is-open"))});
+if(cl)cl.addEventListener("click",function(){setMenu(false)});
+if(bd)bd.addEventListener("click",function(){setMenu(false)});
+document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(false)});
+[].forEach.call(nav.querySelectorAll(".site-nav__link"),function(a){a.addEventListener("click",function(){setMenu(false)})});}
+});})();
+</script>
+<link rel="icon" href="/favicon.ico">
+<link rel="webmention" href="https://webmention.io/links.rauljimenez.info/webmention">
+<link rel="stylesheet" href="/style.css">
+<link rel="alternate" type="application/atom+xml" title="Raúl Jiménez — Activity" href="/feed.xml">
+<link rel="alternate" type="application/atom+xml" hreflang="en" title="Raúl Jiménez — Blog (English)" href="https://www.rauljimenez.info/blog/atom.xml">
+<link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
+<link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
+<link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
+</head>
+<body>
+<nav class="site-nav">
+<a class="site-nav__brand" href="https://www.rauljimenez.info/"><img src="https://www.rauljimenez.info/img/rauljimenez.info.png" alt="Raúl Jiménez Ortega"></a>
+<button class="site-nav__toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="site-nav-menu">
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+</button>
+<div class="site-nav__menu" id="site-nav-menu">
+<div class="site-nav__drawer-head">
+<span class="i18n-en">Menu</span><span class="i18n-es">Menú</span>
+<button class="site-nav__close" type="button" aria-label="Close menu">
+<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41L10.59 13.4l-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.29z"/></svg>
+</button>
+</div>
+<div class="site-nav__links i18n-en">
+<a class="site-nav__link" href="https://www.rauljimenez.info/docs/digital-brain">🧠 Digital Brain</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/blog">📝 Blog</a>
+<a class="site-nav__link" aria-current="page" href="https://posts.rauljimenez.info/">📡 Activity</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/docs/category/-about-me">🤓 About me</a>
+</div>
+<div class="site-nav__links i18n-es">
+<a class="site-nav__link" href="https://www.rauljimenez.info/es/docs/digital-brain">🧠 Mi cerebro digital</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/es/blog">📝 Blog</a>
+<a class="site-nav__link" aria-current="page" href="https://posts.rauljimenez.info/">📡 Actividad</a>
+<a class="site-nav__link" href="https://www.rauljimenez.info/es/docs/category/-about-me">🤓 Sobre mí</a>
+</div>
+<div class="site-nav__tools">
+<button class="site-nav__lang" type="button" aria-label="Change language — cambiar idioma" title="English · Español">
+<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.82 7.82 0 0 1 0-4h3.38a16.5 16.5 0 0 0 0 4H4.26zm.81 2h2.95c.32 1.25.78 2.45 1.38 3.56A8.03 8.03 0 0 1 5.07 16zm2.95-8H5.07a8.03 8.03 0 0 1 4.33-3.56C8.8 5.55 8.34 6.75 8.02 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82A13.9 13.9 0 0 1 12 19.96zM14.34 14H9.66a14.9 14.9 0 0 1 0-4h4.68a14.9 14.9 0 0 1 0 4zm.26 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14a16.5 16.5 0 0 0 0-4h3.38a7.82 7.82 0 0 1 0 4h-3.38z"/></svg>
+<span class="i18n-en">ES</span><span class="i18n-es">EN</span>
+</button>
+<button class="site-nav__theme" type="button" aria-label="Switch between dark and light mode" title="Switch between dark and light mode">
+<svg class="icon-sun" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0-5a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1zm0 17a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1zM4.22 4.22a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42L4.22 5.64a1 1 0 0 1 0-1.42zm12.02 12.02a1 1 0 0 1 1.42 0l1.06 1.06a1 1 0 0 1-1.42 1.42l-1.06-1.06a1 1 0 0 1 0-1.42zM2 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1zm17 0a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1zM4.22 19.78a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 0 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0zM16.24 7.76a1 1 0 0 1 0-1.42l1.06-1.06a1 1 0 1 1 1.42 1.42l-1.06 1.06a1 1 0 0 1-1.42 0z"/></svg>
+<svg class="icon-moon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27A7.014 7.014 0 0 1 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49z"/></svg>
+</button>
+</div>
+</div>
+<div class="site-nav__backdrop" hidden></div>
+</nav>
+<div class="wrap">
+
+<nav class="view-tabs" aria-label="Activity views">
+<a class="view-tab is-active" aria-current="page" href="/"><span class="i18n-en">Timeline</span><span class="i18n-es">Cronología</span></a>
+<a class="view-tab" href="/map/"><span class="i18n-en">Map</span><span class="i18n-es">Mapa</span></a>
+<a class="view-tab" href="/calendar/"><span class="i18n-en">Calendar</span><span class="i18n-es">Calendario</span></a>
+</nav>
+<h1 class="visually-hidden"><span class="i18n-en">Activity</span><span class="i18n-es">Actividad</span></h1>
+<div class="feed-bar">
+<div class="feed-filter__langs" role="group" aria-label="Filter posts by language">
+<span class="feed-filter__label"><span class="i18n-en">Language</span><span class="i18n-es">Idioma</span></span>
+<button type="button" class="feed-filter__btn" data-feed-lang=""><span class="i18n-en">All</span><span class="i18n-es">Todos</span></button>
+<button type="button" class="feed-filter__btn" data-feed-lang="en"><span class="i18n-en">English</span><span class="i18n-es">English</span></button>
+<button type="button" class="feed-filter__btn" data-feed-lang="es"><span class="i18n-en">Español</span><span class="i18n-es">Español</span></button>
+</div><details class="intro-toggle">
+<summary class="intro-toggle__btn"><span class="i18n-en">What is this?</span><span class="i18n-es">¿Qué es esto?</span><svg class="intro-toggle__chev" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></summary>
+<div class="page-intro">
+<p class="i18n-en">The kind of thing people usually scatter across other companies' platforms — a note, a link, a photo, an Amazon or Google Maps review, a like on a YouTube video, an RSVP to an event, something I've read or watched — collected here on my own domain instead. Some of it is also posted to social media; some of it (a rating, a review) has nowhere else good to go; and some I don't share anywhere at all.</p>
+<p class="i18n-es">El tipo de cosas que solemos repartir por las plataformas de otras empresas —una nota, un enlace, una foto, una reseña en Amazon o Google Maps, un me gusta en un vídeo de YouTube, un RSVP a un evento, algo que he leído o visto— recogidas aquí, en mi propio dominio. Parte se publica también en redes sociales; parte (una valoración, una reseña) no tiene otro sitio al que ir; y parte no la comparto en ningún lado.</p>
+<p class="page-intro__about"><a href="/about/"><span class="i18n-en">About this feed, IndieWeb-style, and why &rarr;</span><span class="i18n-es">Sobre este feed, al estilo IndieWeb, y por qué &rarr;</span></a></p>
+</div>
+</details>
+</div>
+<div class="timeline">
+<h2 class="feed-day">Tuesday, 8 September 2026</h2>
+<ul class="feed">
+<li class="fc fc--note" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/notes/2026/09/08/5f83e" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge note">Note</span>
+<time datetime="2026-09-08T08:55:39.479Z">10:55</time>
+</div>
+<p class="fc-excerpt">My manager, John Foster, wrote yesterday on dev.to about his concerns about where AI may be taking us as developers: https://dev.to/jf990/considering-our-collective-ai-future-54ch I share…</p>
+</li>
+<li class="fc fc--like" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/likes/2026/09/08/9ad1e" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge like">Like</span>
+<time datetime="2026-09-08T08:33:50.928Z">10:33</time>
+</div>
+<p class="fc-action"><span class="fc-icon">⭐</span> Liked <a class="fc-subject" href="https://dev.to/jf990/considering-our-collective-ai-future-54ch">dev.to</a></p>
+</li>
+</ul>
+<h2 class="feed-day">Monday, 7 September 2026</h2>
+<ul class="feed">
+<li class="fc fc--bookmark" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/bookmarks/2026/09/07/hey-indieweb-posse-people-can-we" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge bookmark">Bookmark</span>
+<time datetime="2026-09-07T21:34:27.802Z">23:34</time>
+</div>
+<p class="fc-action"><span class="fc-icon">🔖</span> Bookmarked <a class="fc-subject" href="https://michaelharley.net/posts/2026/09/07/hey-indieweb-posse-people-can-we-please-use-the-same-hashtags-for-reviews/">Hey IndieWeb, POSSE people, can we please use the same hashtags for reviews?! | Michael Harley</a></p><p class="fc-context">michaelharley.net</p><p class="fc-reactions"><span class="fc-reactions__c is-like"><span class="fc-reactions__g" aria-hidden="true">♥</span> 1</span></p>
+</li>
+<li class="fc fc--like" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/likes/2026/09/07/640b9" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge like">Like</span>
+<time datetime="2026-09-07T17:16:04.571Z">19:16</time>
+</div>
+<p class="fc-action"><span class="fc-icon">⭐</span> Liked <a class="fc-subject" href="https://aaronparecki.com/2026/08/29/5/">aaronparecki.com</a></p>
+</li>
+<li class="fc fc--note" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/notes/2026/09/07/a28ca" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge note">Note</span>
+<time datetime="2026-09-07T12:05:10.351Z">14:05</time>
+</div>
+<p class="fc-excerpt">I&#39;ve been working on a second blog post &quot;🌿 Second steps into the IndieWeb,&quot; where I&#39;ve shared my experience trying to join this movement.  I hope it is helpful to others interested in…</p><div class="fc-media"><img src="https://posts.rauljimenez.info/media/2026/09/second-steps-into-the-indieweb.png" alt="" loading="lazy"></div><p class="fc-reactions"><span class="fc-reactions__c is-like"><span class="fc-reactions__g" aria-hidden="true">♥</span> 1</span></p>
+</li>
+</ul>
+<h2 class="feed-day">Sunday, 6 September 2026</h2>
+<ul class="feed">
+<li class="fc fc--checkin" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/photos/2026/09/06/72d0a" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge checkin">Check-in</span>
+<time datetime="2026-09-06T10:10:07.636Z">12:10</time>
+</div>
+<p class="fc-action"><span class="fc-icon">📍</span> Checked in at <a class="fc-subject" href="https://maps.app.goo.gl/yK5DYtYgikKxpG9QA?g_st=ac">Playa Costacabana</a></p><p class="fc-excerpt">Enjoying the Sunday at Costacabana beach with the family ! 😎</p><div class="fc-media"><img src="https://posts.rauljimenez.info/media/2026/09/1000059889.jpg" alt="" loading="lazy"></div><p class="fc-reactions"><span class="fc-reactions__c is-like"><span class="fc-reactions__g" aria-hidden="true">♥</span> 2</span></p>
+</li>
+</ul>
+<h2 class="feed-day">Friday, 4 September 2026</h2>
+<ul class="feed">
+<li class="fc fc--event" lang="es">
+<a class="fc-perma" href="https://posts.rauljimenez.info/events/2026/09/04/conferencia-esri-espana-2026" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge event">Event</span>
+<time datetime="2026-09-04T08:14:41.230Z">10:14</time>
+</div>
+<p class="fc-headline">Conferencia Esri España 2026</p><p class="fc-when">30 Sept 2026 – 1 Oct 2026 · IFEMA, Madrid</p><p class="fc-excerpt">Desde 2023 no participaba en la Conferencia de Esri España. Este año volveré a participar en la sesión del primer día por la tarde, compartiendo, como no, cositas sobre las tecnologías…</p>
+</li>
+</ul>
+<h2 class="feed-day">Wednesday, 2 September 2026</h2>
+<ul class="feed">
+<li class="fc fc--photo" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/photos/2026/09/01/e4bdf" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge photo">Photo</span>
+<time datetime="2026-09-01T23:45:16.767Z">01:45</time>
+</div>
+<p class="fc-excerpt">Last weekend, I enjoyed a solar-powered boat ride across &quot;Pantano del Tranco&quot; (Tranco Reservoir) in Cazorla, Jaén Spain 😍🌲⛰️🌊🧘‍♂️</p><div class="fc-media"><img src="https://posts.rauljimenez.info/media/2026/09/img-20260829-114558.jpg" alt="A photo of me posing: a middle-aged man with graying hair and a short beard smiles warmly in the foreground, looking directly at the camera. He is wearing a pale yellow T-shirt. He is on a solar-powered boat on the Tranco Reservoir in Jaén. Behind him, a vast expanse of deep turquoise water stretches into the distance, with gentle ripples on the surface. On both sides of the water, densely forested hills covered in green pine trees rise up, and in the background, taller, rocky mountains are visible. The sky is bright blue with scattered thin white clouds. The lighting is bright, natural sunlight. The photo is taken from a medium-shot perspective, at eye level." loading="lazy"></div><p class="fc-reactions"><span class="fc-reactions__c is-like"><span class="fc-reactions__g" aria-hidden="true">♥</span> 2</span></p>
+</li>
+<li class="fc fc--review" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/reviews/2026/09/01/it-is-beautiful-but-very" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge review">Review</span>
+<time datetime="2026-09-01T22:10:46.806Z">00:10</time>
+</div>
+<p class="fc-action"><span class="fc-icon">📝</span> Reviewed <a class="fc-subject" href="https://en.wikipedia.org/wiki/Livraria_Lello">Livraria Lello</a> <span class="fc-rating" title="4/5">★★★★☆</span></p><p class="fc-headline">It is beautiful, but very expensive for what it is</p><p class="fc-excerpt">What some people call the “Harry Potter bookstore” is the Lello Bookstore (Livraria Lello), located in the historic center of Porto, Portugal, is very beautiful, but: - We had to wait…</p><div class="fc-media"><img src="https://posts.rauljimenez.info/media/2026/09/livraria-lello.png" alt="livraria-lello panorama" loading="lazy"></div><p class="fc-context">en.wikipedia.org</p>
+</li>
+</ul>
+<h2 class="feed-day">Tuesday, 1 September 2026</h2>
+<ul class="feed">
+<li class="fc fc--read" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/reads/2026/09/01/d378e" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge read">Read</span>
+<time datetime="2026-09-01T21:57:46.956Z">23:57</time>
+</div>
+<p class="fc-action"><span class="fc-icon">📚</span> Finished reading <a class="fc-subject" href="https://www.amazon.es/Monk-Who-Sold-Ferrari-English-ebook/dp/B00ALKPTFA">The Monk Who Sold His Ferrari</a> <span class="fc-by">by Robin Sharma</span></p><p class="fc-excerpt">I read this book the first time in ~2008 and it made a great impact on my personality back then. It is still one of my favorites even though it doesn&#39;t have a high rating on goodreads.com</p><p class="fc-context">amazon.es</p>
+</li>
+<li class="fc fc--watch" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/watches/2026/09/01/4241b" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge watch">Watch</span>
+<time datetime="2026-09-01T20:59:59.229Z">22:59</time>
+</div>
+<p class="fc-action"><span class="fc-icon">🎬</span> Watched <a class="fc-subject" href="https://www.imdb.com/title/tt0115398/">Triumph of the Nerds</a> <span class="fc-rating" title="5/5">★★★★★</span></p><p class="fc-excerpt">I don&#39;t know if it&#39;s nostalgia, but I love watching these kinds of documentaries that take you on a journey through time and help you see things in perspective. It is available on YouTube:…</p><p class="fc-context">imdb.com</p>
+</li>
+<li class="fc fc--photo" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/photos/2026/09/01/cbbe9" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge photo">Photo</span>
+<time datetime="2026-09-01T20:13:13.962Z">22:13</time>
+</div>
+<p class="fc-excerpt">This weekend we went to Cazorla, and from Iruela Castle, we could see a goat peeking out to take in the view from a cliff</p><div class="fc-media"><img src="https://posts.rauljimenez.info/media/2026/09/img-20260828-202032.jpg" alt="photograph of a goat perched atop a cliff" loading="lazy"></div>
+</li>
+<li class="fc fc--event" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge event">Event</span>
+<time datetime="2026-09-01T14:25:03.862Z">16:25</time>
+</div>
+<p class="fc-headline">🎤 Esri European Developer &amp; Technology Summit 2026</p><p class="fc-when">20–22 Oct 2026 · Congress Center, Frankfurt</p><p class="fc-excerpt">At the upcoming edition of our developer conference (Esri Developer and Technology Summit) in Frankfurt, I will be presenting several talks: - AI-Infused Development: Lessons Learned and…</p><p class="fc-reactions"><span class="fc-reactions__c is-like"><span class="fc-reactions__g" aria-hidden="true">♥</span> 2</span><span class="fc-reactions__c is-repost"><span class="fc-reactions__g" aria-hidden="true">↻</span> 1</span><span class="fc-reactions__c is-reply"><span class="fc-reactions__g" aria-hidden="true">↩</span> 6</span></p>
+</li>
+<li class="fc fc--rsvp" lang="es">
+<a class="fc-perma" href="https://posts.rauljimenez.info/rsvp/2026/09/01/gala-de-sirviendo-codigo-2026" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge rsvp">RSVP</span>
+<time datetime="2026-09-01T13:48:12.572Z">15:48</time>
+</div>
+<p class="fc-action"><span class="fc-icon">✅</span> Going to <a class="fc-subject" href="https://luma.com/vbe4s6ji">Gala de Sirviendo Código 2026</a></p><p class="fc-excerpt">Este año sí que podré estar en la La Gala de Sirviendo Código 2026!! 🥳</p><p class="fc-context">luma.com</p>
+</li>
+<li class="fc fc--like" lang="es">
+<a class="fc-perma" href="https://posts.rauljimenez.info/likes/2026/09/01/d8e0e" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge like">Like</span>
+<time datetime="2026-09-01T12:40:45.231Z">14:40</time>
+</div>
+<p class="fc-action"><span class="fc-icon">⭐</span> Liked <a class="fc-subject" href="https://www.ciccarello.me/es/publicaciones/2024/10/31/crear-web-multilingue/">ciccarello.me</a></p><p class="fc-excerpt">Este artículo ha resonado mucho conmigo :D. En mi caso opté en su día por usar Docusaurus como &quot;workaround&quot;, pero quizás algún día pruebe/migre a Carnaval IndieWeb que está mucho más…</p>
+</li>
+<li class="fc fc--reply" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/replies/2026/09/01/9821c" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge reply">Reply</span>
+<time datetime="2026-09-01T11:19:52.650Z">13:19</time>
+</div>
+<p class="fc-action"><span class="fc-icon">💬</span> Replied to <a class="fc-subject" href="https://www.swyx.io/learn-in-public/">swyx.io</a></p><p class="fc-excerpt">Great article! I read it by the first time years ago, but it is alway nice to reed it again :D</p><p class="fc-reactions"><span class="fc-reactions__c is-reply"><span class="fc-reactions__g" aria-hidden="true">↩</span> 1</span></p>
+</li>
+<li class="fc fc--bookmark" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/bookmarks/2026/09/01/learn-in-public" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge bookmark">Bookmark</span>
+<time datetime="2026-09-01T11:19:05.624Z">13:19</time>
+</div>
+<p class="fc-action"><span class="fc-icon">🔖</span> Bookmarked <a class="fc-subject" href="https://swyx.io/learn-in-public">Learn In Public</a></p><p class="fc-excerpt">Great article! I read it by the first time years ago, but it is alway nice to reed it again :D</p><p class="fc-context">swyx.io</p>
+</li>
+<li class="fc fc--like" lang="en">
+<a class="fc-perma" href="https://posts.rauljimenez.info/likes/2026/09/01/a26a2" aria-label="Open this post"></a>
+<div class="fc-head">
+<span class="badge like">Like</span>
+<time datetime="2026-09-01T11:15:23.821Z">13:15</time>
+</div>
+<p class="fc-action"><span class="fc-icon">⭐</span> Liked <a class="fc-subject" href="https://swyx.io/learn-in-public">swyx.io</a></p><p class="fc-excerpt">I love this idea 😍</p>
+</li>
+</ul>
+</div>
+<div id="timeline-end"></div>
+
+<footer class="site">
+<a class="i18n-en" href="https://www.rauljimenez.info/">www.rauljimenez.info</a><a class="i18n-es" href="https://www.rauljimenez.info/es/">www.rauljimenez.info</a>
+<a href="https://posts.rauljimenez.info/about/"><span class="i18n-en">About this feed</span><span class="i18n-es">Sobre este feed</span></a>
+<a href="/feed.xml">RSS</a>
+<a href="https://github.com/hhkaos/posts.rauljimenez.info"><span class="i18n-en">Source on GitHub</span><span class="i18n-es">Código en GitHub</span></a>
+<p class="footer-meta">
+<span class="i18n-en">Reactions checked <time datetime="2026-09-08T09:01:42.617Z">Sep 8, 2026</time></span><span class="i18n-es">Reacciones revisadas el <time datetime="2026-09-08T09:01:42.617Z">8 sept 2026</time></span>
+<span class="footer-meta__icon i18n-en" tabindex="0" title="Likes, reposts and replies from Mastodon/Bluesky are collected from webmention.io about once a day, so a new reaction can take a day or so to show up here.">ⓘ</span><span class="footer-meta__icon i18n-es" tabindex="0" title="Los likes, reposts y respuestas de Mastodon/Bluesky se recogen de webmention.io aproximadamente una vez al día, así que una reacción nueva puede tardar un día o más en aparecer aquí.">ⓘ</span>
+</p>
+</footer>
+</div>
+<script src="/timeline.js" defer></script>
+<script src="/respond.js" defer></script>
+</body>
+</html>
