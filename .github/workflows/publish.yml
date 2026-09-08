@@ -1,8 +1,12 @@
 name: Publish posts and send webmentions
 
+# Manual fallback only. The normal build+deploy path is now
+# posts-build (this host, webhook-triggered on every push to main) —
+# see /home/home-server/workspace/posts-build/README.md. Kept here as a
+# break-glass: if the host's build breaks but the repo already has good
+# content, `gh workflow run publish.yml` redeploys from GitHub's own infra
+# without depending on this host at all.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

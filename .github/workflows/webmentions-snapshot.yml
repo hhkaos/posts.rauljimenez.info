@@ -7,14 +7,19 @@ name: Refresh webmentions snapshot
 # that file current: one authenticated domain-wide query a day instead of
 # one fetch per visitor per page.
 #
-# Committing the refreshed snapshot to main is meant to trigger publish.yml,
-# which re-renders and redeploys the site with the new mentions — but a push
-# made with the default GITHUB_TOKEN does NOT fire other workflows' `on:
-# push` (GitHub's anti-recursion guard), so that commit alone goes nowhere.
-# The "Trigger a rebuild" step below dispatches publish.yml explicitly to
-# compensate. repository_dispatch is the escape hatch to force a refresh
-# (e.g. from the webmention.io webhook) without waiting for the daily
-# schedule.
+# Committing the refreshed snapshot to main triggers a real rebuild via
+# posts-build's repository webhook (this host, see
+# /home/home-server/workspace/posts-build/README.md) — a plain repo
+# webhook fires on any push regardless of which token authored it, unlike
+# Actions' own `on: push` anti-recursion guard (which is why this used to
+# need an explicit "Trigger a rebuild" `gh workflow run publish.yml` step;
+# publish.yml is workflow_dispatch-only now, so that step was removed).
+#
+# This job itself is now a redundant daily safety net for the real-time
+# path (webmention-notify -> posts-build POST /refresh-snapshot on every
+# new mention) — cheap since it only commits when mentions actually
+# changed. repository_dispatch is a manual escape hatch to force a refresh
+# without waiting for the schedule.
 
 on:
   schedule:
@@ -30,7 +35,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: webmentions-snapshot
@@ -71,11 +75,3 @@ jobs:
           git commit -m "chore: refresh webmentions snapshot"
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Trigger a rebuild
-        # See the top-of-file note: the push above used GITHUB_TOKEN, so it
-        # did not fire publish.yml's `on: push` on its own.
-        if: steps.commit.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run publish.yml --repo ${{ github.repository }} --ref main
