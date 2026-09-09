@@ -1,8 +1,31 @@
 {
-  "generatedAt": "2026-09-08T09:25:07.615Z",
-  "lastId": 2030317,
-  "count": 18,
+  "generatedAt": "2026-09-09T09:07:29.479Z",
+  "lastId": 2030321,
+  "count": 19,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/73f9816bf4d6b3d0736371c15a62dd838e855580d3931550bb28b5372eb4791d.jpg",
+        "url": "https://mastodon.social/@hhkaos"
+      },
+      "url": "https://mastodon.social/@hhkaos/117234812898728403",
+      "published": "2026-09-08T09:54:40+00:00",
+      "wm-received": "2026-09-08T10:19:08Z",
+      "wm-id": 2030321,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117234598223738416/117234812898728403",
+      "wm-target": "https://posts.rauljimenez.info/notes/2026/09/08/5f83e/",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p>John's post on Bluesky: <a href=\"https://bsky.app/profile/geoplay.bsky.social/post/3muxcck4v5c2h\"><span>https://</span><span>bsky.app/profile/geoplay.bsky.</span><span>social/post/3muxcck4v5c2h</span></a></p>\n<a class=\"u-mention\" href=\"https://dev.to/jf990/considering-our-collective-ai-future-54ch\"></a>\n<a href=\"https://bsky.app/profile/geoplay.bsky.social/post/3muxcck4v5c2h\">GeoPlay (@geoplay.bsky.social)</a>",
+        "text": "John's post on Bluesky: https://bsky.app/profile/geoplay.bsky.social/post/3muxcck4v5c2h\n\nGeoPlay (@geoplay.bsky.social)"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/notes/2026/09/08/5f83e/",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
