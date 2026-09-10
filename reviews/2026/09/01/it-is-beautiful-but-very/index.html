@@ -64,9 +64,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
 <link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
 <link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="/map.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<script type="module" src="/map.js"></script>
 </head>
 <body>
 <nav class="site-nav">
@@ -127,7 +126,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <li>And it's pretty small. I would say around ~350 square meters, divided into 2 floors</li>
 </ul>
 <p><img src="https://posts.rauljimenez.info/media/2026/09/livraria-lello.png" alt="livraria-lello panorama"></p></div>
-<figure class="post-map" data-lat="41.146944" data-lon="-8.614722" data-type="review">
+<figure class="post-map" data-type="review">
+<arcgis-map class="post-map__canvas" basemap="streets-navigation-vector" center="-8.614722,41.146944" zoom="14" data-lat="41.146944" data-lon="-8.614722" data-type="review"></arcgis-map>
 <a class="post-map__fallback" href="https://www.openstreetmap.org/?mlat=41.146944&amp;mlon=-8.614722#map=15/41.146944/-8.614722" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
 <figcaption>📍 Livraria Lello</figcaption>
 </figure>

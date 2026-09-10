@@ -64,9 +64,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
 <link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
 <link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="/map.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<script type="module" src="/map.js"></script>
 </head>
 <body>
 <nav class="site-nav">
@@ -119,9 +118,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <span class="i18n-en">Every geotagged post — photos, check-ins, events, reviews with a location — on one map. 7 places so far. <a href="/about/">About this feed &rarr;</a></span>
 <span class="i18n-es">Todas las publicaciones geolocalizadas —fotos, check-ins, eventos, reseñas con ubicación— en un mapa. 7 sitios por ahora. <a href="/about/">Sobre este feed &rarr;</a></span>
 </p>
-<div id="map" class="map-full">
-<noscript><p class="i18n-en">The interactive map needs JavaScript — the places are listed below.</p><p class="i18n-es">El mapa interactivo necesita JavaScript; los lugares están listados abajo.</p></noscript>
-</div>
+<arcgis-map id="map" class="map-full" basemap="streets-navigation-vector" center="0,20" zoom="2"></arcgis-map>
+<noscript><p class="map-noscript i18n-en">The interactive map needs JavaScript — the places are listed below.</p><p class="map-noscript i18n-es">El mapa interactivo necesita JavaScript; los lugares están listados abajo.</p></noscript>
 <script type="application/json" id="map-points">[{"lat":36.837107,"lon":-2.379345,"type":"checkin","badge":"Check-in","title":"Checked in at Playa Costacabana","url":"https://posts.rauljimenez.info/photos/2026/09/06/72d0a","place":"Playa Costacabana","thumb":"https://posts.rauljimenez.info/media/2026/09/1000059889.jpg"},{"lat":40.46427,"lon":-3.616447,"type":"event","badge":"Event","title":"Conferencia Esri España 2026","url":"https://posts.rauljimenez.info/events/2026/09/04/conferencia-esri-espana-2026","place":"IFEMA","thumb":""},{"lat":38.16852932143889,"lon":-2.7826115992172893,"type":"photo","badge":"Photo","title":"Photo — 2 Sept 2026","url":"https://posts.rauljimenez.info/photos/2026/09/01/e4bdf","place":"","thumb":"https://posts.rauljimenez.info/media/2026/09/img-20260829-114558.jpg"},{"lat":41.146944,"lon":-8.614722,"type":"review","badge":"Review","title":"It is beautiful, but very expensive for what it is","url":"https://posts.rauljimenez.info/reviews/2026/09/01/it-is-beautiful-but-very","place":"Livraria Lello","thumb":""},{"lat":37.920978,"lon":-2.990129,"type":"photo","badge":"Photo","title":"Photo — 1 Sept 2026","url":"https://posts.rauljimenez.info/photos/2026/09/01/cbbe9","place":"","thumb":"https://posts.rauljimenez.info/media/2026/09/img-20260828-202032.jpg"},{"lat":50.112339,"lon":8.650718,"type":"event","badge":"Event","title":"🎤 Esri European Developer & Technology Summit 2026","url":"https://posts.rauljimenez.info/events/2026/09/01/esri-european-developer-and-technology-summit","place":"Congress Center","thumb":""},{"lat":40.42080999945242,"lon":-3.7187837343650276,"type":"rsvp","badge":"RSVP","title":"Going to Gala de Sirviendo Código 2026","url":"https://posts.rauljimenez.info/rsvp/2026/09/01/gala-de-sirviendo-codigo-2026","place":"La Estación Gran Teatro Caixabank Príncipe Pío","thumb":""}]</script>
 <section class="map-list-wrap">
 <h2><span class="i18n-en">All places</span><span class="i18n-es">Todos los sitios</span></h2>

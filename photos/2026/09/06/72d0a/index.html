@@ -64,9 +64,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
 <link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
 <link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="/map.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<script type="module" src="/map.js"></script>
 </head>
 <body>
 <nav class="site-nav">
@@ -122,7 +121,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <p class="target">📍 Checked in at <span class="p-location h-card"><a class="p-name u-url" href="https://maps.app.goo.gl/yK5DYtYgikKxpG9QA?g_st=ac">Playa Costacabana</a><data class="p-latitude" value="36.837107"></data><data class="p-longitude" value="-2.379345"></data></span></p>
 <img class="u-photo" src="https://posts.rauljimenez.info/media/2026/09/1000059889.jpg" alt="" loading="lazy">
 <div class="content e-content"><p>Enjoying the Sunday at Costacabana beach with the family ! 😎</p></div>
-<figure class="post-map" data-lat="36.837107" data-lon="-2.379345" data-type="checkin">
+<figure class="post-map" data-type="checkin">
+<arcgis-map class="post-map__canvas" basemap="streets-navigation-vector" center="-2.379345,36.837107" zoom="14" data-lat="36.837107" data-lon="-2.379345" data-type="checkin"></arcgis-map>
 <a class="post-map__fallback" href="https://www.openstreetmap.org/?mlat=36.837107&amp;mlon=-2.379345#map=15/36.837107/-2.379345" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
 <figcaption>📍 Playa Costacabana</figcaption>
 </figure>

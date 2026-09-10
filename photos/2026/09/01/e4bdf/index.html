@@ -64,9 +64,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
 <link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
 <link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="/map.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<script type="module" src="/map.js"></script>
 </head>
 <body>
 <nav class="site-nav">
@@ -121,7 +120,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <h1 class="visually-hidden">Photo — 2 Sept 2026</h1>
 <img class="u-photo" src="https://posts.rauljimenez.info/media/2026/09/img-20260829-114558.jpg" alt="A photo of me posing: a middle-aged man with graying hair and a short beard smiles warmly in the foreground, looking directly at the camera. He is wearing a pale yellow T-shirt. He is on a solar-powered boat on the Tranco Reservoir in Jaén. Behind him, a vast expanse of deep turquoise water stretches into the distance, with gentle ripples on the surface. On both sides of the water, densely forested hills covered in green pine trees rise up, and in the background, taller, rocky mountains are visible. The sky is bright blue with scattered thin white clouds. The lighting is bright, natural sunlight. The photo is taken from a medium-shot perspective, at eye level." loading="lazy">
 <div class="content e-content"><p>Last weekend, I enjoyed a solar-powered boat ride across &quot;<a href="https://maps.app.goo.gl/15NLEqsdjSzi69No9">Pantano del Tranco</a>&quot; (Tranco Reservoir) in Cazorla, Jaén Spain 😍🌲⛰️🌊🧘‍♂️</p></div>
-<figure class="post-map" data-lat="38.16852932143889" data-lon="-2.7826115992172893" data-type="photo">
+<figure class="post-map" data-type="photo">
+<arcgis-map class="post-map__canvas" basemap="streets-navigation-vector" center="-2.7826115992172893,38.16852932143889" zoom="14" data-lat="38.16852932143889" data-lon="-2.7826115992172893" data-type="photo"></arcgis-map>
 <a class="post-map__fallback" href="https://www.openstreetmap.org/?mlat=38.16852932143889&amp;mlon=-2.7826115992172893#map=15/38.16852932143889/-2.7826115992172893" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
 
 </figure>

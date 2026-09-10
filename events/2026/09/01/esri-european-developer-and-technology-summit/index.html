@@ -62,9 +62,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
 <link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
 <link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="/map.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<script type="module" src="/map.js"></script>
 </head>
 <body>
 <nav class="site-nav">
@@ -133,7 +132,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <li><a href="https://registration.esri.com/flow/esri/26euroepcdev/deveventportal/page/detailed-agenda/session/1785488070964001MGwx">Vector Tile Style Editor: Deep Customization of ArcGIS Basemaps</a></li>
 </ul>
 <p>More info: <a href="https://www.esri.com/en-us/about/events/euro-devtech/overview">https://www.esri.com/en-us/about/events/euro-devtech/overview</a></p></div>
-<figure class="post-map" data-lat="50.112339" data-lon="8.650718" data-type="event">
+<figure class="post-map" data-type="event">
+<arcgis-map class="post-map__canvas" basemap="streets-navigation-vector" center="8.650718,50.112339" zoom="14" data-lat="50.112339" data-lon="8.650718" data-type="event"></arcgis-map>
 <a class="post-map__fallback" href="https://www.openstreetmap.org/?mlat=50.112339&amp;mlon=8.650718#map=15/50.112339/8.650718" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
 <figcaption>📍 Congress Center</figcaption>
 </figure>

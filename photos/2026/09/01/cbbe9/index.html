@@ -64,9 +64,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
 <link rel="alternate" type="application/atom+xml" hreflang="es" title="Raúl Jiménez — Blog (Español)" href="https://www.rauljimenez.info/es/blog/atom.xml">
 <link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="/map.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<script type="module" src="/map.js"></script>
 </head>
 <body>
 <nav class="site-nav">
@@ -121,7 +120,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <h1 class="visually-hidden">Photo — 1 Sept 2026</h1>
 <img class="u-photo" src="https://posts.rauljimenez.info/media/2026/09/img-20260828-202032.jpg" alt="photograph of a goat perched atop a cliff" loading="lazy">
 <div class="content e-content"><p>This weekend we went to Cazorla, and from Iruela Castle, we could see a goat peeking out to take in the view from a cliff</p></div>
-<figure class="post-map" data-lat="37.920978" data-lon="-2.990129" data-type="photo">
+<figure class="post-map" data-type="photo">
+<arcgis-map class="post-map__canvas" basemap="streets-navigation-vector" center="-2.990129,37.920978" zoom="14" data-lat="37.920978" data-lon="-2.990129" data-type="photo"></arcgis-map>
 <a class="post-map__fallback" href="https://www.openstreetmap.org/?mlat=37.920978&amp;mlon=-2.990129#map=15/37.920978/-2.990129" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
 
 </figure>

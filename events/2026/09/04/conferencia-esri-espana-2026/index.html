@@ -62,9 +62,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 <link rel="alternate" type="application/rss+xml" hreflang="es" title="Raúl Jiménez — Blog (Español, RSS)" href="https://www.rauljimenez.info/es/blog/rss.xml">
 <link rel="alternate" type="application/atom+xml" hreflang="en" title="Raúl Jiménez — Blog (English)" href="https://www.rauljimenez.info/blog/atom.xml">
 <link rel="alternate" type="application/rss+xml" hreflang="en" title="Raúl Jiménez — Blog (English, RSS)" href="https://www.rauljimenez.info/blog/rss.xml">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="/map.js"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
+<script type="module" src="/map.js"></script>
 </head>
 <body>
 <nav class="site-nav">
@@ -125,7 +124,8 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape")setMenu(fals
 
 <div class="content e-content"><p>Desde 2023 no participaba en la <a href="https://www.esri.es/es-es/acerca-de/eventos/cesri26/conferencia-cesri26">Conferencia de Esri España</a>. Este año volveré a participar en la sesión del primer día por la tarde, compartiendo, como no, cositas sobre las tecnologías para desarrolladores de Esri.</p>
 <p>Deseando volver por allí para ver y abrazar a antiguos compañeros, amigos, y muchas personas con las que tuve la suerte de compartir 7 años en Esri España (2014-2021).</p></div>
-<figure class="post-map" data-lat="40.46427" data-lon="-3.616447" data-type="event">
+<figure class="post-map" data-type="event">
+<arcgis-map class="post-map__canvas" basemap="streets-navigation-vector" center="-3.616447,40.46427" zoom="14" data-lat="40.46427" data-lon="-3.616447" data-type="event"></arcgis-map>
 <a class="post-map__fallback" href="https://www.openstreetmap.org/?mlat=40.46427&amp;mlon=-3.616447#map=15/40.46427/-3.616447" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
 <figcaption>📍 IFEMA</figcaption>
 </figure>
