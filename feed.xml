@@ -5,11 +5,56 @@
   <link href="https://posts.rauljimenez.info/feed.xml" rel="self"/>
   <link href="https://posts.rauljimenez.info/"/>
   <id>https://posts.rauljimenez.info/</id>
-  <updated>2026-09-08T08:55:39.479Z</updated>
+  <updated>2026-09-09T23:59:05.145Z</updated>
   <author>
     <name>Raúl Jiménez Ortega</name>
     <uri>https://www.rauljimenez.info/</uri>
   </author>
+  <entry xml:lang="en">
+    <title>Note — 10 Sept 2026</title>
+    <link href="https://posts.rauljimenez.info/notes/2026/09/09/this-is-really-interesting-i-know"/>
+    <id>https://posts.rauljimenez.info/notes/2026/09/09/this-is-really-interesting-i-know</id>
+    <published>2026-09-09T23:59:05.145Z</published>
+    <updated>2026-09-09T23:59:05.145Z</updated>
+    <category term="note"/>
+    <content type="html">&lt;p&gt;This is really interesting. I know about PMTiles since 2024, but to be honest I never thought about hosting PMTiles on Huggingface&lt;/p&gt;</content>
+  </entry>
+  <entry xml:lang="en">
+    <title>Bookmarked Self hosting Maps on hugging face</title>
+    <link href="https://posts.rauljimenez.info/bookmarks/2026/09/09/self-hosting-maps-on-hugging"/>
+    <id>https://posts.rauljimenez.info/bookmarks/2026/09/09/self-hosting-maps-on-hugging</id>
+    <published>2026-09-09T23:53:58.451Z</published>
+    <updated>2026-09-09T23:53:58.451Z</updated>
+    <category term="bookmark"/>
+    <content type="html">&lt;p&gt;🔖 Bookmarked &lt;a href=&quot;https://lnkd.in/p/ejJj_Sew&quot;&gt;Self hosting Maps on hugging face&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
+  <entry xml:lang="en">
+    <title>Bookmarked TRMNL | ePaper dashboard to stay focused</title>
+    <link href="https://posts.rauljimenez.info/bookmarks/2026/09/09/trmnl-epaper-dashboard-to-stay"/>
+    <id>https://posts.rauljimenez.info/bookmarks/2026/09/09/trmnl-epaper-dashboard-to-stay</id>
+    <published>2026-09-09T11:41:42.104Z</published>
+    <updated>2026-09-09T11:41:42.104Z</updated>
+    <category term="bookmark"/>
+    <content type="html">&lt;p&gt;🔖 Bookmarked &lt;a href=&quot;https://trmnl.com/&quot;&gt;TRMNL | ePaper dashboard to stay focused&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
+  <entry xml:lang="en">
+    <title>Bookmarked Overleaf, Online LaTeX Editor</title>
+    <link href="https://posts.rauljimenez.info/bookmarks/2026/09/09/overleaf-online-latex-editor"/>
+    <id>https://posts.rauljimenez.info/bookmarks/2026/09/09/overleaf-online-latex-editor</id>
+    <published>2026-09-09T11:28:26.005Z</published>
+    <updated>2026-09-09T11:28:26.005Z</updated>
+    <category term="bookmark"/>
+    <content type="html">&lt;p&gt;🔖 Bookmarked &lt;a href=&quot;https://www.overleaf.com/&quot;&gt;Overleaf, Online LaTeX Editor&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
+  <entry xml:lang="en">
+    <title>Liked michaelharley.net</title>
+    <link href="https://posts.rauljimenez.info/likes/2026/09/08/b9898"/>
+    <id>https://posts.rauljimenez.info/likes/2026/09/08/b9898</id>
+    <published>2026-09-08T16:01:12.155Z</published>
+    <updated>2026-09-08T16:01:12.155Z</updated>
+    <category term="like"/>
+    <content type="html">&lt;p&gt;⭐ Liked &lt;a href=&quot;https://michaelharley.net/posts/2026/09/07/hey-indieweb-posse-people-can-we-please-use-the-same-hashtags-for-reviews/&quot;&gt;michaelharley.net&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
   <entry xml:lang="en">
     <title>Note — 8 Sept 2026</title>
     <link href="https://posts.rauljimenez.info/notes/2026/09/08/5f83e"/>
