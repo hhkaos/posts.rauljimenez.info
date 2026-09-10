@@ -463,23 +463,31 @@ async function postGeo(properties) {
   return null;
 }
 
-// Leaflet from cdnjs, pinned. Injected into <head> (via page()'s `head`
-// slot) only on pages that actually show a map — the `/map/` overview and
-// geotagged post pages. `defer` keeps execution order: leaflet, then map.js.
-const LEAFLET_VERSION = "1.9.4";
-const LEAFLET_HEAD = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/${LEAFLET_VERSION}/leaflet.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/${LEAFLET_VERSION}/leaflet.min.js"></script>
-<script defer src="/map.js"></script>`;
+// ArcGIS Maps SDK for JavaScript, from Esri's single CDN module (registers
+// the <arcgis-map> web component AND bundles its CSS). Injected into <head>
+// (via page()'s `head` slot) only on pages that actually show a map — the
+// `/map/` overview and geotagged post pages. Both scripts are `type="module"`
+// so they defer and execute in order: the SDK bootstrap (sets the global
+// `$arcgis`), then map.js.
+const ARCGIS_VERSION = "5.1";
+// Esri's basemap styles normally need an API key; `streets-navigation-vector`
+// is used here keyless by owner's decision. If it renders grey, switch this
+// to "osm" (the one enum that serves OpenStreetMap tiles with no auth).
+const MAP_BASEMAP = "streets-navigation-vector";
+const ARCGIS_HEAD = `<script type="module" src="https://js.arcgis.com/${ARCGIS_VERSION}/"></script>
+<script type="module" src="/map.js"></script>`;
 
-// A small OpenStreetMap map with a single marker, shown under any post that
-// has coordinates. Progressive enhancement: with no JS it's a labelled
-// link to openstreetmap.org; map.js upgrades it to a Leaflet map in place.
+// A small map with a single marker, shown under any post that has
+// coordinates. Progressive enhancement: with no JS the <arcgis-map> stays
+// empty and the labelled openstreetmap.org link is what's shown; map.js
+// brings the map up and fades the link.
 function postMapBlock(geo, type) {
   if (!geo) return "";
   const { lat, lon, label } = geo;
   const osm = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
   const place = label && !isCoordinateName(label) ? escapeHtml(label) : "";
-  return `<figure class="post-map" data-lat="${lat}" data-lon="${lon}" data-type="${escapeHtml(type)}">
+  return `<figure class="post-map" data-type="${escapeHtml(type)}">
+<arcgis-map class="post-map__canvas" basemap="${MAP_BASEMAP}" center="${lon},${lat}" zoom="14" data-lat="${lat}" data-lon="${lon}" data-type="${escapeHtml(type)}"></arcgis-map>
 <a class="post-map__fallback" href="${escapeHtml(osm)}" rel="nofollow noopener"><span class="i18n-en">View this location on OpenStreetMap &rarr;</span><span class="i18n-es">Ver esta ubicación en OpenStreetMap &rarr;</span></a>
 ${place ? `<figcaption>📍 ${place}</figcaption>` : ""}
 </figure>`;
@@ -1036,7 +1044,7 @@ ${renderPermalink(url, properties, lang)}
     title: name,
     lang,
     body,
-    head: geo ? LEAFLET_HEAD : "",
+    head: geo ? ARCGIS_HEAD : "",
     og: {
       url,
       type: "event",
@@ -1083,7 +1091,7 @@ ${renderPermalink(url, properties, lang)}
     title: properties.name || `Photo — ${formatDate(published)}`,
     lang,
     body,
-    head: geo ? LEAFLET_HEAD : "",
+    head: geo ? ARCGIS_HEAD : "",
     og: { url, type: "article", published, image: photos[0]?.url || screenshotUrl(url), description: ogDescription(content, "Photo · posts.rauljimenez.info") },
   });
 }
@@ -1106,7 +1114,7 @@ ${renderPermalink(url, properties, lang)}
     title: name,
     lang,
     body,
-    head: geo ? LEAFLET_HEAD : "",
+    head: geo ? ARCGIS_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(properties.summary || content, name) },
   });
 }
@@ -1147,7 +1155,7 @@ ${renderPermalink(url, properties, lang)}
     title: `Check-in at ${name}`,
     lang,
     body,
-    head: geo ? LEAFLET_HEAD : "",
+    head: geo ? ARCGIS_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Checked in at ${name}`) },
   });
 }
@@ -1197,7 +1205,7 @@ ${renderPermalink(url, properties, lang)}
     title: headline || `Review of ${itemName}`,
     lang,
     body,
-    head: geo ? LEAFLET_HEAD : "",
+    head: geo ? ARCGIS_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `Review of ${itemName}${hasRating ? ` — ${rating}/5` : ""}`) },
   });
 }
@@ -1246,7 +1254,7 @@ ${renderPermalink(url, properties, lang)}
     title: `${verb} ${workName}`,
     lang,
     body,
-    head: geo ? LEAFLET_HEAD : "",
+    head: geo ? ARCGIS_HEAD : "",
     og: { url, type: "article", published, image: screenshotUrl(url), description: ogDescription(content, `${verb} ${workName}`) },
   });
 }
@@ -1292,7 +1300,7 @@ ${renderPermalink(url, properties, lang)}
     title: properties.name || `${TYPE_LABEL[type]} — ${formatDate(published)}`,
     lang,
     body,
-    head: geo ? LEAFLET_HEAD : "",
+    head: geo ? ARCGIS_HEAD : "",
     og: {
       url,
       type: "article",
@@ -1605,9 +1613,9 @@ ${entries}
 `;
 }
 
-// `/map/` — every geotagged post on one OpenStreetMap map. The points are
-// handed to map.js as a JSON payload; a plain list of the same places is
-// always in the HTML as the no-JS fallback (and it's useful anyway).
+// `/map/` — every geotagged post on one map (ArcGIS <arcgis-map>, clustered).
+// The points are handed to map.js as a JSON payload; a plain list of the same
+// places is always in the HTML as the no-JS fallback (and it's useful anyway).
 function renderMapHtml(points) {
   const data = points.map((p) => ({
     lat: p.lat, lon: p.lon, type: p.type, badge: TYPE_LABEL[p.type] || p.type,
@@ -1628,9 +1636,8 @@ ${viewTabs("map")}
 <span class="i18n-en">Every geotagged post — photos, check-ins, events, reviews with a location — on one map. ${n} place${n === 1 ? "" : "s"} so far. <a href="/about/">About this feed &rarr;</a></span>
 <span class="i18n-es">Todas las publicaciones geolocalizadas —fotos, check-ins, eventos, reseñas con ubicación— en un mapa. ${n} sitio${n === 1 ? "" : "s"} por ahora. <a href="/about/">Sobre este feed &rarr;</a></span>
 </p>
-<div id="map" class="map-full">
-<noscript><p class="i18n-en">The interactive map needs JavaScript — the places are listed below.</p><p class="i18n-es">El mapa interactivo necesita JavaScript; los lugares están listados abajo.</p></noscript>
-</div>
+<arcgis-map id="map" class="map-full" basemap="${MAP_BASEMAP}" center="0,20" zoom="2"></arcgis-map>
+<noscript><p class="map-noscript i18n-en">The interactive map needs JavaScript — the places are listed below.</p><p class="map-noscript i18n-es">El mapa interactivo necesita JavaScript; los lugares están listados abajo.</p></noscript>
 <script type="application/json" id="map-points">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>
 <section class="map-list-wrap">
 <h2><span class="i18n-en">All places</span><span class="i18n-es">Todos los sitios</span></h2>
@@ -1640,7 +1647,7 @@ ${n ? `<ul class="map-list">\n${list}\n</ul>` : `<p><span class="i18n-en">Nothin
   return page({
     title: "Map",
     body,
-    head: LEAFLET_HEAD,
+    head: ARCGIS_HEAD,
     repCard: false,
     webmentions: false,
     og: {

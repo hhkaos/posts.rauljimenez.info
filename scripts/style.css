@@ -1098,12 +1098,14 @@ nav.pager {
   color: var(--text-muted);
 }
 
-/* --- Maps (Leaflet) -------------------------------------------------------
-   The /map/ overview (#map.map-full) and the per-post mini-map (.post-map).
-   `isolation: isolate` caps Leaflet's internal z-indexes (controls go up to
-   1000) inside the map box so the fixed navbar (z-index 10) still wins.
-   Dark mode: a filter on the OSM tile layer only — markers/popups are in
-   separate panes and stay untouched. */
+/* --- Maps (ArcGIS Maps SDK) ---------------------------------------------
+   The /map/ overview (<arcgis-map id="map" class="map-full">) and the
+   per-post mini-map (<arcgis-map class="post-map__canvas"> in .post-map).
+   `isolation: isolate` caps the SDK's internal z-indexes (popup, widgets)
+   inside the map box so the fixed navbar (z-index 10) still wins.
+   Dark mode: the SDK draws the basemap and the data into one WebGL canvas,
+   so the basemap stays light in dark mode; map.js only flips the widget /
+   popup chrome (`.calcite-mode-dark` on the element). */
 #map,
 .post-map__canvas {
   position: relative;
@@ -1111,50 +1113,22 @@ nav.pager {
   isolation: isolate;
   border: 1px solid var(--border);
   border-radius: 10px;
+  overflow: hidden;
   background: var(--surface);
 }
-.leaflet-container {
-  font: inherit;
-  background: var(--surface);
-}
-:root[data-theme="dark"] .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .leaflet-tile-pane {
-    filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
-  }
+arcgis-map {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .map-full {
+  display: block;
   height: 68vh;
   min-height: 380px;
 }
-.map-full .leaflet-container {
-  height: 100%;
-  border-radius: 10px;
-}
-
-/* Overview popup */
-.map-pop .leaflet-popup-content { margin: 0.7rem 0.85rem; }
-.map-pop__badge { display: inline-block; margin-bottom: 0.35rem; }
-.map-pop__thumb {
-  display: block;
-  width: 100%;
-  max-height: 130px;
-  object-fit: cover;
-  border-radius: 6px;
-  margin-bottom: 0.35rem;
-}
-.map-pop__title {
-  display: block;
-  font-weight: 600;
-  line-height: 1.35;
-}
-.map-pop__place {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.85rem;
+.map-noscript {
+  margin: 0.6rem 0 0;
   color: var(--text-muted);
 }
 
@@ -1178,11 +1152,8 @@ nav.pager {
   margin: 1.4rem 0 0;
 }
 .post-map__canvas {
+  display: block;
   height: 260px;
-}
-.post-map__canvas .leaflet-container {
-  height: 100%;
-  border-radius: 10px;
 }
 .post-map__fallback {
   display: inline-block;
