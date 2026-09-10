@@ -375,22 +375,36 @@ is full-width and the form controls stack. Inside the `<section class="respond">
 
 ### Map (`/map/` + per-post mini-maps)
 
-Every geotagged post is shown on an [OpenStreetMap](https://www.openstreetmap.org)
-map — an overview at **`/map/`** and a small single-marker map at the bottom
-of each geotagged post page. Maps use [Leaflet](https://leafletjs.com) `1.9.4`
-from cdnjs, loaded (via `page()`'s `head` slot) **only** on pages that have a
-map; `scripts/map.js` drives both. Dark mode is a CSS filter on the tile
-layer (markers/popups stay untinted). Progressive enhancement: no JS → the
-mini-map is a link to openstreetmap.org and `/map/` shows a plain list of the
-places (also always in the HTML).
+Every geotagged post is shown on a map — an overview at **`/map/`** and a
+small single-marker map at the bottom of each geotagged post page. Maps use
+the [ArcGIS Maps SDK for JavaScript](https://developers.arcgis.com/javascript/)
+`5.1` `<arcgis-map>` web component, loaded from Esri's single CDN module
+(`https://js.arcgis.com/5.1/`, which also bundles the component CSS) via
+`page()`'s `head` slot **only** on pages that have a map. `scripts/map.js`
+(an ES module) drives both:
+
+- **`/map/`** — a client-side `FeatureLayer` built from the `#map-points`
+  JSON payload, with **clustering** (`featureReduction`, cluster-count
+  labels), a `UniqueValueRenderer` colouring each point by post type (from
+  the same `--<type>` CSS vars the timeline badges use), **per-feature name
+  labels** from ~zoom 6 in, and a **popup** (thumb + title link → the post +
+  place). `view.goTo` fits the data extent on load.
+- **mini-map** — one marker `Graphic` on the post's coordinates.
+
+No API key: the `streets-navigation-vector` basemap serves anonymously
+(`MAP_BASEMAP` in `render.mjs` — switch to `"osm"` if Esri ever changes
+that). Dark mode: the SDK draws basemap + data into one WebGL canvas, so
+the basemap stays light in dark mode; `map.js` only flips the widget/popup
+chrome (`.calcite-mode-dark`). Progressive enhancement: no JS → the
+`<arcgis-map>` stays empty, the mini-map shows its openstreetmap.org link,
+and `/map/` shows a plain list of the places (both always in the HTML).
 
 `screenshot.mjs` **keeps** the per-post mini-map in the OG / syndication
 card (for a check-in or located event it's the most useful thing in it): it
-lets Leaflet + the OSM tiles load, nudges the map with a `resize` event
-after the card CSS widens the column, then waits (bounded, 6 s) for every
-`img.leaflet-tile` to finish before measuring and shooting. Adds no
-meaningful build time — a handful of geotagged posts, tiles fetched once
-per build.
+nudges the map with a `resize` event after the card CSS widens the column,
+then waits (bounded, 12 s) for `map.js` to report every `.post-map` drawn
+and settled — it bumps `window.__postMapsReady` once the ArcGIS view stops
+updating — before measuring and shooting. Adds ~1 s/geotagged post.
 
 The timeline, `/map/` and `/calendar/` are three views of the same posts,
 reached through a small **`viewTabs()`** switcher (Timeline / Map / Calendar)
