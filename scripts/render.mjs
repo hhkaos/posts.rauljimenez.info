@@ -493,6 +493,116 @@ ${place ? `<figcaption>📍 ${place}</figcaption>` : ""}
 </figure>`;
 }
 
+// --- Related posts ------------------------------------------------------
+// These relationships are calculated while the static site is built. They
+// never depend on a third party, and a section is omitted when it would be
+// empty or too weak to be useful.
+const NEARBY_RADIUS_KM = 2;
+const NEARBY_MIN_RESULTS = 2;
+const RELATED_MAX_RESULTS = 3;
+
+function distanceKm(a, b) {
+  if (!a || !b) return Infinity;
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLon = (b.lon - a.lon) * rad;
+  const x = Math.sin(dLat / 2) ** 2
+    + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+function normalisedKey(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim();
+}
+
+function categoryKeys(properties) {
+  return [...new Set([].concat(properties.category || [])
+    .map(normalisedKey)
+    .filter(Boolean))];
+}
+
+function relatedCard(post, distance) {
+  const title = feedEntryTitle(post);
+  const image = post.entry.images?.[0];
+  const bits = [
+    `<span class="badge ${escapeHtml(post.type)}">${escapeHtml(TYPE_LABEL[post.type] || post.type)}</span>`,
+    escapeHtml(formatDate(post.published)),
+    Number.isFinite(distance) ? `${distance < 1 ? Math.round(distance * 1000) + " m" : distance.toFixed(1) + " km"}` : "",
+  ].filter(Boolean).join(" · ");
+  return `<li class="related-posts__item">${image
+    ? `<img class="related-posts__image" src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt || "")}" loading="lazy">`
+    : ""}<div class="related-posts__copy"><a href="${escapeHtml(post.url)}">${escapeHtml(title)}</a><p>${bits}</p></div></li>`;
+}
+
+function relatedSection({ className, headingEn, headingEs, posts }) {
+  if (!posts.length) return "";
+  return `<section class="related-posts ${className}">
+<h2><span class="i18n-en">${escapeHtml(headingEn)}</span><span class="i18n-es">${escapeHtml(headingEs)}</span></h2>
+<ul>${posts.map(({ post, distance }) => relatedCard(post, distance)).join("\n")}</ul>
+</section>`;
+}
+
+function relatedPosts(source, allPosts) {
+  const candidates = allPosts.filter((post) => post.url !== source.url);
+  const sourcePlace = normalisedKey(source.geo?.label);
+  const samePlace = sourcePlace
+    ? candidates
+      .filter((post) => normalisedKey(post.geo?.label) === sourcePlace && distanceKm(source.geo, post.geo) <= 0.25)
+      .sort((a, b) => (b.published || "").localeCompare(a.published || ""))
+      .slice(0, RELATED_MAX_RESULTS)
+      .map((post) => ({ post, distance: distanceKm(source.geo, post.geo) }))
+    : [];
+
+  const shown = new Set(samePlace.map(({ post }) => post.url));
+  const nearby = source.geo
+    ? candidates
+      .filter((post) => !shown.has(post.url))
+      .map((post) => ({ post, distance: distanceKm(source.geo, post.geo) }))
+      .filter(({ distance }) => distance <= NEARBY_RADIUS_KM)
+      .sort((a, b) => a.distance - b.distance || (b.post.published || "").localeCompare(a.post.published || ""))
+    : [];
+  const nearbyResults = nearby.length >= NEARBY_MIN_RESULTS
+    ? nearby.slice(0, RELATED_MAX_RESULTS)
+    : [];
+  nearbyResults.forEach(({ post }) => shown.add(post.url));
+
+  const sourceTags = new Set(categoryKeys(source.properties));
+  const tagged = sourceTags.size
+    ? candidates
+      .filter((post) => !shown.has(post.url) && categoryKeys(post.properties).some((tag) => sourceTags.has(tag)))
+      .sort((a, b) => (b.published || "").localeCompare(a.published || ""))
+      .slice(0, RELATED_MAX_RESULTS)
+      .map((post) => ({ post, distance: distanceKm(source.geo, post.geo) }))
+    : [];
+
+  const place = source.geo?.label && !isCoordinateName(source.geo.label) ? source.geo.label : "this place";
+  return [
+    relatedSection({
+      className: "related-posts--place",
+      headingEn: `More at ${place}`,
+      headingEs: `Más en ${place}`,
+      posts: samePlace,
+    }),
+    relatedSection({
+      className: "related-posts--nearby",
+      headingEn: "Explore nearby",
+      headingEs: "Explora cerca de aquí",
+      posts: nearbyResults,
+    }),
+    relatedSection({
+      className: "related-posts--tags",
+      headingEn: "Related topics",
+      headingEs: "Temas relacionados",
+      posts: tagged,
+    }),
+  ].join("\n");
+}
+
 // "Back to the timeline" link at the top of every post page (both languages
 // emitted; CSS shows one per `:root[data-lang]`).
 const BACK_LINK = `<a class="back" href="${BASE_URL}/"><span class="i18n-en">&larr; All activity</span><span class="i18n-es">&larr; Toda la actividad</span></a>`;
@@ -891,7 +1001,7 @@ function renderPermalink(url, properties, lang) {
   const footer = translate
     ? `<p class="post-footer">${translate}</p>`
     : "";
-  return `${footer}${authorHCard()}${respondSection(url, properties, lang)}`;
+  return `${properties.__related || ""}${footer}${authorHCard()}${respondSection(url, properties, lang)}`;
 }
 
 // The "Respond" block under each post: the IndieWeb reply affordance.
@@ -1259,7 +1369,10 @@ ${renderPermalink(url, properties, lang)}
   });
 }
 
-function renderPostHtml({ type, url, properties, content, geo }) {
+function renderPostHtml({ type, url, properties, content, geo, related = "" }) {
+  // This is presentation-only data. It is deliberately not written back to
+  // the post's front matter or exposed as a Microformats property.
+  properties = { ...properties, __related: related };
   // A check-in that also carries a photo is stored as `post-type: photo`
   // (Indiekit's discovery can't be reordered) — treat any post with a
   // `checkin` property as a check-in.
@@ -2186,6 +2299,7 @@ async function main() {
   }
 
   const index = [];
+  const posts = []; // Public posts, retained until related-post links are known.
   const geoPoints = []; // { lat, lon, type, title, url, date, place, thumb }
   const calEntries = []; // dated event / rsvp posts, for /calendar/
   const undatedRsvps = []; // rsvp posts with no start date
@@ -2218,19 +2332,20 @@ async function main() {
       const entry = feedEntry(effectiveType, props, post.content, url);
       const geo = await postGeo(props);
 
-      await mkdir(outDir, { recursive: true });
-      await writeFile(
-        path.join(outDir, "index.html"),
-        renderPostHtml({ type, url, properties: props, content: post.content, geo }),
-      );
-
-      index.push({
+      const renderedPost = {
         type: effectiveType,
+        sourceType: type,
         url,
+        outDir,
         published: props.published,
+        properties: props,
+        content: post.content,
+        geo,
         entry,
         contentHtml: post.content ? renderMarkdown(post.content) : "",
-      });
+      };
+      posts.push(renderedPost);
+      index.push(renderedPost);
 
       if (effectiveType === "event" || effectiveType === "rsvp") {
         const cal = calendarEntry(effectiveType, props, url);
@@ -2260,6 +2375,23 @@ async function main() {
   }
 
   index.sort((a, b) => (b.published || "").localeCompare(a.published || ""));
+
+  // Every public post is known now, so links can be calculated consistently
+  // irrespective of the filesystem order in which its folder was read.
+  for (const post of posts) {
+    await mkdir(post.outDir, { recursive: true });
+    await writeFile(
+      path.join(post.outDir, "index.html"),
+      renderPostHtml({
+        type: post.sourceType,
+        url: post.url,
+        properties: post.properties,
+        content: post.content,
+        geo: post.geo,
+        related: relatedPosts(post, posts),
+      }),
+    );
+  }
 
   await copyFile("scripts/timeline.js", path.join(SITE_DIR, "timeline.js"));
   await copyFile("scripts/respond.js", path.join(SITE_DIR, "respond.js"));
