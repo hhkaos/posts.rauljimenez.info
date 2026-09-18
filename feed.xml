@@ -5,11 +5,20 @@
   <link href="https://posts.rauljimenez.info/feed.xml" rel="self"/>
   <link href="https://posts.rauljimenez.info/"/>
   <id>https://posts.rauljimenez.info/</id>
-  <updated>2026-09-12T09:14:38.329Z</updated>
+  <updated>2026-09-18T08:10:13.886Z</updated>
   <author>
     <name>Raúl Jiménez Ortega</name>
     <uri>https://www.rauljimenez.info/</uri>
   </author>
+  <entry xml:lang="en">
+    <title>Bookmarked nostr - controlled by users, not platforms</title>
+    <link href="https://posts.rauljimenez.info/bookmarks/2026/09/18/nostr-controlled-by-users-not-platforms"/>
+    <id>https://posts.rauljimenez.info/bookmarks/2026/09/18/nostr-controlled-by-users-not-platforms</id>
+    <published>2026-09-18T08:10:13.886Z</published>
+    <updated>2026-09-18T08:10:13.886Z</updated>
+    <category term="bookmark"/>
+    <content type="html">&lt;p&gt;🔖 Bookmarked &lt;a href=&quot;https://nostr.com/&quot;&gt;nostr - controlled by users, not platforms&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
   <entry xml:lang="en">
     <title>Checked in at Mirador de Nayla</title>
     <link href="https://posts.rauljimenez.info/photos/2026/09/12/329fc"/>
