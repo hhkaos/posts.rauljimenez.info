@@ -1,8 +1,32 @@
 {
-  "generatedAt": "2026-09-13T09:41:28.267Z",
-  "lastId": 2031439,
-  "count": 21,
+  "generatedAt": "2026-09-27T10:10:08.114Z",
+  "lastId": 2036125,
+  "count": 22,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:gwbqjf3ciffqeedjrpmjinfo/bafkreifsbg2cnlnktjx2id2y3acrrzoh4pdvdvcpmphes3puyyfzt3l3oi",
+        "url": "https://bsky.app/profile/rauljimenez.info"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3mwiactd3dv2b",
+      "published": "2026-09-27T07:05:03+00:00",
+      "published_ts": 1790492703,
+      "wm-received": "2026-09-27T09:04:33Z",
+      "wm-id": 2036125,
+      "wm-source": "https://brid.gy/comment/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mwiacspx252b/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mwiactd3dv2b",
+      "wm-target": "https://posts.rauljimenez.info/replies/2026/09/27/e0471",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "así que me voy a poner a bichear! 😀 (2/2)\n  <a class=\"u-mention\" href=\"https://jorgesanz.net/\"></a>\n<a class=\"u-mention\" href=\"https://jorgesanz.net/posts/2026-08-27-probando-el-mini-lector-xteink-como-tablero-de-datos/\"></a>",
+        "text": "así que me voy a poner a bichear! 😀 (2/2)"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/replies/2026/09/27/e0471",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
