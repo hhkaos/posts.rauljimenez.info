@@ -5,11 +5,20 @@
   <link href="https://posts.rauljimenez.info/feed.xml" rel="self"/>
   <link href="https://posts.rauljimenez.info/"/>
   <id>https://posts.rauljimenez.info/</id>
-  <updated>2026-09-18T08:10:13.886Z</updated>
+  <updated>2026-09-27T07:04:50.302Z</updated>
   <author>
     <name>Raúl Jiménez Ortega</name>
     <uri>https://www.rauljimenez.info/</uri>
   </author>
+  <entry xml:lang="es">
+    <title>Replied to jorgesanz.net</title>
+    <link href="https://posts.rauljimenez.info/replies/2026/09/27/e0471"/>
+    <id>https://posts.rauljimenez.info/replies/2026/09/27/e0471</id>
+    <published>2026-09-27T07:04:50.302Z</published>
+    <updated>2026-09-27T07:04:50.302Z</updated>
+    <category term="reply"/>
+    <content type="html">&lt;p&gt;💬 Replied to &lt;a href=&quot;https://jorgesanz.net/posts/2026-08-27-probando-el-mini-lector-xteink-como-tablero-de-datos/&quot;&gt;jorgesanz.net&lt;/a&gt;&lt;/p&gt;&lt;p&gt;Qué chulada Jorge!, pues no conocía ninguno de esos dispositivos pero ya me has despertado el gusanillo 😂, así que me voy a poner a bichear! 😀&lt;/p&gt;</content>
+  </entry>
   <entry xml:lang="en">
     <title>Bookmarked nostr - controlled by users, not platforms</title>
     <link href="https://posts.rauljimenez.info/bookmarks/2026/09/18/nostr-controlled-by-users-not-platforms"/>
