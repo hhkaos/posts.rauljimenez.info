@@ -5,11 +5,20 @@
   <link href="https://posts.rauljimenez.info/feed.xml" rel="self"/>
   <link href="https://posts.rauljimenez.info/"/>
   <id>https://posts.rauljimenez.info/</id>
-  <updated>2026-09-27T07:04:50.302Z</updated>
+  <updated>2026-09-29T10:15:36.902Z</updated>
   <author>
     <name>Raúl Jiménez Ortega</name>
     <uri>https://www.rauljimenez.info/</uri>
   </author>
+  <entry xml:lang="en">
+    <title>Bookmarked Slidev - Presentation Slides for Developers</title>
+    <link href="https://posts.rauljimenez.info/bookmarks/2026/09/29/slidev-presentation-slides-for-developers"/>
+    <id>https://posts.rauljimenez.info/bookmarks/2026/09/29/slidev-presentation-slides-for-developers</id>
+    <published>2026-09-29T10:15:36.902Z</published>
+    <updated>2026-09-29T10:15:36.902Z</updated>
+    <category term="bookmark"/>
+    <content type="html">&lt;p&gt;🔖 Bookmarked &lt;a href=&quot;https://sli.dev/&quot;&gt;Slidev - Presentation Slides for Developers&lt;/a&gt;&lt;/p&gt;&lt;p&gt;An open-source, web-based presentation tool built specifically for developers. It allows you to write slides using Markdown, customize themes with web technologies like Vue.js and CSS, embed live code components, and export presentations as static web pages or PDFs&lt;/p&gt;</content>
+  </entry>
   <entry xml:lang="es">
     <title>Replied to jorgesanz.net</title>
     <link href="https://posts.rauljimenez.info/replies/2026/09/27/e0471"/>
