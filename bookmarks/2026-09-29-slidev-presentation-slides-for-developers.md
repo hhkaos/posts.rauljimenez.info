@@ -12,6 +12,10 @@ category:
   - productivity
 published: 2026-09-29T10:15:36.902Z
 post-status: published
+syndication:
+  - https://mastodon.social/@hhkaos/117353821267569037
+  - https://bsky.app/profile/did:plc:gwbqjf3ciffqeedjrpmjinfo/post/3mwnm5hbrw52x
+updated: 2026-09-29T10:20:07.734Z
 visibility: public
 ---
 
