@@ -1,8 +1,32 @@
 {
-  "generatedAt": "2026-09-27T10:10:08.114Z",
-  "lastId": 2036125,
-  "count": 22,
+  "generatedAt": "2026-10-01T11:08:23.335Z",
+  "lastId": 2036899,
+  "count": 23,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:gwbqjf3ciffqeedjrpmjinfo/bafkreifsbg2cnlnktjx2id2y3acrrzoh4pdvdvcpmphes3puyyfzt3l3oi",
+        "url": "https://bsky.app/profile/rauljimenez.info"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3mwnm5huvly2u",
+      "published": "2026-09-29T10:20:07+00:00",
+      "published_ts": 1790677207,
+      "wm-received": "2026-09-30T18:53:19Z",
+      "wm-id": 2036899,
+      "wm-source": "https://brid.gy/comment/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mwnm5hbrw52x/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mwnm5huvly2u",
+      "wm-target": "https://posts.rauljimenez.info/bookmarks/2026/09/29/slidev-presentation-slides-for-developers",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "using Markdown, customize themes with web technologies like Vue.js and CSS, embed live code components, and export presentations as static web pages or PDFs (2/2)\n  <a class=\"u-mention\" href=\"https://sli.dev/\"></a>",
+        "text": "using Markdown, customize themes with web technologies like Vue.js and CSS, embed live code components, and export presentations as static web pages or PDFs (2/2)"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/bookmarks/2026/09/29/slidev-presentation-slides-for-developers",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
