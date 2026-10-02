@@ -1,8 +1,48 @@
 {
-  "generatedAt": "2026-10-01T11:08:23.335Z",
-  "lastId": 2036899,
-  "count": 23,
+  "generatedAt": "2026-10-02T10:41:42.455Z",
+  "lastId": 2037267,
+  "count": 25,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "cl0q",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:6y7ibub5x3xpfw5fk4w6c6sw/bafkreid5cuk7w34edyihx7mbpsfbpawcicsgemdal4qkrqunfpopjhsm44",
+        "url": "https://bsky.app/profile/cl0qsearch.bsky.social"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3mwiacspx252b#liked_by_did:plc:6y7ibub5x3xpfw5fk4w6c6sw",
+      "published": null,
+      "published_ts": null,
+      "wm-received": "2026-10-02T08:38:39Z",
+      "wm-id": 2037267,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mwiacspx252b/did%253Aplc%253A6y7ibub5x3xpfw5fk4w6c6sw",
+      "wm-target": "https://posts.rauljimenez.info/replies/2026/09/27/e0471",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/replies/2026/09/27/e0471",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "cl0q",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:6y7ibub5x3xpfw5fk4w6c6sw/bafkreid5cuk7w34edyihx7mbpsfbpawcicsgemdal4qkrqunfpopjhsm44",
+        "url": "https://bsky.app/profile/cl0qsearch.bsky.social"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3mwnm5hbrw52x#liked_by_did:plc:6y7ibub5x3xpfw5fk4w6c6sw",
+      "published": null,
+      "published_ts": null,
+      "wm-received": "2026-10-02T08:38:38Z",
+      "wm-id": 2037266,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mwnm5hbrw52x/did%253Aplc%253A6y7ibub5x3xpfw5fk4w6c6sw",
+      "wm-target": "https://posts.rauljimenez.info/bookmarks/2026/09/29/slidev-presentation-slides-for-developers",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/bookmarks/2026/09/29/slidev-presentation-slides-for-developers",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
