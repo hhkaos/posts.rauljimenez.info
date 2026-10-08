@@ -5,11 +5,20 @@
   <link href="https://posts.rauljimenez.info/feed.xml" rel="self"/>
   <link href="https://posts.rauljimenez.info/"/>
   <id>https://posts.rauljimenez.info/</id>
-  <updated>2026-09-29T10:15:36.902Z</updated>
+  <updated>2026-10-08T14:31:40.218Z</updated>
   <author>
     <name>Raúl Jiménez Ortega</name>
     <uri>https://www.rauljimenez.info/</uri>
   </author>
+  <entry xml:lang="en">
+    <title>Liked youtube.com</title>
+    <link href="https://posts.rauljimenez.info/likes/2026/10/08/49f79"/>
+    <id>https://posts.rauljimenez.info/likes/2026/10/08/49f79</id>
+    <published>2026-10-08T14:31:40.218Z</published>
+    <updated>2026-10-08T14:31:40.218Z</updated>
+    <category term="like"/>
+    <content type="html">&lt;p&gt;⭐ Liked &lt;a href=&quot;https://www.youtube.com/watch?v=cZx-sRPyZ2w&amp;amp;time_continue=105&amp;amp;source_ve_path=MjE0Mjgz&amp;amp;embeds_referring_euri=https://adventuresinmapping.com/&quot;&gt;youtube.com&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
   <entry xml:lang="en">
     <title>Bookmarked Slidev - Presentation Slides for Developers</title>
     <link href="https://posts.rauljimenez.info/bookmarks/2026/09/29/slidev-presentation-slides-for-developers"/>
