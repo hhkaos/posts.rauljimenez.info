@@ -1,8 +1,28 @@
 {
-  "generatedAt": "2026-10-16T09:13:52.794Z",
-  "lastId": 2041244,
-  "count": 29,
+  "generatedAt": "2026-10-21T09:32:25.958Z",
+  "lastId": 2042401,
+  "count": 30,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Derek Law",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:mkiirybhzgeajzg73mp6szk3/bafkreihdiz6d2lgt7kozosyeyj2cqkgqpffijv2usajix2hykkqo6rgjlu",
+        "url": "https://bsky.app/profile/gisbandit.bsky.social"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3myc3lxguva2u#liked_by_did:plc:mkiirybhzgeajzg73mp6szk3",
+      "published": null,
+      "published_ts": null,
+      "wm-received": "2026-10-20T13:15:13Z",
+      "wm-id": 2042401,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3myc3lxguva2u/did%253Aplc%253Amkiirybhzgeajzg73mp6szk3",
+      "wm-target": "https://posts.rauljimenez.info/photos/2026/10/20/980a6",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/photos/2026/10/20/980a6",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
