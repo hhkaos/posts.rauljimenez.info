@@ -1,8 +1,28 @@
 {
-  "generatedAt": "2026-10-21T09:32:25.958Z",
-  "lastId": 2042401,
-  "count": 30,
+  "generatedAt": "2026-11-02T12:48:10.715Z",
+  "lastId": 2046125,
+  "count": 31,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Álvaro Montoro at JSConf MX",
+        "photo": "https://cdn.bsky.app/img/avatar/plain/did:plc:xei4kpuuaogvgnvufre7wvjm/bafkreigphqyvgorv7zyiphugwgccquzbevo7hvxflrujfoy6qhee4o6goy",
+        "url": "https://bsky.app/profile/alvaromontoro.com"
+      },
+      "url": "https://bsky.app/profile/rauljimenez.info/post/3mzazs2vzpy2j#liked_by_did:plc:xei4kpuuaogvgnvufre7wvjm",
+      "published": null,
+      "published_ts": null,
+      "wm-received": "2026-11-01T15:51:57Z",
+      "wm-id": 2046125,
+      "wm-source": "https://brid.gy/like/bluesky/did:plc:gwbqjf3ciffqeedjrpmjinfo/at%253A%252F%252Fdid%253Aplc%253Agwbqjf3ciffqeedjrpmjinfo%252Fapp.bsky.feed.post%252F3mzazs2vzpy2j/did%253Aplc%253Axei4kpuuaogvgnvufre7wvjm",
+      "wm-target": "https://posts.rauljimenez.info/photos/2026/11/01/6670b",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/photos/2026/11/01/6670b",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
