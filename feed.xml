@@ -5,11 +5,20 @@
   <link href="https://posts.rauljimenez.info/feed.xml" rel="self"/>
   <link href="https://posts.rauljimenez.info/"/>
   <id>https://posts.rauljimenez.info/</id>
-  <updated>2026-11-01T14:31:16.158Z</updated>
+  <updated>2026-11-16T11:08:14.900Z</updated>
   <author>
     <name>Raúl Jiménez Ortega</name>
     <uri>https://www.rauljimenez.info/</uri>
   </author>
+  <entry xml:lang="en">
+    <title>Liked hackstory.es</title>
+    <link href="https://posts.rauljimenez.info/likes/2026/11/16/39cd3"/>
+    <id>https://posts.rauljimenez.info/likes/2026/11/16/39cd3</id>
+    <published>2026-11-16T11:08:14.900Z</published>
+    <updated>2026-11-16T11:08:14.900Z</updated>
+    <category term="like"/>
+    <content type="html">&lt;p&gt;⭐ Liked &lt;a href=&quot;https://hackstory.es/&quot;&gt;hackstory.es&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
   <entry xml:lang="en">
     <title>Photo — 1 Nov 2026</title>
     <link href="https://posts.rauljimenez.info/photos/2026/11/01/c12ba"/>
