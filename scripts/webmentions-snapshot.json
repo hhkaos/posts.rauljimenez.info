@@ -1,8 +1,52 @@
 {
-  "generatedAt": "2026-11-16T13:04:17.572Z",
-  "lastId": 2051503,
-  "count": 33,
+  "generatedAt": "2026-11-17T13:46:16.887Z",
+  "lastId": 2051803,
+  "count": 35,
   "mentions": [
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "Raul Jimenez Ortega",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/73f9816bf4d6b3d0736371c15a62dd838e855580d3931550bb28b5372eb4791d.jpg",
+        "url": "https://mastodon.social/@hhkaos"
+      },
+      "url": "https://mastodon.social/@hhkaos/117625861662061021",
+      "published": "2026-11-16T11:23:31+00:00",
+      "published_ts": 1794828211,
+      "wm-received": "2026-11-17T05:46:27Z",
+      "wm-id": 2051803,
+      "wm-source": "https://brid.gy/comment/mastodon/@hhkaos@mastodon.social/117625848131689874/117625861662061021",
+      "wm-target": "https://posts.rauljimenez.info/replies/2026/11/16/everything-thats-free-and-unlimited-eventually",
+      "wm-protocol": "webmention",
+      "content": {
+        "html": "<p>wrong link... xD <a href=\"https://jitsi.org/blog/changes-coming/\"><span>https://</span><span>jitsi.org/blog/changes-coming/</span><span></span></a></p>\n  <a href=\"https://jitsi.org/blog/changes-coming/\">Changes coming to meet.jit.si - Jitsi</a>",
+        "text": "wrong link... xD https://jitsi.org/blog/changes-coming/\n  Changes coming to meet.jit.si - Jitsi"
+      },
+      "in-reply-to": "https://posts.rauljimenez.info/replies/2026/11/16/everything-thats-free-and-unlimited-eventually",
+      "wm-property": "in-reply-to",
+      "wm-private": false
+    },
+    {
+      "type": "entry",
+      "author": {
+        "type": "card",
+        "name": "nyaomaru 😸",
+        "photo": "https://avatars.webmention.io/files.mastodon.social/8d016eee3ecfa8d42185f92d9956d25bfd71f3c1fdc65dd7779e8d1306a4dad7.png",
+        "url": "https://mastodon.social/@nyaomaru"
+      },
+      "url": "https://mastodon.social/@hhkaos/117625867788169663#favorited-by-116873713320656704",
+      "published": null,
+      "published_ts": null,
+      "wm-received": "2026-11-17T05:46:26Z",
+      "wm-id": 2051802,
+      "wm-source": "https://brid.gy/like/mastodon/@hhkaos@mastodon.social/117625867788169663/116873713320656704",
+      "wm-target": "https://posts.rauljimenez.info/notes/2026/11/16/this-is-the-skill-i-currently",
+      "wm-protocol": "webmention",
+      "like-of": "https://posts.rauljimenez.info/notes/2026/11/16/this-is-the-skill-i-currently",
+      "wm-property": "like-of",
+      "wm-private": false
+    },
     {
       "type": "entry",
       "author": {
